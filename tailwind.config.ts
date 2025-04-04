@@ -64,10 +64,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         legal: {
-          primary: "#6E59A5",
-          secondary: "#9b87f5",
-          muted: "#E5DEFF",
-          accent: "#0EA5E9",
+          primary: "#4F9CF9",
+          secondary: "#0072FF",
+          muted: "#1A2C42",
+          accent: "#00F0FF",
         }
       },
       borderRadius: {
@@ -83,11 +83,16 @@ export default {
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "0.8" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out"
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite"
       }
     }
   },

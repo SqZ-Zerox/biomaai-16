@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
     --card: 222 47% 8%;
@@ -14,57 +14,57 @@
     --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 210 100% 52%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 91% 25%;
+    --secondary: 217 91% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 223 47% 20%;
+    --muted: 223 47% 15%;
     --muted-foreground: 215 20% 75%;
 
-    --accent: 195 95% 65%;
+    --accent: 180 100% 50%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 32.6% 20%;
-    --input: 217 32.6% 20%;
+    --border: 217 32.6% 17.5%;
+    --input: 217 32.6% 17.5%;
     --ring: 224 71.4% 45%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 10%;
+    --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 223 47% 15%;
+    --sidebar-accent: 223 47% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 47% 15%;
     --sidebar-ring: 224 71.4% 45%;
   }
 
   .dark {
-    --background: 222 47% 8%;
+    --background: 222 47% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 10%;
+    --card: 222 47% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 10%;
+    --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 210 100% 52%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 91% 20%;
+    --secondary: 217 91% 12%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 223 47% 15%;
+    --muted: 223 47% 11%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 195 95% 65%;
+    --accent: 180 100% 50%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 74% 42%;
@@ -74,11 +74,11 @@
     --input: 217 32.6% 17.5%;
     --ring: 224 71.4% 45%;
     
-    --sidebar-background: 222 47% 9%;
+    --sidebar-background: 222 47% 6%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 223 47% 15%;
+    --sidebar-accent: 223 47% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 223 47% 15%;
     --sidebar-ring: 224 71.4% 45%;
@@ -93,15 +93,15 @@
   body {
     @apply bg-background text-foreground;
     background-image: 
-      radial-gradient(circle at 25% 10%, rgba(2, 132, 199, 0.05) 0%, transparent 30%),
-      radial-gradient(circle at 75% 75%, rgba(56, 189, 248, 0.05) 0%, transparent 30%);
+      radial-gradient(circle at 25% 10%, rgba(0, 240, 255, 0.03) 0%, transparent 35%),
+      radial-gradient(circle at 75% 75%, rgba(79, 156, 249, 0.03) 0%, transparent 35%);
     background-attachment: fixed;
   }
 }
 
 @layer components {
   .legal-card {
-    @apply bg-card rounded-lg border border-border/40 shadow-md shadow-accent/5 backdrop-blur-sm hover:shadow-lg hover:shadow-accent/10 transition-shadow duration-300;
+    @apply bg-card/80 rounded-lg border border-border/40 shadow-md shadow-accent/5 backdrop-blur-sm hover:shadow-lg hover:shadow-accent/10 transition-shadow duration-300;
   }
 
   .legal-section {
@@ -122,7 +122,7 @@
     bottom: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(90deg, #3b82f6, #38bdf8, #3b82f6);
+    background: linear-gradient(90deg, #4F9CF9, #00F0FF, #4F9CF9);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -131,5 +131,27 @@
   
   .glass-card {
     @apply bg-card/70 backdrop-blur-sm border border-border/40;
+  }
+
+  .neon-glow {
+    @apply relative;
+  }
+  
+  .neon-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 15px 2px rgba(0, 240, 255, 0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .neon-glow:hover::after {
+    opacity: 1;
   }
 }
