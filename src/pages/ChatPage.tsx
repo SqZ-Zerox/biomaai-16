@@ -1,8 +1,9 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Send, Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertTriangle, Send, Loader2, MessageSquare, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { AppError, errorHandler } from "@/lib/error";
@@ -41,7 +42,9 @@ const ChatPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -121,11 +124,13 @@ const ChatPage = () => {
       ]);
     } finally {
       setIsLoading(false);
+      chatInputRef.current?.focus();
     }
   };
 
   const handleSampleQuestion = (question: string) => {
     setInput(question);
+    chatInputRef.current?.focus();
   };
 
   const handleRetry = () => {
@@ -138,19 +143,59 @@ const ChatPage = () => {
     setIsError(false);
   };
 
+  const toggleSidebar = () => {
+    setShowSidebar(prev => !prev);
+  };
+
   return (
-    <div className="flex flex-col h-[calc(100vh-15rem)]">
-      <h1 className="text-2xl font-bold mb-4">Legal Chatbot Assistant</h1>
-      
-      <div className="flex-1 flex flex-col">
-        <div className="flex-grow relative">
-          <div className="absolute inset-0 overflow-y-auto p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/40 shadow-sm">
-            <div className="space-y-4">
+    <div className="flex h-[calc(100vh-15rem)] flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Legal Assistant</h1>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="mr-2" 
+          onClick={toggleSidebar}
+        >
+          <History className="h-[1.2rem] w-[1.2rem]" />
+        </Button>
+      </div>
+
+      <div className="flex flex-1 gap-4 overflow-hidden">
+        {showSidebar && (
+          <div className="w-64 flex-shrink-0 overflow-hidden rounded-lg border border-border/40 shadow-sm bg-card/60 backdrop-blur-sm">
+            <div className="p-3 font-medium text-sm border-b border-border/40">
+              <span className="flex items-center gap-2">
+                <History className="h-4 w-4" /> Chat History
+              </span>
+            </div>
+            <ScrollArea className="h-full p-3">
+              <div className="space-y-2">
+                <div className="p-2 rounded-md hover:bg-accent/30 cursor-pointer text-sm flex items-start">
+                  <MessageSquare className="h-4 w-4 mr-2 mt-0.5" />
+                  <span>Law of Contracts discussion</span>
+                </div>
+                <div className="p-2 rounded-md hover:bg-accent/30 cursor-pointer text-sm flex items-start">
+                  <MessageSquare className="h-4 w-4 mr-2 mt-0.5" />
+                  <span>Criminal Law questions</span>
+                </div>
+                <div className="p-2 rounded-md hover:bg-accent/30 cursor-pointer text-sm flex items-start">
+                  <MessageSquare className="h-4 w-4 mr-2 mt-0.5" />
+                  <span>Constitutional principles</span>
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+
+        <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm border border-border/40 rounded-lg shadow-sm overflow-hidden">
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4 pb-4">
               {messages.map((message, index) => (
                 <div
                   key={index}
                   className={cn(
-                    "flex",
+                    "flex animate-fade-in",
                     message.role === "user" 
                       ? "justify-end" 
                       : message.role === "system" 
@@ -160,7 +205,7 @@ const ChatPage = () => {
                 >
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm",
+                      "max-w-[80%] rounded-lg px-4 py-2 shadow-sm",
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : message.role === "system"
@@ -180,7 +225,7 @@ const ChatPage = () => {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-3">
                     <div className="flex space-x-2">
                       <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce"></div>
                       <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce delay-75"></div>
@@ -191,27 +236,25 @@ const ChatPage = () => {
               )}
               <div ref={messagesEndRef} className="h-1" />
             </div>
-          </div>
-        </div>
+          </ScrollArea>
 
-        <div className="mt-4">
           {isError && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 animate-fade-in">
+            <div className="mx-4 mb-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 animate-fade-in">
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <span className="text-sm">{errorMsg || "An error occurred while sending your message."}</span>
               <Button variant="outline" size="sm" className="ml-auto" onClick={handleRetry}>Retry</Button>
             </div>
           )}
 
-          <div className="mb-2">
-            <p className="text-sm text-muted-foreground mb-2">Suggested questions:</p>
+          <div className="px-4 py-2 border-t border-border/40 bg-card/80">
+            <p className="text-xs text-muted-foreground mb-2">Suggested questions:</p>
             <div className="flex flex-wrap gap-2">
               {SAMPLE_QUESTIONS.map((question, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="text-xs transition-all hover:bg-primary/10"
+                  className="text-xs bg-background/50 hover:bg-primary/10"
                   onClick={() => handleSampleQuestion(question)}
                 >
                   {question}
@@ -219,24 +262,27 @@ const ChatPage = () => {
               ))}
             </div>
           </div>
-          
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2 mt-auto">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a legal question..."
-              disabled={isLoading}
-              className="flex-1 transition-all duration-200 bg-background shadow-sm"
-            />
-            <Button 
-              type="submit" 
-              size="icon"
-              disabled={!input.trim() || isLoading}
-              className="transition-all duration-200 hover:scale-105"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </form>
+
+          <div className="border-t border-border/40 p-4 bg-background/30">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <Input
+                ref={chatInputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask a legal question..."
+                disabled={isLoading}
+                className="flex-1 bg-background shadow-sm"
+              />
+              <Button 
+                type="submit" 
+                size="icon"
+                disabled={!input.trim() || isLoading}
+                className="transition-all duration-200 hover:scale-105"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
