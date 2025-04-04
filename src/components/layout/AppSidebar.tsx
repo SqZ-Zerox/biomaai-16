@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -9,7 +8,8 @@ import {
   Home,
   BookOpenCheck,
   Award,
-  HelpCircle
+  HelpCircle,
+  FileText
 } from "lucide-react";
 
 import {
@@ -54,6 +54,11 @@ const AppSidebar = () => {
       title: "Study Plan",
       path: "/study-plan",
       icon: Calendar,
+    },
+    {
+      title: "Legal Essays",
+      path: "/legal-essays",
+      icon: FileText,
     },
     {
       title: "Upload",

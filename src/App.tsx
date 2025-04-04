@@ -10,6 +10,7 @@ import ChatPage from "./pages/ChatPage";
 import StudyPage from "./pages/StudyPage";
 import StudyPlanPage from "./pages/StudyPlanPage";
 import UploadPage from "./pages/UploadPage";
+import LegalEssaysPage from "./pages/LegalEssaysPage";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -38,6 +39,7 @@ const App = () => {
                 <Route path="/study" element={<StudyPage />} />
                 <Route path="/study-plan" element={<StudyPlanPage />} />
                 <Route path="/upload" element={<UploadPage />} />
+                <Route path="/legal-essays" element={<LegalEssaysPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
