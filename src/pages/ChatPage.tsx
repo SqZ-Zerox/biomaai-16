@@ -139,10 +139,10 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-13rem)]">
+    <div className="flex flex-col h-[calc(100vh-15rem)]">
       <h1 className="text-2xl font-bold mb-4">Legal Chatbot Assistant</h1>
       
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+      <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 chat-container">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -157,7 +157,7 @@ const ChatPage = () => {
           >
             <div
               className={cn(
-                "max-w-[80%] rounded-lg px-4 py-2",
+                "max-w-[80%] rounded-lg px-4 py-2 transition-all duration-300 animate-fade-in",
                 message.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : message.role === "system"
@@ -176,7 +176,7 @@ const ChatPage = () => {
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex justify-start animate-fade-in">
             <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
               <div className="flex space-x-2">
                 <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce"></div>
@@ -186,11 +186,11 @@ const ChatPage = () => {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-1" />
       </div>
 
       {isError && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 animate-fade-in">
           <AlertTriangle className="h-5 w-5 text-destructive" />
           <span className="text-sm">{errorMsg || "An error occurred while sending your message."}</span>
           <Button variant="outline" size="sm" className="ml-auto" onClick={handleRetry}>Retry</Button>
@@ -205,7 +205,7 @@ const ChatPage = () => {
               key={index}
               variant="outline"
               size="sm"
-              className="text-xs"
+              className="text-xs transition-all hover:bg-primary/10"
               onClick={() => handleSampleQuestion(question)}
             >
               {question}
@@ -214,18 +214,19 @@ const ChatPage = () => {
         </div>
       </div>
       
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2 mt-auto">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a legal question..."
           disabled={isLoading}
-          className="flex-1"
+          className="flex-1 transition-all duration-200"
         />
         <Button 
           type="submit" 
           size="icon"
           disabled={!input.trim() || isLoading}
+          className="transition-all duration-200 hover:scale-105"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>

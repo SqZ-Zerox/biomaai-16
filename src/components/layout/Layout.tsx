@@ -50,7 +50,7 @@ const Layout: React.FC = () => {
           <SidebarRail />
           
           {/* Main content */}
-          <main className="flex-1 container mx-auto px-4 pb-24 pt-6 relative z-10 overflow-y-auto">
+          <main className="flex-1 container mx-auto px-4 pb-16 pt-6 relative z-10 overflow-y-auto">
             <div className="max-w-5xl mx-auto">
               {/* Background effects */}
               <div className="fixed inset-0 z-0 pointer-events-none">
@@ -67,7 +67,7 @@ const Layout: React.FC = () => {
         <Navigation />
         
         {/* Footer with copyright - fixed at bottom */}
-        <div className="w-full text-center py-3 text-xs text-muted-foreground opacity-80 border-t border-border/20 bg-background/80 backdrop-blur-sm">
+        <div className="absolute bottom-0 left-0 right-0 z-10 text-center py-1 text-xs text-muted-foreground opacity-80 border-t border-border/20 bg-background/80 backdrop-blur-sm">
           <p>© 2025 LegalAid. Created by Zawad. All rights reserved.</p>
         </div>
       </div>
