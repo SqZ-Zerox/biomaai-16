@@ -26,9 +26,9 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             tabIndex={0}
           >
             <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
-              <span className="text-accent font-bold">L</span>
+              <span className="text-primary font-bold">L</span>
             </div>
-            <h1 className="text-xl font-bold text-foreground">Legal<span className="text-accent">Aid</span></h1>
+            <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary">Aid</span></h1>
           </div>
         </div>
         
@@ -40,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             className="rounded-full hover:bg-card"
             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {isDarkMode ? <SunIcon className="h-[1.2rem] w-[1.2rem] text-accent" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem] text-accent" />}
+            {isDarkMode ? <SunIcon className="h-[1.2rem] w-[1.2rem] text-primary" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem] text-primary" />}
           </Button>
         </div>
       </div>

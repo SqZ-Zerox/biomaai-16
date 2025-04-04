@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex flex-col min-h-screen bg-background w-full">
+      <div className="flex flex-col min-h-screen bg-background w-full animated-bg">
         <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
         
         <div className="flex flex-1 w-full">
@@ -54,11 +54,17 @@ const Layout: React.FC = () => {
             <div className="max-w-5xl mx-auto">
               {/* Background effects */}
               <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-primary/5 filter blur-3xl animate-pulse-glow"></div>
-                <div className="absolute bottom-1/3 right-1/6 w-80 h-80 rounded-full bg-accent/5 filter blur-3xl animate-pulse-glow" style={{animationDelay: '1s'}}></div>
+                <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-primary/5 filter blur-3xl glow-effect"></div>
+                <div className="absolute bottom-1/3 right-1/6 w-80 h-80 rounded-full bg-primary/5 filter blur-3xl glow-effect" style={{animationDelay: '1.5s'}}></div>
+                <div className="absolute top-2/3 left-1/3 w-40 h-40 rounded-full bg-primary/5 filter blur-3xl glow-effect" style={{animationDelay: '0.8s'}}></div>
               </div>
               
               <Outlet />
+              
+              {/* Copyright */}
+              <div className="mt-12 text-center text-xs text-muted-foreground opacity-80">
+                <p>© 2025 LegalAid. Created by Zawad. All rights reserved.</p>
+              </div>
             </div>
           </main>
         </div>
