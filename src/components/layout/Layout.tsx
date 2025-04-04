@@ -66,9 +66,13 @@ const Layout: React.FC = () => {
         
         <Navigation />
         
-        {/* Copyright - moved to a fixed position that won't interfere with content */}
-        <div className="fixed bottom-16 left-0 right-0 z-10 text-center py-1 text-xs text-muted-foreground opacity-60">
-          <p>© 2025 LegalAid. Created by Zawad. All rights reserved.</p>
+        {/* Updated copyright mark with more refined styling */}
+        <div className="fixed bottom-20 left-0 right-0 z-10 text-center py-1 text-xs text-muted-foreground">
+          <div className="inline-block px-4 py-1 rounded-full bg-muted/20 backdrop-blur-md border border-border/40 shadow-sm">
+            <span className="opacity-70">© 2025 LegalAid</span>
+            <span className="mx-2 text-primary/50">•</span>
+            <span className="opacity-70">Created by Zawad</span>
+          </div>
         </div>
       </div>
     </SidebarProvider>
@@ -76,3 +80,4 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
+
