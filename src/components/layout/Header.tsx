@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface HeaderProps {
   toggleDarkMode: () => void;
@@ -15,16 +16,20 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
   return (
     <header className="bg-card/70 backdrop-blur-md border-b border-border/40 py-4 px-6 sticky top-0 z-30">
       <div className="container mx-auto flex justify-between items-center">
-        <div 
-          className="flex items-center gap-2" 
-          onClick={() => navigate("/")} 
-          role="button"
-          tabIndex={0}
-        >
-          <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
-            <span className="text-accent font-bold">L</span>
+        <div className="flex items-center gap-2">
+          <SidebarTrigger />
+          
+          <div 
+            className="flex items-center gap-2 ml-2" 
+            onClick={() => navigate("/")} 
+            role="button"
+            tabIndex={0}
+          >
+            <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
+              <span className="text-accent font-bold">L</span>
+            </div>
+            <h1 className="text-xl font-bold text-foreground">Legal<span className="text-accent">Aid</span></h1>
           </div>
-          <h1 className="text-xl font-bold text-foreground">Legal<span className="text-accent">Aid</span></h1>
         </div>
         
         <div className="flex items-center gap-3">
