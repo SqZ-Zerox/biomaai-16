@@ -1,7 +1,7 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertTriangle, Send, Loader2, MessageSquare, History } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,10 +45,13 @@ const ChatPage = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   };
 
   useEffect(() => {
@@ -68,7 +71,10 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent event propagation
+    }
     
     if (!input.trim()) return;
     
@@ -147,14 +153,21 @@ const ChatPage = () => {
     setShowSidebar(prev => !prev);
   };
 
+  // Prevent default on key down to stop page scrolling
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-15rem)] flex-col">
+    <div className="flex flex-col h-[calc(100vh-15rem)] max-h-[calc(100vh-15rem)]" ref={chatContainerRef}>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Legal Assistant</h1>
         <Button 
           variant="outline" 
-          size="icon" 
-          className="mr-2" 
+          size="icon"
           onClick={toggleSidebar}
         >
           <History className="h-[1.2rem] w-[1.2rem]" />
@@ -189,7 +202,7 @@ const ChatPage = () => {
         )}
 
         <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm border border-border/40 rounded-lg shadow-sm overflow-hidden">
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4 overflow-y-auto">
             <div className="space-y-4 pb-4">
               {messages.map((message, index) => (
                 <div
@@ -246,9 +259,8 @@ const ChatPage = () => {
             </div>
           )}
 
-          <div className="px-4 py-2 border-t border-border/40 bg-card/80">
-            <p className="text-xs text-muted-foreground mb-2">Suggested questions:</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="p-2 border-t border-border/40 bg-card/80">
+            <div className="flex flex-wrap gap-1 mb-2">
               {SAMPLE_QUESTIONS.map((question, index) => (
                 <Button
                   key={index}
@@ -263,12 +275,13 @@ const ChatPage = () => {
             </div>
           </div>
 
-          <div className="border-t border-border/40 p-4 bg-background/30">
+          <div className="border-t border-border/40 p-2 bg-background/30">
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               <Input
                 ref={chatInputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Ask a legal question..."
                 disabled={isLoading}
                 className="flex-1 bg-background shadow-sm"

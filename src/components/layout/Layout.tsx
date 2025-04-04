@@ -66,12 +66,12 @@ const Layout: React.FC = () => {
         
         <Navigation />
         
-        {/* Copyright mark - moved to bottom right */}
-        <div className="fixed bottom-[68px] right-4 z-10 text-center py-1 text-xs text-muted-foreground pointer-events-none">
-          <div className="inline-block px-4 py-1 rounded-full bg-background/60 backdrop-blur-md border border-border/40 shadow-sm">
-            <span className="opacity-70">© 2025 LegalAid</span>
-            <span className="mx-2 text-primary/50">•</span>
-            <span className="opacity-70">Created by Zawad</span>
+        {/* Copyright mark - moved to bottom right corner */}
+        <div className="fixed bottom-4 right-4 z-20 text-center">
+          <div className="inline-block px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 shadow-sm">
+            <span className="text-xs opacity-60">© 2025 LegalAid</span>
+            <span className="mx-1 text-primary/40 text-xs">•</span>
+            <span className="text-xs opacity-60">Created by Zawad</span>
           </div>
         </div>
       </div>
