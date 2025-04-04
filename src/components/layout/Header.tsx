@@ -13,23 +13,29 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-card shadow-sm py-4 px-6">
+    <header className="bg-card/80 backdrop-blur-md border-b border-border/40 py-4 px-6 sticky top-0 z-30">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2" onClick={() => navigate("/")} role="button">
-          <div className="bg-legal-secondary rounded-full p-1 w-8 h-8 flex items-center justify-center">
-            <span className="text-white font-bold">L</span>
+        <div 
+          className="flex items-center gap-2" 
+          onClick={() => navigate("/")} 
+          role="button"
+          tabIndex={0}
+        >
+          <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
+            <span className="text-primary font-bold">L</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">Legal Aid</h1>
+          <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary">Aid</span></h1>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="icon"
             onClick={toggleDarkMode}
+            className="rounded-full"
             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {isDarkMode ? <SunIcon className="h-[1.2rem] w-[1.2rem]" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem]" />}
+            {isDarkMode ? <SunIcon className="h-[1.2rem] w-[1.2rem] text-accent" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem] text-accent" />}
           </Button>
         </div>
       </div>

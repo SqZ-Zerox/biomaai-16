@@ -105,40 +105,64 @@ const StudyPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Practice Questions</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <span className="text-accent">Practice</span> Questions
+        </h1>
+        <p className="text-muted-foreground mt-1">
           Test your knowledge with AI-generated questions
         </p>
       </div>
       
-      <div className="bg-muted/50 py-3 px-4 rounded-lg flex justify-between items-center">
+      <div className="bg-muted/10 py-3 px-4 rounded-lg border border-border/40 flex justify-between items-center backdrop-blur-sm">
         <div>
           <span className="text-sm text-muted-foreground">Progress</span>
           <p className="font-medium">{completedCount} of {questions.length} completed</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleGenerateMore}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleGenerateMore}
+          className="border-primary/40 text-primary hover:text-primary-foreground hover:bg-primary/80"
+        >
           Generate More
         </Button>
       </div>
 
-      <Tabs defaultValue="mcq" value={activeTab} onValueChange={(value) => setActiveTab(value as QuestionType)}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="mcq">Multiple Choice</TabsTrigger>
-          <TabsTrigger value="short">Short Answer</TabsTrigger>
-          <TabsTrigger value="essay">Essay</TabsTrigger>
+      <Tabs 
+        defaultValue="mcq" 
+        value={activeTab} 
+        onValueChange={(value) => setActiveTab(value as QuestionType)}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-3 bg-muted/20 p-1">
+          <TabsTrigger value="mcq" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Multiple Choice
+          </TabsTrigger>
+          <TabsTrigger value="short" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Short Answer
+          </TabsTrigger>
+          <TabsTrigger value="essay" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Essay
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value={activeTab} className="mt-4 space-y-4">
           {filteredQuestions.length > 0 ? (
             filteredQuestions.map((question) => (
-              <Card key={question.id} className={question.completed ? "border-legal-primary/20 bg-legal-primary/5" : ""}>
+              <Card 
+                key={question.id} 
+                className={cn(
+                  "glass-card border-border/40",
+                  question.completed ? "border-primary/20 bg-primary/5" : ""
+                )}
+              >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between">
                     <CardTitle className="text-base">
                       {question.question}
                     </CardTitle>
                     {question.completed && (
-                      <CheckCircle className="h-5 w-5 text-legal-primary" />
+                      <CheckCircle className="h-5 w-5 text-primary" />
                     )}
                   </div>
                 </CardHeader>
@@ -149,18 +173,17 @@ const StudyPage = () => {
                       {question.options.map((option, index) => (
                         <div 
                           key={index}
-                          className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
-                            userAnswers[question.id] === index ? 'bg-legal-muted' : 'hover:bg-muted'
-                          } ${
-                            question.completed && question.correctAnswer === index ? 'bg-green-100 dark:bg-green-900/20' : ''
-                          } ${
-                            question.completed && userAnswers[question.id] === index && question.correctAnswer !== index ? 'bg-red-100 dark:bg-red-900/20' : ''
-                          }`}
+                          className={cn(
+                            "flex items-center space-x-2 p-2 rounded-md transition-colors cursor-pointer",
+                            userAnswers[question.id] === index ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/20',
+                            question.completed && question.correctAnswer === index ? 'bg-green-500/10 border border-green-500/20' : '',
+                            question.completed && userAnswers[question.id] === index && question.correctAnswer !== index ? 'bg-red-500/10 border border-red-500/20' : ''
+                          )}
                           onClick={() => !question.completed && handleMCQChange(question.id, index)}
                         >
                           {userAnswers[question.id] === index ? (
-                            <div className="h-4 w-4 rounded-full border-2 border-legal-primary flex items-center justify-center">
-                              <div className="h-2 w-2 rounded-full bg-legal-primary"></div>
+                            <div className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center">
+                              <div className="h-2 w-2 rounded-full bg-primary"></div>
                             </div>
                           ) : (
                             <Circle className="h-4 w-4" />
@@ -173,7 +196,7 @@ const StudyPage = () => {
                   
                   {question.type === "short" && (
                     <textarea 
-                      className="w-full p-2 border rounded h-24" 
+                      className="w-full p-2 border border-border/40 bg-background rounded-md h-24" 
                       placeholder="Write your answer here..."
                       disabled={question.completed}
                       value={userAnswers[question.id] as string || ''}
@@ -183,7 +206,7 @@ const StudyPage = () => {
                   
                   {question.type === "essay" && (
                     <textarea 
-                      className="w-full p-2 border rounded h-36" 
+                      className="w-full p-2 border border-border/40 bg-background rounded-md h-36" 
                       placeholder="Write your essay here..."
                       disabled={question.completed}
                       value={userAnswers[question.id] as string || ''}
@@ -192,9 +215,9 @@ const StudyPage = () => {
                   )}
                   
                   {showExplanation === question.id && question.explanation && (
-                    <div className="mt-4 p-3 bg-legal-muted rounded-md">
+                    <div className="mt-4 p-3 bg-accent/10 border border-accent/20 rounded-md">
                       <div className="flex items-start">
-                        <Info className="h-5 w-5 text-legal-primary mr-2 mt-0.5" />
+                        <Info className="h-5 w-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-sm">Explanation</p>
                           <p className="text-sm text-muted-foreground">{question.explanation}</p>
@@ -209,6 +232,7 @@ const StudyPage = () => {
                     <Button
                       onClick={() => handleAnswerSubmit(question.id)}
                       disabled={submittingId === question.id || userAnswers[question.id] === undefined}
+                      className="bg-primary hover:bg-primary/90"
                     >
                       {submittingId === question.id ? (
                         <>
@@ -222,6 +246,7 @@ const StudyPage = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => setShowExplanation(showExplanation === question.id ? null : question.id)}
+                      className="border-primary/30 text-primary hover:bg-primary/10"
                     >
                       {showExplanation === question.id ? "Hide Explanation" : "Show Explanation"}
                     </Button>
@@ -230,9 +255,11 @@ const StudyPage = () => {
               </Card>
             ))
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-12 px-6 border border-dashed border-border/40 rounded-lg bg-muted/5">
               <p className="text-muted-foreground">No questions available for this type yet.</p>
-              <Button className="mt-4" onClick={handleGenerateMore}>Generate Questions</Button>
+              <Button className="mt-4 bg-primary hover:bg-primary/90" onClick={handleGenerateMore}>
+                Generate Questions
+              </Button>
             </div>
           )}
         </TabsContent>
