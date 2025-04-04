@@ -23,7 +23,7 @@
     --muted: 223 47% 15%;
     --muted-foreground: 215 20% 75%;
 
-    --accent: 225 70% 60%;
+    --accent: 220 70% 50%;  /* Changed from cyan to blue */
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84.2% 60.2%;
@@ -64,7 +64,7 @@
     --muted: 210 40% 93%;
     --muted-foreground: 215 25% 35%;
 
-    --accent: 225 70% 60%;
+    --accent: 220 70% 50%;  /* Changed from cyan to blue */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -96,6 +96,7 @@
       radial-gradient(circle at 25% 10%, rgba(65, 88, 208, 0.05) 0%, transparent 35%),
       radial-gradient(circle at 75% 75%, rgba(54, 77, 204, 0.05) 0%, transparent 35%);
     background-attachment: fixed;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -191,5 +192,26 @@
     0% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
     100% { transform: translateY(0px); }
+  }
+
+  /* Mode transition */
+  .mode-transition * {
+    transition: background-color 0.3s ease, 
+                border-color 0.3s ease, 
+                color 0.3s ease,
+                box-shadow 0.3s ease;
+  }
+
+  /* Legal colors (using blue instead of cyan) */
+  .legal-primary {
+    color: #4F78FF; /* Blue instead of cyan */
+  }
+  
+  .legal-accent {
+    color: #4F78FF; /* Blue instead of cyan */
+  }
+  
+  .legal-bg-accent {
+    background-color: #4F78FF; /* Blue instead of cyan */
   }
 }

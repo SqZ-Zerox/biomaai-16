@@ -64,10 +64,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         legal: {
-          primary: "#4F9CF9",
-          secondary: "#0072FF",
-          muted: "#1A2C42",
-          accent: "#00F0FF",
+          primary: "#4F78FF", // Changed from cyan to blue
+          secondary: "#0057FF", // Changed to blue
+          muted: "#1A2C42", 
+          accent: "#4F78FF", // Changed from cyan to blue
         }
       },
       borderRadius: {

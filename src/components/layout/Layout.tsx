@@ -60,16 +60,16 @@ const Layout: React.FC = () => {
               </div>
               
               <Outlet />
-              
-              {/* Copyright */}
-              <div className="mt-12 text-center text-xs text-muted-foreground opacity-80">
-                <p>© 2025 LegalAid. Created by Zawad. All rights reserved.</p>
-              </div>
             </div>
           </main>
         </div>
         
         <Navigation />
+        
+        {/* Footer with copyright - fixed at bottom */}
+        <div className="w-full text-center py-3 text-xs text-muted-foreground opacity-80 border-t border-border/20 bg-background/80 backdrop-blur-sm">
+          <p>© 2025 LegalAid. Created by Zawad. All rights reserved.</p>
+        </div>
       </div>
     </SidebarProvider>
   );

@@ -87,7 +87,7 @@ const AppSidebar = () => {
           <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10 floating">
             <span className="text-primary font-bold">L</span>
           </div>
-          <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary neon-text">Aid</span></h1>
+          <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary">Aid</span></h1>
         </div>
       </SidebarHeader>
       

@@ -4,52 +4,241 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertCircle, FileText, Loader2, Upload, Video } from "lucide-react";
+import { AlertCircle, FileText, Loader2, Upload, Video, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { dataService, StudyMaterial } from "@/services/dataService";
+import { errorHandler } from "@/lib/error";
 
 const UploadPage = () => {
   const [activeTab, setActiveTab] = useState("pdf");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [recentUploads] = useState<string[]>([
-    "Constitutional Law Notes.pdf",
-    "Contract Law Lecture 3.mp4",
-    "Tort Law Case Studies.pdf"
-  ]);
+  const [dragOver, setDragOver] = useState(false);
+  const [materials, setMaterials] = useState<StudyMaterial[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    const fetchMaterials = async () => {
+      try {
+        setIsLoading(true);
+        const result = await dataService.getStudyMaterials();
+        setMaterials(result);
+        setIsError(false);
+      } catch (error) {
+        console.error("Error fetching materials:", error);
+        const { message } = errorHandler(error);
+        setIsError(true);
+        setErrorMessage(message || "Failed to load your uploaded materials.");
+        toast({
+          title: "Error",
+          description: "Failed to load your uploaded materials.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchMaterials();
+  }, [toast]);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setSelectedFile(files[0]);
+      validateAndSetFile(files[0]);
     }
   };
 
-  const handleUpload = () => {
+  const validateAndSetFile = (file: File) => {
+    // Validate file type based on active tab
+    let isValidFileType = false;
+    
+    if (activeTab === "pdf") {
+      isValidFileType = file.name.endsWith(".pdf") || 
+                        file.name.endsWith(".doc") || 
+                        file.name.endsWith(".docx") || 
+                        file.name.endsWith(".txt");
+    } else if (activeTab === "video") {
+      isValidFileType = file.name.endsWith(".mp4") || 
+                        file.name.endsWith(".mov") || 
+                        file.name.endsWith(".avi");
+    }
+    
+    if (!isValidFileType) {
+      toast({
+        title: "Invalid File Type",
+        description: `Please upload a ${activeTab === "pdf" ? "PDF, DOC, DOCX, or TXT" : "MP4, MOV, or AVI"} file.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Validate file size
+    const maxSize = activeTab === "pdf" ? 50 * 1024 * 1024 : 500 * 1024 * 1024; // 50MB for PDF, 500MB for video
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: `Maximum file size is ${activeTab === "pdf" ? "50MB" : "500MB"}.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSelectedFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      validateAndSetFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
     if (!selectedFile) return;
     
     setIsUploading(true);
     setUploadProgress(0);
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        const newProgress = prev + 10;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          toast({
-            title: "Upload Complete",
-            description: `${selectedFile.name} has been uploaded successfully.`,
-          });
-          setSelectedFile(null);
-          return 100;
-        }
-        return newProgress;
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + 10;
+          return newProgress < 90 ? newProgress : prev;
+        });
+      }, 500);
+      
+      // Call API to upload the file
+      const result = await dataService.uploadMaterial(selectedFile);
+      
+      // Complete the progress and clear interval
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      // Update materials list with the new entry
+      setMaterials(prev => [...prev, result]);
+      
+      // Show success toast
+      toast({
+        title: "Upload Complete",
+        description: `${selectedFile.name} has been uploaded successfully.`,
       });
-    }, 500);
+      
+      // Clear selected file after successful upload
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Upload error:", error);
+      const { message } = errorHandler(error);
+      
+      toast({
+        title: "Upload Failed",
+        description: message || "There was a problem uploading your file.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  const cancelUpload = () => {
+    if (isUploading) {
+      // In a real app, we'd abort the fetch/axios request
+      toast({
+        title: "Upload Cancelled",
+        description: "Your upload has been cancelled.",
+      });
+    }
+    setSelectedFile(null);
+    setIsUploading(false);
+    setUploadProgress(0);
+  };
+
+  const renderFileUpload = () => (
+    <div 
+      className={`border-2 ${dragOver ? 'border-primary' : 'border-dashed'} rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer`}
+      onClick={() => document.getElementById(`${activeTab}-upload`)?.click()}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <input 
+        type="file" 
+        id={`${activeTab}-upload`} 
+        className="hidden" 
+        accept={activeTab === "pdf" ? ".pdf,.doc,.docx,.txt" : ".mp4,.mov,.avi"}
+        onChange={handleFileChange}
+      />
+      <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+      <p className="text-lg font-medium">Click to upload or drag & drop</p>
+      <p className="text-sm text-muted-foreground mt-1">
+        Support for {activeTab === "pdf" ? "PDF, DOC, DOCX, and TXT" : "MP4, MOV, and AVI"} files
+      </p>
+      
+      {selectedFile && (
+        <div className="mt-4 text-left bg-muted/50 p-3 rounded-md flex justify-between items-center">
+          <div className="flex items-center">
+            {activeTab === "pdf" ? (
+              <FileText className="h-5 w-5 text-primary mr-2" />
+            ) : (
+              <Video className="h-5 w-5 text-primary mr-2" />
+            )}
+            <div>
+              <p className="font-medium text-sm truncate max-w-[200px]">{selectedFile.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+              </p>
+            </div>
+          </div>
+          {isUploading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cancelUpload();
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleUpload();
+              }}
+            >
+              Upload
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -80,55 +269,7 @@ const UploadPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div 
-                className="border-2 border-dashed rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => document.getElementById('pdf-upload')?.click()}
-              >
-                <input 
-                  type="file" 
-                  id="pdf-upload" 
-                  className="hidden" 
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={handleFileChange}
-                />
-                <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium">Click to upload or drag & drop</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Support for PDF, DOC, DOCX, and TXT files
-                </p>
-                
-                {selectedFile && (
-                  <div className="mt-4 text-left bg-muted/50 p-3 rounded-md flex justify-between items-center">
-                    <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-legal-primary mr-2" />
-                      <div>
-                        <p className="font-medium text-sm truncate max-w-[200px]">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    {isUploading ? (
-                      <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-legal-primary" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpload();
-                        }}
-                      >
-                        Upload
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+              {renderFileUpload()}
             </CardContent>
             <CardFooter className="flex justify-between">
               <p className="text-sm text-muted-foreground">
@@ -168,55 +309,7 @@ const UploadPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div 
-                className="border-2 border-dashed rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => document.getElementById('video-upload')?.click()}
-              >
-                <input 
-                  type="file" 
-                  id="video-upload" 
-                  className="hidden" 
-                  accept=".mp4,.mov,.avi"
-                  onChange={handleFileChange}
-                />
-                <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium">Click to upload or drag & drop</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Support for MP4, MOV, and AVI files
-                </p>
-                
-                {selectedFile && (
-                  <div className="mt-4 text-left bg-muted/50 p-3 rounded-md flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Video className="h-5 w-5 text-legal-primary mr-2" />
-                      <div>
-                        <p className="font-medium text-sm truncate max-w-[200px]">{selectedFile.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    {isUploading ? (
-                      <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-legal-primary" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpload();
-                        }}
-                      >
-                        Upload
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
+              {renderFileUpload()}
               <div className="mt-4 p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm font-medium">Note about video uploads:</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -241,22 +334,43 @@ const UploadPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {recentUploads.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : isError ? (
+                <div className="text-center py-8 flex flex-col items-center">
+                  <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
+                  <p className="text-muted-foreground">{errorMessage}</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : materials.length > 0 ? (
                 <div className="space-y-2">
-                  {recentUploads.map((filename, index) => (
+                  {materials.map((material, index) => (
                     <div 
                       key={index}
                       className="flex justify-between items-center p-3 bg-muted/50 rounded-md hover:bg-muted/80 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center">
-                        {filename.endsWith('.pdf') ? (
-                          <FileText className="h-5 w-5 text-legal-primary mr-2" />
-                        ) : filename.endsWith('.mp4') ? (
-                          <Video className="h-5 w-5 text-legal-primary mr-2" />
+                        {material.type === "pdf" ? (
+                          <FileText className="h-5 w-5 text-primary mr-2" />
+                        ) : material.type === "video" ? (
+                          <Video className="h-5 w-5 text-primary mr-2" />
                         ) : (
-                          <FileText className="h-5 w-5 text-legal-primary mr-2" />
+                          <FileText className="h-5 w-5 text-primary mr-2" />
                         )}
-                        <span>{filename}</span>
+                        <div>
+                          <span className="block">{material.title}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {material.fileSize} • {material.uploadDate.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                       <Button variant="ghost" size="sm">
                         Generate Questions
@@ -277,7 +391,7 @@ const UploadPage = () => {
       {(activeTab === "pdf" || activeTab === "video") && (
         <div className="bg-muted/50 p-4 rounded-lg">
           <p className="text-sm font-medium flex items-center">
-            <AlertCircle className="h-4 w-4 mr-2 text-legal-primary" />
+            <AlertCircle className="h-4 w-4 mr-2 text-primary" />
             What happens after upload?
           </p>
           <p className="text-sm text-muted-foreground mt-1">
