@@ -142,95 +142,103 @@ const ChatPage = () => {
     <div className="flex flex-col h-[calc(100vh-15rem)]">
       <h1 className="text-2xl font-bold mb-4">Legal Chatbot Assistant</h1>
       
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2 chat-container">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={cn(
-              "flex",
-              message.role === "user" 
-                ? "justify-end" 
-                : message.role === "system" 
-                  ? "justify-center" 
-                  : "justify-start"
-            )}
-          >
-            <div
-              className={cn(
-                "max-w-[80%] rounded-lg px-4 py-2 transition-all duration-300 animate-fade-in",
-                message.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : message.role === "system"
-                    ? "bg-destructive/10 text-destructive border border-destructive/20"
-                    : "bg-muted"
+      <div className="flex-1 flex flex-col">
+        <div className="flex-grow relative">
+          <div className="absolute inset-0 overflow-y-auto p-4 rounded-lg bg-background/50 backdrop-blur-sm border border-border/40 shadow-sm">
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex",
+                    message.role === "user" 
+                      ? "justify-end" 
+                      : message.role === "system" 
+                        ? "justify-center" 
+                        : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : message.role === "system"
+                          ? "bg-destructive/10 text-destructive border border-destructive/20"
+                          : "bg-muted"
+                    )}
+                  >
+                    <p>{message.content}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
+                    <div className="flex space-x-2">
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce delay-75"></div>
+                      <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce delay-150"></div>
+                    </div>
+                  </div>
+                </div>
               )}
-            >
-              <p>{message.content}</p>
-              <p className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+              <div ref={messagesEndRef} className="h-1" />
             </div>
           </div>
-        ))}
-        {isLoading && (
-          <div className="flex justify-start animate-fade-in">
-            <div className="bg-muted max-w-[80%] rounded-lg px-4 py-2">
-              <div className="flex space-x-2">
-                <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce delay-75"></div>
-                <div className="h-2 w-2 bg-muted-foreground rounded-full animate-bounce delay-150"></div>
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} className="h-1" />
-      </div>
-
-      {isError && (
-        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 animate-fade-in">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-          <span className="text-sm">{errorMsg || "An error occurred while sending your message."}</span>
-          <Button variant="outline" size="sm" className="ml-auto" onClick={handleRetry}>Retry</Button>
         </div>
-      )}
 
-      <div className="mt-2 mb-2">
-        <p className="text-sm text-muted-foreground mb-2">Suggested questions:</p>
-        <div className="flex flex-wrap gap-2">
-          {SAMPLE_QUESTIONS.map((question, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              size="sm"
-              className="text-xs transition-all hover:bg-primary/10"
-              onClick={() => handleSampleQuestion(question)}
+        <div className="mt-4">
+          {isError && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 animate-fade-in">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <span className="text-sm">{errorMsg || "An error occurred while sending your message."}</span>
+              <Button variant="outline" size="sm" className="ml-auto" onClick={handleRetry}>Retry</Button>
+            </div>
+          )}
+
+          <div className="mb-2">
+            <p className="text-sm text-muted-foreground mb-2">Suggested questions:</p>
+            <div className="flex flex-wrap gap-2">
+              {SAMPLE_QUESTIONS.map((question, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs transition-all hover:bg-primary/10"
+                  onClick={() => handleSampleQuestion(question)}
+                >
+                  {question}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2 mt-auto">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a legal question..."
+              disabled={isLoading}
+              className="flex-1 transition-all duration-200 bg-background shadow-sm"
+            />
+            <Button 
+              type="submit" 
+              size="icon"
+              disabled={!input.trim() || isLoading}
+              className="transition-all duration-200 hover:scale-105"
             >
-              {question}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
-          ))}
+          </form>
         </div>
       </div>
-      
-      <form onSubmit={handleSendMessage} className="flex items-center gap-2 mt-auto">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a legal question..."
-          disabled={isLoading}
-          className="flex-1 transition-all duration-200"
-        />
-        <Button 
-          type="submit" 
-          size="icon"
-          disabled={!input.trim() || isLoading}
-          className="transition-all duration-200 hover:scale-105"
-        >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </form>
     </div>
   );
 };

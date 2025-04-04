@@ -66,8 +66,8 @@ const Layout: React.FC = () => {
         
         <Navigation />
         
-        {/* Updated copyright mark with more refined styling */}
-        <div className="fixed bottom-20 left-0 right-0 z-10 text-center py-1 text-xs text-muted-foreground">
+        {/* Copyright mark - improved position and styling */}
+        <div className="fixed bottom-[68px] left-0 right-0 z-10 text-center py-1 text-xs text-muted-foreground pointer-events-none">
           <div className="inline-block px-4 py-1 rounded-full bg-muted/20 backdrop-blur-md border border-border/40 shadow-sm">
             <span className="opacity-70">© 2025 LegalAid</span>
             <span className="mx-2 text-primary/50">•</span>
@@ -80,4 +80,3 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
-
