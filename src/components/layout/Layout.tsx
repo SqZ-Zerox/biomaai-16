@@ -42,10 +42,10 @@ const Layout: React.FC = () => {
       return newMode;
     });
     
-    // Reset transition state after animation completes
+    // Reset transition state after animation completes - reduced from 300ms to 150ms
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 300);
+    }, 150);
   };
 
   return (
