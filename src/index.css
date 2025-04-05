@@ -2,260 +2,155 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 220 70% 50%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 91% 15%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 223 47% 15%;
-    --muted-foreground: 215 20% 75%;
-
-    --accent: 220 70% 50%;  /* Changed from cyan to blue */
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 32.6% 17.5%;
-    --input: 217 32.6% 17.5%;
-    --ring: 224 71.4% 45%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 220 70% 50%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 223 47% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 15%;
-    --sidebar-ring: 224 71.4% 45%;
-  }
-
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 220 70% 50%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 91% 65%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 210 40% 93%;
-    --muted-foreground: 215 25% 35%;
-
-    --accent: 220 70% 50%;  /* Changed from cyan to blue */
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222 84% 70%;
-    
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 220 70% 50%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 93%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 222 84% 70%;
+ 
+    --primary: 236 82% 66%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --accent: 236 82% 66%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+ 
+    --primary: 236 82% 66%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --accent: 236 82% 66%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+ 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+ 
+    --ring: 217.2 32.6% 17.5%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    background-image: 
-      radial-gradient(circle at 25% 10%, rgba(65, 88, 208, 0.05) 0%, transparent 35%),
-      radial-gradient(circle at 75% 75%, rgba(54, 77, 204, 0.05) 0%, transparent 35%);
-    background-attachment: fixed;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer components {
-  .legal-card {
-    @apply bg-card/80 rounded-lg border border-border/40 shadow-md shadow-accent/5 backdrop-blur-sm hover:shadow-lg hover:shadow-accent/10 transition-shadow duration-300;
-  }
+/* Custom styles for the app */
+.animated-bg {
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-  .legal-section {
-    @apply py-6;
-  }
-  
-  .neon-border {
-    @apply border border-transparent relative overflow-hidden;
-    position: relative;
-  }
-  
-  .neon-border::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(90deg, #3b5ee8, #5271ff, #3b5ee8);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.7;
-  }
-  
-  .glass-card {
-    @apply bg-card/70 backdrop-blur-sm border border-border/40;
-  }
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
 
-  .neon-glow {
-    @apply relative;
-  }
-  
-  .neon-glow::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    border-radius: inherit;
-    box-shadow: 0 0 15px 2px rgba(54, 77, 204, 0.3);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  .neon-glow:hover::after {
-    opacity: 1;
-  }
-  
-  .animated-bg {
-    @apply relative overflow-hidden;
-  }
-  
-  .animated-bg::before {
-    content: '';
-    position: absolute;
-    top: -100%;
-    left: -100%;
-    width: 300%;
-    height: 300%;
-    background: linear-gradient(45deg, 
-                rgba(65, 88, 208, 0.03) 0%,
-                rgba(54, 77, 204, 0.03) 25%, 
-                rgba(65, 88, 208, 0.03) 50%, 
-                rgba(54, 77, 204, 0.03) 75%, 
-                rgba(65, 88, 208, 0.03) 100%);
-    background-size: 200% 200%;
-    animation: gradient-shift 15s ease infinite;
-    z-index: -1;
-  }
-  
-  @keyframes gradient-shift {
-    0% { background-position: 0% 0%; }
-    50% { background-position: 100% 100%; }
-    100% { background-position: 0% 0%; }
-  }
-  
-  .floating {
-    animation: floating 3s ease-in-out infinite;
-  }
-  
-  @keyframes floating {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-  }
+.mode-transition {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-  /* Mode transition - REDUCED TRANSITION TIME FROM 0.3s TO 0.15s */
-  .mode-transition * {
-    transition: background-color 0.15s ease, 
-                border-color 0.15s ease, 
-                color 0.15s ease,
-                box-shadow 0.15s ease;
-  }
-  
-  /* Enhanced transitions for mode switching - REDUCED TRANSITION TIME */
-  .transitioning {
-    animation: mode-transition-flash 0.15s ease;
-  }
-  
-  @keyframes mode-transition-flash {
-    0% { opacity: 1; }
-    50% { opacity: 0.8; }
-    100% { opacity: 1; }
-  }
+.transitioning * {
+  transition: none !important;
+}
 
-  /* Legal colors (using blue instead of cyan) */
-  .legal-primary {
-    color: #4F78FF; /* Blue instead of cyan */
+.neon-border {
+  box-shadow: 0 0 5px rgba(82, 113, 255, 0.3),
+              0 0 10px rgba(82, 113, 255, 0.2),
+              0 0 15px rgba(82, 113, 255, 0.1);
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0);
   }
-  
-  .legal-accent {
-    color: #4F78FF; /* Blue instead of cyan */
+  50% {
+    transform: translateY(-5px);
   }
-  
-  .legal-bg-accent {
-    background-color: #4F78FF; /* Blue instead of cyan */
-  }
-  
-  /* Dialog overlay - fix for color issues */
-  [data-radix-popper-content-wrapper] {
-    z-index: 50 !important;
-  }
-  
-  .Dialog__overlay {
-    @apply bg-background/80 backdrop-blur-sm;
-    animation: overlayShow 0.2s ease-in-out;
-  }
-  
-  @keyframes overlayShow {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  /* Message animations */
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out forwards;
-  }
-  
-  .chat-container > div {
-    transform-origin: center bottom;
-  }
-  
-  /* Fix for ScrollArea in Chat components */
-  .scroll-area-viewport {
-    height: 100% !important;
-  }
+}
+
+/* Flashcard flip animation */
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.flipping {
+  transform: rotateY(90deg);
+}
+
+.globe {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.globe::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(82, 113, 255, 0.3);
+  box-shadow: 0 0 5px rgba(82, 113, 255, 0.2);
+}
+
+/* For case brief generator */
+.case-brief-section {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  margin-bottom: 1.5rem;
 }

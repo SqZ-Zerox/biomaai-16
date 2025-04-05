@@ -5,7 +5,8 @@ import {
   BookOpen, 
   MessageSquare, 
   Calendar, 
-  Upload 
+  Gavel,
+  Library
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +31,14 @@ const Navigation: React.FC = () => {
       path: "/study-plan",
     },
     {
-      icon: <Upload size={20} />,
-      label: "Upload",
-      path: "/upload",
+      icon: <Gavel size={20} />,
+      label: "Case Brief",
+      path: "/case-brief",
+    },
+    {
+      icon: <Library size={20} />,
+      label: "Flashcards",
+      path: "/flashcards",
     },
   ];
 

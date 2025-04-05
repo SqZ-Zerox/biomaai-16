@@ -10,7 +10,10 @@ import {
   BookOpenCheck,
   Award,
   HelpCircle,
-  FileText
+  FileText,
+  Gavel,
+  BookmarkCheck,
+  Library
 } from "lucide-react";
 
 import {
@@ -60,6 +63,21 @@ const AppSidebar = () => {
       title: "Legal Essays",
       path: "/legal-essays",
       icon: FileText,
+    },
+    {
+      title: "Case Brief Generator",
+      path: "/case-brief",
+      icon: Gavel,
+    },
+    {
+      title: "Citation Tool",
+      path: "/citation-tool",
+      icon: BookmarkCheck,
+    },
+    {
+      title: "Flashcards",
+      path: "/flashcards",
+      icon: Library,
     },
     {
       title: "Upload",

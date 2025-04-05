@@ -11,6 +11,9 @@ import StudyPage from "./pages/StudyPage";
 import ProductivityHubPage from "./pages/StudyPlanPage";
 import UploadPage from "./pages/UploadPage";
 import LegalEssaysPage from "./pages/LegalEssaysPage";
+import CaseBriefPage from "./pages/CaseBriefPage";
+import CitationToolPage from "./pages/CitationToolPage";
+import FlashcardsPage from "./pages/FlashcardsPage";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -40,6 +43,9 @@ const App = () => {
                 <Route path="/study-plan" element={<ProductivityHubPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/legal-essays" element={<LegalEssaysPage />} />
+                <Route path="/case-brief" element={<CaseBriefPage />} />
+                <Route path="/citation-tool" element={<CitationToolPage />} />
+                <Route path="/flashcards" element={<FlashcardsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
