@@ -484,16 +484,16 @@ const CitationToolPage: React.FC = () => {
                   />
                 </div>
                 <Select
-                  value={filterType || ""}
+                  value={filterType || "all"}
                   onValueChange={(value) =>
-                    setFilterType(value === "" ? null : value)
+                    setFilterType(value === "all" ? null : value)
                   }
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Filter type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     {citationTypes.map((type) => (
                       <SelectItem key={type.id} value={type.id}>
                         {type.name}
@@ -502,16 +502,16 @@ const CitationToolPage: React.FC = () => {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={filterStyle || ""}
+                  value={filterStyle || "all"}
                   onValueChange={(value) =>
-                    setFilterStyle(value === "" ? null : value)
+                    setFilterStyle(value === "all" ? null : value)
                   }
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Filter style" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Styles</SelectItem>
+                    <SelectItem value="all">All Styles</SelectItem>
                     {citationStyles.map((style) => (
                       <SelectItem key={style.id} value={style.id}>
                         {style.name}
