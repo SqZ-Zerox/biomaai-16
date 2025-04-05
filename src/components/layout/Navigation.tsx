@@ -6,7 +6,8 @@ import {
   MessageSquare, 
   Calendar, 
   Gavel,
-  Library
+  Library,
+  Link
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,11 @@ const Navigation: React.FC = () => {
       icon: <Library size={20} />,
       label: "Flashcards",
       path: "/flashcards",
+    },
+    {
+      icon: <Link size={20} />,
+      label: "Citations",
+      path: "/citation-tool",
     },
   ];
 

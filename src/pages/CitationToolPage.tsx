@@ -1,710 +1,645 @@
 
 import React, { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  BookOpen, 
-  BookText, 
-  FileText, 
-  Globe, 
-  BookOpenCheck, 
-  Copy, 
-  Check, 
-  Trash2,
-  ClipboardList,
-  MoreHorizontal
-} from "lucide-react";
-import { 
-  CITATION_STYLES, 
-  CitationSource, 
-  formatCitation, 
-  getSavedCitations,
-  saveCitation,
-  deleteSavedCitation
-} from "@/services/citationService";
+import { Clipboard, Copy, BookOpen, Link, Trash2, PlusCircle, Save, Check, Search, FileText, Edit } from "lucide-react";
+
+// Define citation styles
+const citationStyles = [
+  { id: "bluebook", name: "Bluebook" },
+  { id: "apa", name: "APA" },
+  { id: "mla", name: "MLA" },
+  { id: "chicago", name: "Chicago" },
+  { id: "harvard", name: "Harvard" },
+];
+
+// Define citation types
+const citationTypes = [
+  { id: "case", name: "Case" },
+  { id: "statute", name: "Statute" },
+  { id: "article", name: "Journal Article" },
+  { id: "book", name: "Book" },
+  { id: "website", name: "Website" },
+];
+
+// Citation interfaces
+interface Citation {
+  id: string;
+  type: string;
+  style: string;
+  details: Record<string, string>;
+  formattedCitation: string;
+  createdAt: Date;
+  tags: string[];
+}
+
+// Case citation form fields
+const caseFields = [
+  { id: "caseName", label: "Case Name", placeholder: "e.g., Brown v. Board of Education" },
+  { id: "volume", label: "Reporter Volume", placeholder: "e.g., 347" },
+  { id: "reporter", label: "Reporter", placeholder: "e.g., U.S." },
+  { id: "page", label: "First Page", placeholder: "e.g., 483" },
+  { id: "court", label: "Court", placeholder: "e.g., Supreme Court" },
+  { id: "year", label: "Year", placeholder: "e.g., 1954" },
+];
+
+// Statute citation form fields
+const statuteFields = [
+  { id: "title", label: "Title/Code", placeholder: "e.g., 42 U.S.C." },
+  { id: "section", label: "Section", placeholder: "e.g., § 1983" },
+  { id: "year", label: "Year", placeholder: "e.g., 2021" },
+];
+
+// Journal article citation form fields
+const articleFields = [
+  { id: "author", label: "Author(s)", placeholder: "e.g., Smith, John" },
+  { id: "title", label: "Article Title", placeholder: "e.g., Constitutional Law Developments" },
+  { id: "journal", label: "Journal", placeholder: "e.g., Harvard Law Review" },
+  { id: "volume", label: "Volume", placeholder: "e.g., 100" },
+  { id: "page", label: "Page", placeholder: "e.g., 1" },
+  { id: "year", label: "Year", placeholder: "e.g., 2022" },
+];
+
+// Book citation form fields
+const bookFields = [
+  { id: "author", label: "Author(s)", placeholder: "e.g., Smith, John" },
+  { id: "title", label: "Book Title", placeholder: "e.g., Principles of Criminal Law" },
+  { id: "publisher", label: "Publisher", placeholder: "e.g., Oxford University Press" },
+  { id: "year", label: "Year", placeholder: "e.g., 2020" },
+  { id: "edition", label: "Edition", placeholder: "e.g., 2nd" },
+];
+
+// Website citation form fields
+const websiteFields = [
+  { id: "author", label: "Author/Organization", placeholder: "e.g., American Bar Association" },
+  { id: "title", label: "Page Title", placeholder: "e.g., Ethics Guidelines" },
+  { id: "website", label: "Website Name", placeholder: "e.g., ABA Ethics Center" },
+  { id: "url", label: "URL", placeholder: "e.g., https://www.americanbar.org/ethics" },
+  { id: "accessed", label: "Date Accessed", placeholder: "e.g., Apr. 5, 2025" },
+];
 
 const CitationToolPage: React.FC = () => {
-  const [sourceType, setSourceType] = useState<CitationSource["type"]>("case");
+  const [activeTab, setActiveTab] = useState("generator");
+  const [citationType, setCitationType] = useState("case");
   const [citationStyle, setCitationStyle] = useState("bluebook");
-  const [source, setSource] = useState<CitationSource>({
-    type: "case",
-    title: "",
-  });
-  const [formattedCitation, setFormattedCitation] = useState("");
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [savedCitations, setSavedCitations] = useState<{id: string, text: string, date: string}[]>([]);
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formattedCitation, setFormattedCitation] = useState<string>("");
+  const [savedCitations, setSavedCitations] = useState<Citation[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterStyle, setFilterStyle] = useState<string | null>(null);
+  const [currentTags, setCurrentTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingCitationId, setEditingCitationId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadSavedCitations();
-  }, []);
-
-  const loadSavedCitations = () => {
-    const citations = getSavedCitations();
-    setSavedCitations(citations);
+  // Get the correct fields based on citation type
+  const getFields = () => {
+    switch (citationType) {
+      case "case":
+        return caseFields;
+      case "statute":
+        return statuteFields;
+      case "article":
+        return articleFields;
+      case "book":
+        return bookFields;
+      case "website":
+        return websiteFields;
+      default:
+        return caseFields;
+    }
   };
 
-  const handleSourceTypeChange = (type: CitationSource["type"]) => {
-    setSourceType(type);
-    setSource({
-      type,
-      title: source.title || "",
-    });
-  };
-
-  const handleInputChange = (field: keyof CitationSource, value: string | string[]) => {
-    setSource(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const generateCitation = () => {
-    if (!source.title.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a title for the source",
-        variant: "destructive"
-      });
-      return;
+  // Format citation based on type and style
+  const formatCitation = () => {
+    let citation = "";
+    
+    try {
+      if (citationType === "case") {
+        // Bluebook format for case citations
+        if (citationStyle === "bluebook") {
+          citation = `${formData.caseName}, ${formData.volume} ${formData.reporter} ${formData.page} (${formData.court} ${formData.year})`;
+        } else {
+          citation = `${formData.caseName}, ${formData.volume} ${formData.reporter} ${formData.page} (${formData.year})`;
+        }
+      } else if (citationType === "statute") {
+        citation = `${formData.title} ${formData.section} (${formData.year})`;
+      } else if (citationType === "article") {
+        citation = `${formData.author}, ${formData.title}, ${formData.volume} ${formData.journal} ${formData.page} (${formData.year})`;
+      } else if (citationType === "book") {
+        citation = `${formData.author}, ${formData.title} (${formData.edition ? formData.edition + " ed. " : ""}${formData.publisher} ${formData.year})`;
+      } else if (citationType === "website") {
+        citation = `${formData.author}, ${formData.title}, ${formData.website}, ${formData.url} (last visited ${formData.accessed})`;
+      }
+    } catch (error) {
+      console.error("Error formatting citation:", error);
+      citation = "Please fill in all required fields";
     }
     
-    const citation = formatCitation(source, citationStyle);
+    return citation;
+  };
+
+  // Handle input changes
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Generate citation
+  const handleGenerate = () => {
+    const citation = formatCitation();
     setFormattedCitation(citation);
   };
 
-  const handleCopyToClipboard = () => {
+  // Copy citation to clipboard
+  const handleCopy = () => {
     navigator.clipboard.writeText(formattedCitation);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-    
     toast({
-      title: "Copied to Clipboard",
-      description: "Citation has been copied to clipboard"
+      title: "Copied!",
+      description: "Citation copied to clipboard",
     });
   };
 
-  const handleSaveCitation = () => {
-    if (!formattedCitation) {
+  // Save citation to library
+  const handleSave = () => {
+    if (formattedCitation.trim() === "") {
       toast({
         title: "Error",
         description: "Please generate a citation first",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
-    saveCitation(formattedCitation);
-    loadSavedCitations();
-    
+
+    const newCitation: Citation = {
+      id: editingCitationId || `citation-${Date.now()}`,
+      type: citationType,
+      style: citationStyle,
+      details: { ...formData },
+      formattedCitation,
+      createdAt: new Date(),
+      tags: [...currentTags],
+    };
+
+    if (isEditing && editingCitationId) {
+      setSavedCitations((prev) =>
+        prev.map((citation) =>
+          citation.id === editingCitationId ? newCitation : citation
+        )
+      );
+      toast({
+        title: "Updated!",
+        description: "Citation has been updated",
+      });
+      setIsEditing(false);
+      setEditingCitationId(null);
+    } else {
+      setSavedCitations((prev) => [newCitation, ...prev]);
+      toast({
+        title: "Saved!",
+        description: "Citation added to your library",
+      });
+    }
+
+    // Clear form after saving
+    setFormData({});
+    setFormattedCitation("");
+    setCurrentTags([]);
+  };
+
+  // Delete citation from library
+  const handleDelete = (id: string) => {
+    setSavedCitations((prev) => prev.filter((citation) => citation.id !== id));
     toast({
-      title: "Citation Saved",
-      description: "Your citation has been saved"
+      title: "Deleted",
+      description: "Citation removed from your library",
     });
   };
 
-  const handleDeleteCitation = (id: string) => {
-    deleteSavedCitation(id);
-    loadSavedCitations();
-    
-    toast({
-      title: "Citation Deleted",
-      description: "The citation has been removed from your saved list"
-    });
+  // Edit citation
+  const handleEdit = (citation: Citation) => {
+    setCitationType(citation.type);
+    setCitationStyle(citation.style);
+    setFormData(citation.details);
+    setFormattedCitation(citation.formattedCitation);
+    setCurrentTags(citation.tags);
+    setIsEditing(true);
+    setEditingCitationId(citation.id);
+    setActiveTab("generator");
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const renderSourceForm = () => {
-    switch (sourceType) {
-      case "case":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="title">Case Name</Label>
-              <Input
-                id="title"
-                value={source.title || ""}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="e.g., Brown v. Board of Education"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="volume">Reporter Volume</Label>
-                <Input
-                  id="volume"
-                  value={source.volume || ""}
-                  onChange={(e) => handleInputChange("volume", e.target.value)}
-                  placeholder="e.g., 347"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="publisher">Reporter</Label>
-                <Input
-                  id="publisher"
-                  value={source.publisher || ""}
-                  onChange={(e) => handleInputChange("publisher", e.target.value)}
-                  placeholder="e.g., U.S."
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="pageRange">Page Number</Label>
-                <Input
-                  id="pageRange"
-                  value={source.pageRange || ""}
-                  onChange={(e) => handleInputChange("pageRange", e.target.value)}
-                  placeholder="e.g., 483"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
-                <Input
-                  id="year"
-                  value={source.year || ""}
-                  onChange={(e) => handleInputChange("year", e.target.value.toString())}
-                  placeholder="e.g., 1954"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="court">Court</Label>
-                <Input
-                  id="court"
-                  value={source.court || ""}
-                  onChange={(e) => handleInputChange("court", e.target.value)}
-                  placeholder="e.g., Supreme Court"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="pinpoint">Pinpoint Citation</Label>
-                <Input
-                  id="pinpoint"
-                  value={source.pinpoint || ""}
-                  onChange={(e) => handleInputChange("pinpoint", e.target.value)}
-                  placeholder="e.g., 495"
-                />
-              </div>
-            </div>
-          </>
-        );
-        
-      case "statute":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="title">Statute Title</Label>
-              <Input
-                id="title"
-                value={source.title || ""}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="e.g., Americans with Disabilities Act"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="volume">Title/Volume</Label>
-                <Input
-                  id="volume"
-                  value={source.volume || ""}
-                  onChange={(e) => handleInputChange("volume", e.target.value)}
-                  placeholder="e.g., 42"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="publisher">Code</Label>
-                <Input
-                  id="publisher"
-                  value={source.publisher || ""}
-                  onChange={(e) => handleInputChange("publisher", e.target.value)}
-                  placeholder="e.g., U.S.C."
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
-                <Input
-                  id="year"
-                  value={source.year || ""}
-                  onChange={(e) => handleInputChange("year", e.target.value.toString())}
-                  placeholder="e.g., 2020"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="pinpoint">Section</Label>
-                <Input
-                  id="pinpoint"
-                  value={source.pinpoint || ""}
-                  onChange={(e) => handleInputChange("pinpoint", e.target.value)}
-                  placeholder="e.g., 12101"
-                />
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="jurisdiction">Jurisdiction</Label>
-              <Input
-                id="jurisdiction"
-                value={source.jurisdiction || ""}
-                onChange={(e) => handleInputChange("jurisdiction", e.target.value)}
-                placeholder="e.g., Federal"
-              />
-            </div>
-          </>
-        );
-        
-      case "book":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="authors">Author(s)</Label>
-              <Textarea
-                id="authors"
-                value={source.authors?.join(", ") || ""}
-                onChange={(e) => handleInputChange("authors", e.target.value.split(", "))}
-                placeholder="e.g., Richard A. Posner"
-                rows={2}
-              />
-              <p className="text-xs text-muted-foreground">Separate multiple authors with commas</p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="title">Book Title</Label>
-              <Input
-                id="title"
-                value={source.title || ""}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="e.g., Economic Analysis of Law"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="publisher">Publisher</Label>
-                <Input
-                  id="publisher"
-                  value={source.publisher || ""}
-                  onChange={(e) => handleInputChange("publisher", e.target.value)}
-                  placeholder="e.g., Aspen Publishers"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
-                <Input
-                  id="year"
-                  value={source.year || ""}
-                  onChange={(e) => handleInputChange("year", e.target.value.toString())}
-                  placeholder="e.g., 2011"
-                />
-              </div>
-            </div>
-          </>
-        );
-        
-      case "journal":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="authors">Author(s)</Label>
-              <Textarea
-                id="authors"
-                value={source.authors?.join(", ") || ""}
-                onChange={(e) => handleInputChange("authors", e.target.value.split(", "))}
-                placeholder="e.g., Cass R. Sunstein"
-                rows={2}
-              />
-              <p className="text-xs text-muted-foreground">Separate multiple authors with commas</p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="title">Article Title</Label>
-              <Input
-                id="title"
-                value={source.title || ""}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="e.g., Incompletely Theorized Agreements"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="volume">Volume</Label>
-                <Input
-                  id="volume"
-                  value={source.volume || ""}
-                  onChange={(e) => handleInputChange("volume", e.target.value)}
-                  placeholder="e.g., 108"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="publisher">Journal Name</Label>
-                <Input
-                  id="publisher"
-                  value={source.publisher || ""}
-                  onChange={(e) => handleInputChange("publisher", e.target.value)}
-                  placeholder="e.g., Harv. L. Rev."
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="pageRange">Page Range</Label>
-                <Input
-                  id="pageRange"
-                  value={source.pageRange || ""}
-                  onChange={(e) => handleInputChange("pageRange", e.target.value)}
-                  placeholder="e.g., 1733-1772"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
-                <Input
-                  id="year"
-                  value={source.year || ""}
-                  onChange={(e) => handleInputChange("year", e.target.value.toString())}
-                  placeholder="e.g., 1995"
-                />
-              </div>
-            </div>
-          </>
-        );
-        
-      case "website":
-        return (
-          <>
-            <div className="grid gap-2">
-              <Label htmlFor="authors">Author(s)</Label>
-              <Textarea
-                id="authors"
-                value={source.authors?.join(", ") || ""}
-                onChange={(e) => handleInputChange("authors", e.target.value.split(", "))}
-                placeholder="e.g., Legal Information Institute"
-                rows={2}
-              />
-              <p className="text-xs text-muted-foreground">Separate multiple authors with commas</p>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title of Web Page</Label>
-              <Input
-                id="title"
-                value={source.title || ""}
-                onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="e.g., Stare Decisis"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="publisher">Website Name</Label>
-              <Input
-                id="publisher"
-                value={source.publisher || ""}
-                onChange={(e) => handleInputChange("publisher", e.target.value)}
-                placeholder="e.g., Cornell Law School"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="url">URL</Label>
-              <Input
-                id="url"
-                value={source.url || ""}
-                onChange={(e) => handleInputChange("url", e.target.value)}
-                placeholder="e.g., https://www.law.cornell.edu/wex/stare_decisis"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="dateAccessed">Date Accessed</Label>
-              <Input
-                id="dateAccessed"
-                value={source.dateAccessed || ""}
-                onChange={(e) => handleInputChange("dateAccessed", e.target.value)}
-                placeholder="e.g., Apr. 5, 2023"
-              />
-            </div>
-          </>
-        );
-        
-      default:
-        return null;
+  // Add tag to current citation
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && newTag.trim() !== "") {
+      e.preventDefault();
+      if (!currentTags.includes(newTag.trim())) {
+        setCurrentTags((prev) => [...prev, newTag.trim()]);
+      }
+      setNewTag("");
     }
   };
 
-  const getSourceTypeIcon = (type: CitationSource["type"]) => {
-    switch (type) {
-      case "case":
-        return <FileText className="h-5 w-5" />;
-      case "statute":
-        return <BookOpenCheck className="h-5 w-5" />;
-      case "book":
-        return <BookText className="h-5 w-5" />;
-      case "journal":
-        return <BookOpen className="h-5 w-5" />;
-      case "website":
-        return <Globe className="h-5 w-5" />;
-      default:
-        return <FileText className="h-5 w-5" />;
-    }
+  // Remove tag from current citation
+  const handleRemoveTag = (tagToRemove: string) => {
+    setCurrentTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
+
+  // Get citation type name
+  const getCitationTypeName = (type: string) => {
+    const found = citationTypes.find((t) => t.id === type);
+    return found ? found.name : type;
+  };
+
+  // Get citation style name
+  const getCitationStyleName = (style: string) => {
+    const found = citationStyles.find((s) => s.id === style);
+    return found ? found.name : style;
+  };
+
+  // Filter and search citations
+  const filteredCitations = savedCitations.filter((citation) => {
+    const matchesSearchTerm = citation.formattedCitation
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesType = filterType ? citation.type === filterType : true;
+    const matchesStyle = filterStyle ? citation.style === filterStyle : true;
+    return matchesSearchTerm && matchesType && matchesStyle;
+  });
+
+  // Load saved citations from localStorage on initial load
+  useEffect(() => {
+    const storedCitations = localStorage.getItem("savedCitations");
+    if (storedCitations) {
+      try {
+        const parsedCitations = JSON.parse(storedCitations);
+        // Convert string dates back to Date objects
+        const processedCitations = parsedCitations.map((citation: any) => ({
+          ...citation,
+          createdAt: new Date(citation.createdAt),
+        }));
+        setSavedCitations(processedCitations);
+      } catch (error) {
+        console.error("Error parsing saved citations:", error);
+      }
+    }
+  }, []);
+
+  // Save citations to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("savedCitations", JSON.stringify(savedCitations));
+  }, [savedCitations]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Legal Citation Tool</h1>
-        <p className="text-muted-foreground mt-1">Generate accurate legal citations in multiple formats</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Citation Generator */}
-        <Card className="md:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Citation Generator</CardTitle>
-            <CardDescription>
-              Generate citations for different legal sources in your preferred style
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <Tabs defaultValue="case">
-              <TabsList className="grid grid-cols-5 mb-6">
-                <TabsTrigger 
-                  value="case" 
-                  onClick={() => handleSourceTypeChange("case")}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Case</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="statute" 
-                  onClick={() => handleSourceTypeChange("statute")}
-                  className="flex items-center gap-2"
-                >
-                  <BookOpenCheck className="h-4 w-4" />
-                  <span className="hidden sm:inline">Statute</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="book" 
-                  onClick={() => handleSourceTypeChange("book")}
-                  className="flex items-center gap-2"
-                >
-                  <BookText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Book</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="journal" 
-                  onClick={() => handleSourceTypeChange("journal")}
-                  className="flex items-center gap-2"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline">Journal</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="website" 
-                  onClick={() => handleSourceTypeChange("website")}
-                  className="flex items-center gap-2"
-                >
-                  <Globe className="h-4 w-4" />
-                  <span className="hidden sm:inline">Website</span>
-                </TabsTrigger>
-              </TabsList>
-              
-              <div className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="citationStyle">Citation Style</Label>
-                    <Select 
-                      value={citationStyle} 
-                      onValueChange={setCitationStyle}
-                    >
-                      <SelectTrigger id="citationStyle">
-                        <SelectValue placeholder="Select a citation style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CITATION_STYLES.map((style) => (
-                          <SelectItem key={style.id} value={style.id}>
-                            {style.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {renderSourceForm()}
+    <div className="container mx-auto py-6 animate-fade-in">
+      <h1 className="text-2xl font-bold mb-2 flex items-center">
+        <Link className="h-6 w-6 mr-2 text-primary" />
+        Legal Citation Tool
+      </h1>
+      <p className="text-muted-foreground mb-6">
+        Generate, format, and manage legal citations in various styles
+      </p>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="generator" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Citation Generator
+          </TabsTrigger>
+          <TabsTrigger value="library" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Citation Library
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="generator" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Citation</CardTitle>
+              <CardDescription>
+                Select the type of source and citation style, then enter the details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Citation Type</label>
+                  <Select
+                    value={citationType}
+                    onValueChange={(value) => {
+                      setCitationType(value);
+                      setFormData({});
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {citationTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                
-                <Button onClick={generateCitation} className="w-full mt-6">
-                  Generate Citation
-                </Button>
-                
-                {formattedCitation && (
-                  <div className="mt-6 p-4 border rounded-md bg-muted/30">
-                    <div className="flex justify-between items-start">
-                      <Label className="mb-2">Generated Citation:</Label>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleCopyToClipboard}
-                          className="h-8"
-                        >
-                          {copySuccess ? (
-                            <>
-                              <Check className="mr-1 h-3 w-3" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="mr-1 h-3 w-3" />
-                              Copy
-                            </>
-                          )}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleSaveCitation}
-                          className="h-8"
-                        >
-                          <ClipboardList className="mr-1 h-3 w-3" />
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="mt-2 p-3 bg-background rounded-md">{formattedCitation}</p>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Citation Style</label>
+                  <Select
+                    value={citationStyle}
+                    onValueChange={(value) => setCitationStyle(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {citationStyles.map((style) => (
+                        <SelectItem key={style.id} value={style.id}>
+                          {style.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                {getFields().map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <label className="text-sm font-medium">{field.label}</label>
+                    <Input
+                      placeholder={field.placeholder}
+                      value={formData[field.id] || ""}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
+                    />
                   </div>
-                )}
+                ))}
               </div>
-            </Tabs>
-          </CardContent>
-        </Card>
-        
-        {/* Saved Citations */}
-        <Card className="md:col-span-1 border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Saved Citations</CardTitle>
-            <CardDescription>
-              View and manage your saved citations
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            {savedCitations.length === 0 ? (
-              <div className="text-center py-8">
-                <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground opacity-50 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No saved citations</h3>
-                <p className="text-muted-foreground text-sm">
-                  Generate a citation and save it to view it here.
-                </p>
-              </div>
-            ) : (
-              <ScrollArea className="h-[calc(100vh-26rem)]">
-                <div className="space-y-4">
-                  {savedCitations.map((citation) => (
-                    <div 
-                      key={citation.id} 
-                      className="p-3 rounded-md border border-border/40 bg-muted/10"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(citation.date)}
-                        </span>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              navigator.clipboard.writeText(citation.text);
-                              toast({
-                                title: "Copied to Clipboard",
-                                description: "Citation has been copied to clipboard"
-                              });
-                            }}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Copy
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteCitation(citation.id)}
-                              className="text-red-500"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <p className="text-sm">{citation.text}</p>
-                    </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tags (optional)</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {currentTags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <button
+                        onClick={() => handleRemoveTag(tag)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        ×
+                      </button>
+                    </Badge>
                   ))}
                 </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-          
-          <CardFooter className="flex justify-center pt-2 pb-4">
-            <p className="text-xs text-muted-foreground">
-              {savedCitations.length} {savedCitations.length === 1 ? "citation" : "citations"} saved
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
+                <Input
+                  placeholder="Add tags (press Enter)"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={handleAddTag}
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={handleGenerate}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Generate Citation
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="flex items-center gap-2"
+                disabled={!formattedCitation}
+              >
+                {isEditing ? (
+                  <>
+                    <Edit className="h-4 w-4" />
+                    Update Citation
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save to Library
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {formattedCitation && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Formatted Citation</CardTitle>
+                <CardDescription>
+                  Use this citation in your legal documents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-md">
+                  <p className="font-mono text-sm break-all">{formattedCitation}</p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  onClick={handleCopy}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy to Clipboard
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="library">
+          <Card>
+            <CardHeader>
+              <CardTitle>Citation Library</CardTitle>
+              <CardDescription>
+                Your saved citations for quick reference
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-4 md:flex-row">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search citations..."
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select
+                  value={filterType || ""}
+                  onValueChange={(value) =>
+                    setFilterType(value === "" ? null : value)
+                  }
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Filter type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Types</SelectItem>
+                    {citationTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={filterStyle || ""}
+                  onValueChange={(value) =>
+                    setFilterStyle(value === "" ? null : value)
+                  }
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Filter style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Styles</SelectItem>
+                    {citationStyles.map((style) => (
+                      <SelectItem key={style.id} value={style.id}>
+                        {style.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filteredCitations.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clipboard className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
+                  <p className="mt-2 text-muted-foreground">
+                    {savedCitations.length === 0
+                      ? "Your citation library is empty. Save citations to see them here."
+                      : "No citations match your search filters."}
+                  </p>
+                </div>
+              ) : (
+                <ScrollArea className="h-[450px] pr-4">
+                  <div className="space-y-4">
+                    {filteredCitations.map((citation) => (
+                      <Card key={citation.id} className="overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline">
+                                  {getCitationTypeName(citation.type)}
+                                </Badge>
+                                <Badge variant="outline">
+                                  {getCitationStyleName(citation.style)}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {citation.createdAt.toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(citation)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Delete Citation</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to delete this citation? This action
+                                      cannot be undone.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <DialogFooter>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => document.body.click()}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => {
+                                        handleDelete(citation.id);
+                                        document.body.click();
+                                      }}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="py-2">
+                          <div className="bg-muted p-3 rounded-md">
+                            <p className="font-mono text-sm break-all">
+                              {citation.formattedCitation}
+                            </p>
+                          </div>
+                          {citation.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {citation.tags.map((tag) => (
+                                <Badge
+                                  key={tag}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto"
+                            onClick={() => {
+                              navigator.clipboard.writeText(citation.formattedCitation);
+                              toast({
+                                title: "Copied!",
+                                description: "Citation copied to clipboard",
+                              });
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5 mr-1" />
+                            Copy
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
