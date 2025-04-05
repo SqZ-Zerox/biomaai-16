@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, Info, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudyEvent } from "@/services/dataService";
+import { format } from "date-fns";
 
 interface EventsListProps {
   events: StudyEvent[];
@@ -27,8 +28,14 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
   
   // Sort events by date
   const sortedEvents = [...currentMonthEvents].sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  // Get upcoming events (future dates)
+  const now = new Date();
+  const upcomingEvents = events
+    .filter(event => event.date.getTime() > now.getTime())
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  const getEventTypeStyles = (type: string) => {
+  const getEventTypeStyles = (type: string | undefined) => {
     switch (type) {
       case 'exam':
         return "bg-red-500/20 text-red-500";
@@ -39,6 +46,25 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
       default:
         return "bg-gray-500/20 text-gray-500";
     }
+  };
+
+  const getFormattedDate = (date: Date) => {
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+    
+    const isToday = date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear();
+                    
+    const isTomorrow = date.getDate() === tomorrow.getDate() && 
+                       date.getMonth() === tomorrow.getMonth() && 
+                       date.getFullYear() === tomorrow.getFullYear();
+    
+    if (isToday) return 'Today';
+    if (isTomorrow) return 'Tomorrow';
+    
+    return format(date, 'EEE, MMM d');
   };
 
   if (isLoading) {
@@ -61,7 +87,7 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
       <CardHeader>
         <CardTitle>
           {eventsForSelectedDate.length > 0
-            ? `Events for ${selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+            ? `Events for ${format(selectedDate, "MMMM d, yyyy")}`
             : "Upcoming Events"
           }
         </CardTitle>
@@ -95,43 +121,66 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
           </div>
         ) : (
           <div className="space-y-3">
-            {sortedEvents.length > 0 ? (
-              sortedEvents.slice(0, 5).map((event) => (
-                <div 
-                  key={event.id} 
-                  className="p-3 rounded-md border border-border/40 bg-muted/10"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {event.date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                      <h3 className="font-medium">{event.title}</h3>
-                      {event.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {event.description}
-                        </p>
-                      )}
-                    </div>
-                    <span className={cn(
-                      "text-xs px-2 py-0.5 rounded-full",
-                      getEventTypeStyles(event.type)
-                    )}>
-                      {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                    </span>
-                  </div>
+            {upcomingEvents.length > 0 ? (
+              <>
+                <div className="flex items-start gap-2 mb-2 text-muted-foreground">
+                  <Info className="h-4 w-4 mt-0.5" />
+                  <p className="text-sm">
+                    Select a date on the calendar to see events for that day.
+                  </p>
                 </div>
-              ))
+                
+                {upcomingEvents.slice(0, 5).map((event, index, arr) => {
+                  const currentDateStr = getFormattedDate(event.date);
+                  const showDateDivider = index === 0 || 
+                    currentDateStr !== getFormattedDate(arr[index - 1].date);
+                  
+                  return (
+                    <React.Fragment key={event.id}>
+                      {showDateDivider && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <CalendarDays className="h-4 w-4 text-primary" />
+                          <h3 className="font-medium text-sm">
+                            {currentDateStr}
+                          </h3>
+                        </div>
+                      )}
+                      <div className="p-3 rounded-md border border-border/40 bg-muted/10">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            {event.description && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className={cn(
+                            "text-xs px-2 py-0.5 rounded-full",
+                            getEventTypeStyles(event.type)
+                          )}>
+                            {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+                
+                {upcomingEvents.length > 5 && (
+                  <p className="text-center text-sm text-muted-foreground mt-2">
+                    + {upcomingEvents.length - 5} more upcoming events
+                  </p>
+                )}
+              </>
             ) : (
-              <p className="text-muted-foreground text-sm py-8 text-center">
-                No upcoming events for this month
-              </p>
+              <div className="flex flex-col items-center justify-center text-center p-6">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+                <h3 className="font-medium text-lg mb-2">No upcoming events</h3>
+                <p className="text-muted-foreground text-sm">
+                  You don't have any upcoming events. Add a new event to get started.
+                </p>
+              </div>
             )}
           </div>
         )}

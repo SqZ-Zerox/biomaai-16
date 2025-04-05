@@ -2,17 +2,18 @@
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, AlertTriangle, Clock, PlusCircle, BarChart2, CalendarDays, ListTodo } from "lucide-react";
+import { Loader2, AlertTriangle, Clock, PlusCircle, BarChart2, CalendarDays, ListTodo, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { dataService, StudyTask, StudyEvent } from "@/services/dataService";
+import { dataService, StudyTask, StudyEvent, TaskCategory, TaskPriority } from "@/services/dataService";
 import { useToast } from "@/hooks/use-toast";
 import TaskList from "@/components/productivity/TaskList";
 import StudyTimer from "@/components/productivity/StudyTimer";
 import AddTaskModal from "@/components/productivity/AddTaskModal";
 import EventsList from "@/components/productivity/EventsList";
+import AddEventModal from "@/components/productivity/AddEventModal";
+import TaskFilters from "@/components/productivity/TaskFilters";
 import ProductivityStats from "@/components/productivity/ProductivityStats";
 
 const ProductivityHubPage = () => {
@@ -23,8 +24,21 @@ const ProductivityHubPage = () => {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("tasks");
   const { toast } = useToast();
+  
+  // Filter states
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
+  const [showCompleted, setShowCompleted] = useState(false);
+  
+  // Reset filters
+  const resetFilters = () => {
+    setPriorityFilter('all');
+    setCategoryFilter('all');
+    setShowCompleted(false);
+  };
   
   // Fetch tasks and events on mount
   useEffect(() => {
@@ -69,11 +83,33 @@ const ProductivityHubPage = () => {
     );
   };
 
+  // Apply filters to tasks
+  const filteredTasks = tasks.filter(task => {
+    // Filter by completion status
+    if (!showCompleted && task.completed) return false;
+    
+    // Filter by priority
+    if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+    
+    // Filter by category
+    if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
+    
+    return true;
+  });
+
   const handleTaskAdded = (newTask: StudyTask) => {
     setTasks([...tasks, newTask]);
     toast({
       title: "Task Added",
       description: `"${newTask.title}" has been added to your tasks.`
+    });
+  };
+
+  const handleEventAdded = (newEvent: StudyEvent) => {
+    setEvents([...events, newEvent]);
+    toast({
+      title: "Event Added",
+      description: `"${newEvent.title}" has been added to your calendar.`
     });
   };
 
@@ -93,6 +129,41 @@ const ProductivityHubPage = () => {
         description: "Failed to update task status. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await dataService.deleteTask(taskId);
+      setTasks(tasks.filter(task => task.id !== taskId));
+      
+      toast({
+        title: "Task Deleted",
+        description: "The task has been removed.",
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCalendarDateClick = (newDate: Date | undefined) => {
+    if (newDate) {
+      setDate(newDate);
+      // Check if there are events on this date
+      const eventsOnDate = events.filter(
+        event => 
+          event.date.getDate() === newDate.getDate() &&
+          event.date.getMonth() === newDate.getMonth() &&
+          event.date.getFullYear() === newDate.getFullYear()
+      );
+      
+      // If clicking a date, switch to calendar tab to show events for that date
+      setActiveTab("calendar");
     }
   };
 
@@ -126,9 +197,17 @@ const ProductivityHubPage = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Productivity Hub</h1>
-        <Button onClick={() => setIsAddTaskModalOpen(true)} className="gap-2">
-          <PlusCircle className="h-4 w-4" /> Add Task
-        </Button>
+        <div className="flex gap-2">
+          {activeTab === "calendar" ? (
+            <Button onClick={() => setIsAddEventModalOpen(true)} className="gap-2">
+              <PlusCircle className="h-4 w-4" /> Add Event
+            </Button>
+          ) : (
+            <Button onClick={() => setIsAddTaskModalOpen(true)} className="gap-2">
+              <PlusCircle className="h-4 w-4" /> Add Task
+            </Button>
+          )}
+        </div>
       </div>
       
       <Tabs defaultValue="tasks" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -149,11 +228,22 @@ const ProductivityHubPage = () => {
 
         {/* Tasks Tab */}
         <TabsContent value="tasks" className="mt-0">
+          <TaskFilters
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            showCompleted={showCompleted}
+            setShowCompleted={setShowCompleted}
+            resetFilters={resetFilters}
+          />
+          
           <div className="grid grid-cols-1 gap-6">
             <TaskList 
-              tasks={tasks} 
+              tasks={filteredTasks} 
               isLoading={isLoadingTasks} 
               toggleTaskCompletion={toggleTaskCompletion}
+              onDeleteTask={handleDeleteTask}
             />
           </div>
         </TabsContent>
@@ -162,8 +252,16 @@ const ProductivityHubPage = () => {
         <TabsContent value="calendar" className="mt-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Calendar</CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => setIsAddEventModalOpen(true)}
+                >
+                  <PlusCircle className="h-4 w-4" /> Event
+                </Button>
               </CardHeader>
               <CardContent>
                 {isLoadingEvents ? (
@@ -174,7 +272,7 @@ const ProductivityHubPage = () => {
                   <Calendar
                     mode="single"
                     selected={date}
-                    onSelect={(newDate) => newDate && setDate(newDate)}
+                    onSelect={handleCalendarDateClick}
                     className="rounded-md border"
                     modifiers={{
                       marked: (date) => isDayMarked(date),
@@ -210,6 +308,13 @@ const ProductivityHubPage = () => {
         isOpen={isAddTaskModalOpen} 
         onClose={() => setIsAddTaskModalOpen(false)}
         onTaskAdded={handleTaskAdded}
+      />
+      
+      <AddEventModal
+        isOpen={isAddEventModalOpen}
+        onClose={() => setIsAddEventModalOpen(false)}
+        onEventAdded={handleEventAdded}
+        selectedDate={date}
       />
     </div>
   );

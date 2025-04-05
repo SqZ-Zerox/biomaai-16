@@ -1,19 +1,37 @@
 
 import React from "react";
-import { Loader2, Clock, XCircle, Calendar, Tag } from "lucide-react";
+import { Loader2, Clock, XCircle, Calendar, Tag, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudyTask, TaskPriority } from "@/services/dataService";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type TaskListProps = {
   tasks: StudyTask[];
   isLoading: boolean;
   toggleTaskCompletion: (taskId: string) => Promise<void>;
+  onDeleteTask: (taskId: string) => Promise<void>;
 };
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, toggleTaskCompletion }) => {
+const TaskList: React.FC<TaskListProps> = ({ 
+  tasks, 
+  isLoading, 
+  toggleTaskCompletion, 
+  onDeleteTask 
+}) => {
   // Group tasks by priority
   const highPriorityTasks = tasks.filter(task => task.priority === 'high');
   const mediumPriorityTasks = tasks.filter(task => task.priority === 'medium');
@@ -86,12 +104,39 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, toggleTaskComplet
         className="mt-1"
       />
       <div className="space-y-1 w-full">
-        <label 
-          htmlFor={task.id}
-          className={`text-base font-medium cursor-pointer ${task.completed ? 'line-through text-muted-foreground' : ''}`}
-        >
-          {task.title}
-        </label>
+        <div className="flex justify-between">
+          <label 
+            htmlFor={task.id}
+            className={`text-base font-medium cursor-pointer ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+          >
+            {task.title}
+          </label>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this task? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => onDeleteTask(task.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
         
         {task.description && (
           <p className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : 'text-muted-foreground'}`}>
@@ -150,7 +195,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading, toggleTaskComplet
             <XCircle className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
             <h3 className="font-medium text-lg mb-2">No tasks found</h3>
             <p className="text-muted-foreground">
-              You don't have any tasks yet. Add a new task to get started.
+              You don't have any tasks matching your filters. Try adjusting your filters or add a new task to get started.
             </p>
           </div>
         </CardContent>
