@@ -53,12 +53,15 @@ const Navigation: React.FC = () => {
     <nav className="fixed bottom-0 left-0 right-0 bg-card/70 backdrop-blur-md border-t border-border/40 shadow-lg shadow-black/20 z-50">
       <div className="container mx-auto flex justify-around items-center py-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          // Check if the current path matches this nav item's path
+          // Also consider exact path or starting with path (for nested routes)
+          const isActive = location.pathname === item.path || 
+                         (item.path !== "/" && location.pathname.startsWith(item.path));
           return (
             <button
               key={item.path}
               className={cn(
-                "flex flex-col items-center py-2 px-4 rounded-md transition-all relative",
+                "flex flex-col items-center py-2 px-2 sm:px-4 rounded-md transition-all relative",
                 isActive 
                   ? "text-accent font-medium" 
                   : "text-muted-foreground hover:text-foreground"

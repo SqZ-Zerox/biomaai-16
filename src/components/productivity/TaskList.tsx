@@ -1,6 +1,6 @@
 
-import React from "react";
-import { Loader2, Clock, XCircle, Calendar, Tag, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { Loader2, Clock, XCircle, Calendar, Tag, Trash2, PencilIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,20 +18,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import EditTaskModal from "./EditTaskModal";
 
 type TaskListProps = {
   tasks: StudyTask[];
   isLoading: boolean;
   toggleTaskCompletion: (taskId: string) => Promise<void>;
   onDeleteTask: (taskId: string) => Promise<void>;
+  onUpdateTask?: (task: StudyTask) => void;
 };
 
 const TaskList: React.FC<TaskListProps> = ({ 
   tasks, 
   isLoading, 
   toggleTaskCompletion, 
-  onDeleteTask 
+  onDeleteTask,
+  onUpdateTask
 }) => {
+  const [editingTask, setEditingTask] = useState<StudyTask | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   // Group tasks by priority
   const highPriorityTasks = tasks.filter(task => task.priority === 'high');
   const mediumPriorityTasks = tasks.filter(task => task.priority === 'medium');
@@ -88,6 +94,19 @@ const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
+  const handleEditTask = (task: StudyTask) => {
+    setEditingTask(task);
+    setIsEditModalOpen(true);
+  };
+
+  const handleTaskUpdated = (updatedTask: StudyTask) => {
+    if (onUpdateTask) {
+      onUpdateTask(updatedTask);
+    }
+    setIsEditModalOpen(false);
+    setEditingTask(null);
+  };
+
   // Render each task card
   const renderTask = (task: StudyTask) => (
     <div 
@@ -112,30 +131,38 @@ const TaskList: React.FC<TaskListProps> = ({
             {task.title}
           </label>
           
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
-                <Trash2 className="h-4 w-4" />
+          <div className="flex space-x-1">
+            {onUpdateTask && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" onClick={() => handleEditTask(task)}>
+                <PencilIcon className="h-4 w-4" />
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this task? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => onDeleteTask(task.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this task? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => onDeleteTask(task.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
         
         {task.description && (
@@ -204,70 +231,79 @@ const TaskList: React.FC<TaskListProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Progress Bar */}
-      <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Task Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>{completedTasks} of {totalTasks} tasks completed</span>
-              <span>{completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-muted/30 h-2 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-500" 
-                style={{ width: `${completionPercentage}%` }}
-              ></div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* High Priority Tasks */}
-      {sortedHighPriority.length > 0 && (
+    <>
+      <div className="space-y-6">
+        {/* Progress Bar */}
         <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-red-500">High Priority</CardTitle>
+            <CardTitle className="text-lg">Task Progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {sortedHighPriority.map(renderTask)}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{completedTasks} of {totalTasks} tasks completed</span>
+                <span>{completionPercentage}%</span>
+              </div>
+              <div className="w-full bg-muted/30 h-2 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-500" 
+                  style={{ width: `${completionPercentage}%` }}
+                ></div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Medium Priority Tasks */}
-      {sortedMediumPriority.length > 0 && (
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-amber-500">Medium Priority</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {sortedMediumPriority.map(renderTask)}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* High Priority Tasks */}
+        {sortedHighPriority.length > 0 && (
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-red-500">High Priority</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {sortedHighPriority.map(renderTask)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Low Priority Tasks */}
-      {sortedLowPriority.length > 0 && (
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-green-500">Low Priority</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {sortedLowPriority.map(renderTask)}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {/* Medium Priority Tasks */}
+        {sortedMediumPriority.length > 0 && (
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-amber-500">Medium Priority</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {sortedMediumPriority.map(renderTask)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Low Priority Tasks */}
+        {sortedLowPriority.length > 0 && (
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-green-500">Low Priority</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {sortedLowPriority.map(renderTask)}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <EditTaskModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onTaskUpdated={handleTaskUpdated}
+        task={editingTask}
+      />
+    </>
   );
 };
 

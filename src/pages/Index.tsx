@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,192 +15,362 @@ import {
   BookOpen,
   MessageSquare,
   Calendar,
-  Upload,
-  Sparkles,
-  BookOpenCheck,
-  Lightbulb,
   Gavel,
-  BookmarkCheck,
   Library,
-  ArrowRight
+  Sparkles,
+  Clock,
+  ArrowRight,
+  CheckCircle,
+  BookmarkCheck,
+  Bell
 } from "lucide-react";
-
-const features = [
-  {
-    icon: <BookOpen className="h-5 w-5 text-primary" />,
-    title: "Study Materials",
-    description: "Access a comprehensive collection of study resources organized by subject.",
-    link: "/study",
-    badge: null,
-  },
-  {
-    icon: <MessageSquare className="h-5 w-5 text-primary" />,
-    title: "AI Chat Assistant",
-    description: "Get instant answers to legal questions and study guidance from our AI.",
-    link: "/chat",
-    badge: null,
-  },
-  {
-    icon: <Calendar className="h-5 w-5 text-primary" />,
-    title: "Productivity Hub",
-    description: "Track tasks, set study schedules, and manage your academic calendar.",
-    link: "/study-plan",
-    badge: null,
-  },
-  {
-    icon: <Upload className="h-5 w-5 text-primary" />,
-    title: "Document Upload",
-    description: "Upload your notes, cases, and study materials for easy access.",
-    link: "/upload",
-    badge: null,
-  },
-  {
-    icon: <BookOpenCheck className="h-5 w-5 text-primary" />,
-    title: "Legal Essays",
-    description: "Create, edit, and manage your legal essays with AI assistance.",
-    link: "/legal-essays",
-    badge: null,
-  },
-  {
-    icon: <Gavel className="h-5 w-5 text-primary" />,
-    title: "Case Brief Generator",
-    description: "Easily create and manage structured case briefs for your law studies.",
-    link: "/case-brief",
-    badge: { text: "New", variant: "default" },
-  },
-  {
-    icon: <BookmarkCheck className="h-5 w-5 text-primary" />,
-    title: "Legal Citation Tool",
-    description: "Generate properly formatted citations in Bluebook, OSCOLA, AGLC and more.",
-    link: "/citation-tool",
-    badge: { text: "New", variant: "default" },
-  },
-  {
-    icon: <Library className="h-5 w-5 text-primary" />,
-    title: "Flashcards",
-    description: "Create and study digital flashcards to memorize legal concepts and cases.",
-    link: "/flashcards",
-    badge: { text: "New", variant: "default" },
-  }
-];
+import { dataService, StudyTask, StudyEvent } from "@/services/dataService";
+import { format } from "date-fns";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [recentTasks, setRecentTasks] = useState<StudyTask[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<StudyEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch tasks and events
+        const tasksData = await dataService.getTasks();
+        const eventsData = await dataService.getEvents();
+        
+        // Get incomplete tasks sorted by priority (high first)
+        const sortedTasks = tasksData
+          .filter(task => !task.completed)
+          .sort((a, b) => {
+            const priorityOrder: Record<string, number> = { high: 1, medium: 2, low: 3 };
+            return (priorityOrder[a.priority || 'low'] || 3) - (priorityOrder[b.priority || 'low'] || 3);
+          });
+        
+        // Get upcoming events
+        const now = new Date();
+        const upcoming = eventsData
+          .filter(event => event.date > now)
+          .sort((a, b) => a.date.getTime() - b.date.getTime());
+        
+        setRecentTasks(sortedTasks.slice(0, 3));
+        setUpcomingEvents(upcoming.slice(0, 3));
+      } catch (error) {
+        console.error("Error loading home data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Quick access tools
+  const quickTools = [
+    {
+      icon: <BookOpen className="h-5 w-5 text-primary" />,
+      title: "Study Materials",
+      description: "Access study resources",
+      link: "/study",
+    },
+    {
+      icon: <MessageSquare className="h-5 w-5 text-primary" />,
+      title: "AI Chat",
+      description: "Get instant answers",
+      link: "/chat",
+    },
+    {
+      icon: <Calendar className="h-5 w-5 text-primary" />,
+      title: "Productivity Hub",
+      description: "Manage tasks & events",
+      link: "/study-plan",
+    },
+    {
+      icon: <Gavel className="h-5 w-5 text-primary" />,
+      title: "Case Brief",
+      description: "Create case briefs",
+      link: "/case-brief",
+    },
+    {
+      icon: <Library className="h-5 w-5 text-primary" />,
+      title: "Flashcards",
+      description: "Study with flashcards",
+      link: "/flashcards",
+    },
+    {
+      icon: <BookmarkCheck className="h-5 w-5 text-primary" />,
+      title: "Citations",
+      description: "Generate citations",
+      link: "/citation-tool",
+    },
+  ];
+
+  // Function to get priority indicator
+  const getPriorityColor = (priority: string | undefined) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-500/20 text-red-500';
+      case 'medium':
+        return 'bg-amber-500/20 text-amber-500';
+      case 'low':
+        return 'bg-green-500/20 text-green-500';
+      default:
+        return 'bg-gray-500/20 text-gray-500';
+    }
+  };
+
+  // Get event type style
+  const getEventTypeStyles = (type: string | undefined) => {
+    switch (type) {
+      case 'exam':
+        return "bg-red-500/20 text-red-500";
+      case 'assignment':
+        return "bg-amber-500/20 text-amber-500";
+      case 'class':
+        return "bg-primary/20 text-primary";
+      default:
+        return "bg-gray-500/20 text-gray-500";
+    }
+  };
 
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center">
-          <div className="neon-border rounded-full p-2 w-12 h-12 flex items-center justify-center bg-primary/10 floating">
-            <Sparkles className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-        <h1 className="text-4xl font-bold tracking-tight">Welcome to LegalAid</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Your AI-powered study companion for law school success
-        </p>
-        <div className="flex justify-center gap-4 pt-2">
-          <Button size="lg" onClick={() => navigate("/study")}>
-            Start Studying
-          </Button>
-          <Button size="lg" variant="outline" onClick={() => navigate("/chat")}>
-            Chat with AI
-          </Button>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="pt-8">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold">Features</h2>
-          <p className="text-muted-foreground">Tools designed to help you excel in your legal studies</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <Card key={index} className="border-border/40 bg-card/60 backdrop-blur-sm hover-scale">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
-                    {feature.icon}
-                  </div>
-                  {feature.badge && (
-                    <Badge variant={feature.badge.variant as "default" | "secondary" | "outline" | "destructive"}>
-                      {feature.badge.text}
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="mt-2">{feature.title}</CardTitle>
-                <CardDescription>{feature.description}</CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-between" 
-                  onClick={() => navigate(feature.link)}
-                >
-                  <span>Explore</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Benefits Section */}
-      <div className="pt-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold">Why LegalAid?</h2>
-          <p className="text-muted-foreground">Designed by law students for law students</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-            <CardHeader>
-              <div className="p-2 rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
+      {/* Welcome Section with User Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl">
+                  Welcome to LegalAid
+                </CardTitle>
+                <CardDescription>
+                  Your AI-powered study assistant for law school
+                </CardDescription>
+              </div>
+              <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
-              <CardTitle className="mt-2">AI-Powered</CardTitle>
-              <CardDescription>
-                Leverage the power of artificial intelligence to enhance your studies and save time.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-            <CardHeader>
-              <div className="p-2 rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
-                <BookOpenCheck className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+              {quickTools.map((tool, index) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(tool.link)}
+                  className="p-3 rounded-lg border border-border/40 bg-muted/5 hover:bg-muted/20 transition flex flex-col items-center text-center gap-1"
+                >
+                  <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center mb-2">
+                    {tool.icon}
+                  </div>
+                  <span className="font-medium text-sm">{tool.title}</span>
+                  <span className="text-xs text-muted-foreground">{tool.description}</span>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Study Timer Card */}
+        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Quick Focus</CardTitle>
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=15")}>
+                  15 min
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=25")}>
+                  25 min
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=50")}>
+                  50 min
+                </Button>
               </div>
-              <CardTitle className="mt-2">Comprehensive</CardTitle>
-              <CardDescription>
-                All-in-one platform with everything you need to succeed in law school.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-            <CardHeader>
-              <div className="p-2 rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
-                <Lightbulb className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="mt-2">Efficient</CardTitle>
-              <CardDescription>
-                Study smarter, not harder with our productivity-focused tools and resources.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
+              <Button className="w-full" onClick={() => navigate("/study-plan?tab=focus")}>
+                Start Focus Session
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Call to Action */}
-      <div className="pt-8 text-center">
-        <Button size="lg" onClick={() => navigate("/study")}>
-          Get Started Now
-        </Button>
+      {/* Priority Tasks and Upcoming Events */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Priority Tasks */}
+        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Priority Tasks</CardTitle>
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/study-plan")}>
+                View All <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-pulse space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
+                  ))}
+                </div>
+              </div>
+            ) : recentTasks.length > 0 ? (
+              <div className="space-y-3">
+                {recentTasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
+                    onClick={() => navigate("/study-plan")}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="pt-1">
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-sm">{task.title}</h3>
+                        {task.dueDate && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {task.priority && (
+                      <Badge className={getPriorityColor(task.priority)}>
+                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p>No pending tasks</p>
+                <Button
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => navigate("/study-plan")}
+                >
+                  Add a task
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Events */}
+        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Upcoming Events</CardTitle>
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/study-plan?tab=calendar")}>
+                View Calendar <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-pulse space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
+                  ))}
+                </div>
+              </div>
+            ) : upcomingEvents.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingEvents.map((event) => (
+                  <div 
+                    key={event.id} 
+                    className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
+                    onClick={() => navigate("/study-plan?tab=calendar")}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="pt-1">
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-sm">{event.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(event.date), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    {event.type && (
+                      <Badge className={getEventTypeStyles(event.type)}>
+                        {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p>No upcoming events</p>
+                <Button
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => navigate("/study-plan?tab=calendar")}
+                >
+                  Add an event
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Study Resources Preview */}
+      <Card className="border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 py-3 px-6">
+          <h2 className="text-lg font-medium">Quick Study Access</h2>
+        </div>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Button 
+              variant="outline"
+              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
+              onClick={() => navigate("/case-brief")}
+            >
+              <Gavel className="h-5 w-5" />
+              <span>Create New Case Brief</span>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
+              onClick={() => navigate("/flashcards")}
+            >
+              <Library className="h-5 w-5" />
+              <span>Study Flashcards</span>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
+              onClick={() => navigate("/chat")}
+            >
+              <MessageSquare className="h-5 w-5" />
+              <span>Ask AI Assistant</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

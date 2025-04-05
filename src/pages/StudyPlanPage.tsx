@@ -138,6 +138,22 @@ const ProductivityHubPage = () => {
     }
   };
 
+  const handleUpdateEvent = (updatedEvent: StudyEvent) => {
+    setEvents(events.map(event => event.id === updatedEvent.id ? updatedEvent : event));
+    toast({
+      title: "Event Updated",
+      description: `"${updatedEvent.title}" has been updated.`
+    });
+  };
+
+  const handleUpdateTask = (updatedTask: StudyTask) => {
+    setTasks(tasks.map(task => task.id === updatedTask.id ? updatedTask : task));
+    toast({
+      title: "Task Updated",
+      description: `"${updatedTask.title}" has been updated.`
+    });
+  };
+
   const toggleTaskCompletion = async (taskId: string) => {
     try {
       const updatedTask = await dataService.toggleTaskCompletion(taskId);
@@ -282,6 +298,7 @@ const ProductivityHubPage = () => {
               isLoading={isLoadingTasks} 
               toggleTaskCompletion={toggleTaskCompletion}
               onDeleteTask={handleDeleteTask}
+              onUpdateTask={handleUpdateTask}
             />
           </div>
         </TabsContent>
@@ -328,6 +345,7 @@ const ProductivityHubPage = () => {
               isLoading={isLoadingEvents}
               selectedDate={date}
               onDeleteEvent={handleDeleteEvent}
+              onUpdateEvent={handleUpdateEvent}
             />
           </div>
         </TabsContent>
