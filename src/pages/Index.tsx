@@ -22,15 +22,27 @@ import {
   ArrowRight,
   CheckCircle,
   BookmarkCheck,
-  Bell
+  Bell,
+  BarChart2,
+  PlusCircle,
+  Lightbulb,
+  CheckSquare,
+  BookOpenCheck,
+  Target,
+  Trophy
 } from "lucide-react";
 import { dataService, StudyTask, StudyEvent } from "@/services/dataService";
-import { format } from "date-fns";
+import { format, isToday, isTomorrow, isThisWeek } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 const Index = () => {
   const navigate = useNavigate();
   const [recentTasks, setRecentTasks] = useState<StudyTask[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<StudyEvent[]>([]);
+  const [completedTasksCount, setCompletedTasksCount] = useState(0);
+  const [totalTasksCount, setTotalTasksCount] = useState(0);
+  const [studyTimeToday, setStudyTimeToday] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +53,7 @@ const Index = () => {
         // Fetch tasks and events
         const tasksData = await dataService.getTasks();
         const eventsData = await dataService.getEvents();
+        const statsData = await dataService.getProductivityStats();
         
         // Get incomplete tasks sorted by priority (high first)
         const sortedTasks = tasksData
@@ -56,8 +69,11 @@ const Index = () => {
           .filter(event => event.date > now)
           .sort((a, b) => a.date.getTime() - b.date.getTime());
         
-        setRecentTasks(sortedTasks.slice(0, 3));
-        setUpcomingEvents(upcoming.slice(0, 3));
+        setRecentTasks(sortedTasks.slice(0, 5));
+        setUpcomingEvents(upcoming.slice(0, 5));
+        setCompletedTasksCount(tasksData.filter(t => t.completed).length);
+        setTotalTasksCount(tasksData.length);
+        setStudyTimeToday(statsData.totalStudyTime);
       } catch (error) {
         console.error("Error loading home data:", error);
       } finally {
@@ -136,238 +152,476 @@ const Index = () => {
     }
   };
 
+  // Format date with relative indicators (Today, Tomorrow, etc.)
+  const formatDateWithRelative = (date: Date) => {
+    if (isToday(date)) {
+      return `Today, ${format(date, "h:mm a")}`;
+    } else if (isTomorrow(date)) {
+      return `Tomorrow, ${format(date, "h:mm a")}`;
+    } else if (isThisWeek(date)) {
+      return format(date, "EEEE, h:mm a"); // e.g. "Monday, 2:30 PM"
+    } else {
+      return format(date, "MMM d, yyyy");
+    }
+  };
+
+  // Format minutes into hours and minutes
+  const formatMinutes = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    return `${mins}m`;
+  };
+
   return (
     <div className="space-y-8">
-      {/* Welcome Section with User Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl">
-                  Welcome to LegalAid
-                </CardTitle>
-                <CardDescription>
-                  Your AI-powered study assistant for law school
-                </CardDescription>
-              </div>
-              <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-              {quickTools.map((tool, index) => (
-                <button
-                  key={index}
-                  onClick={() => navigate(tool.link)}
-                  className="p-3 rounded-lg border border-border/40 bg-muted/5 hover:bg-muted/20 transition flex flex-col items-center text-center gap-1"
-                >
-                  <div className="rounded-full bg-primary/10 w-8 h-8 flex items-center justify-center mb-2">
-                    {tool.icon}
-                  </div>
-                  <span className="font-medium text-sm">{tool.title}</span>
-                  <span className="text-xs text-muted-foreground">{tool.description}</span>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Hero Section with Quick Stats */}
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-6 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+              Welcome to LegalAid
+            </h1>
+            <p className="text-muted-foreground max-w-lg">
+              Your AI-powered study assistant for law school. Track tasks, manage events, and maximize your productivity.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={() => navigate("/study-plan")} size="lg" className="gap-2">
+              <Calendar className="h-5 w-5" /> Productivity Hub
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/chat")} size="lg" className="gap-2">
+              <MessageSquare className="h-5 w-5" /> Ask AI
+            </Button>
+          </div>
+        </div>
 
-        {/* Study Timer Card */}
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Quick Focus</CardTitle>
-              <Clock className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=15")}>
-                  15 min
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=25")}>
-                  25 min
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=50")}>
-                  50 min
-                </Button>
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <Card className="border-border/40 bg-white/90 dark:bg-card/60 backdrop-blur-sm">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <CheckSquare className="h-5 w-5 text-primary" />
               </div>
-              <Button className="w-full" onClick={() => navigate("/study-plan?tab=focus")}>
-                Start Focus Session
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div>
+                <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                <h3 className="text-2xl font-bold">
+                  {isLoading ? "..." : `${completedTasksCount}/${totalTasksCount}`}
+                </h3>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/40 bg-white/90 dark:bg-card/60 backdrop-blur-sm">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Study Time Today</p>
+                <h3 className="text-2xl font-bold">
+                  {isLoading ? "..." : formatMinutes(studyTimeToday)}
+                </h3>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/40 bg-white/90 dark:bg-card/60 backdrop-blur-sm">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Bell className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Upcoming Events</p>
+                <h3 className="text-2xl font-bold">
+                  {isLoading ? "..." : upcomingEvents.length}
+                </h3>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/40 bg-white/90 dark:bg-card/60 backdrop-blur-sm">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Focus Sessions</p>
+                <h3 className="text-2xl font-bold">
+                  {isLoading ? "..." : "4"}
+                </h3>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Priority Tasks and Upcoming Events */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Priority Tasks */}
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Priority Tasks</CardTitle>
-              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/study-plan")}>
-                View All <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <div className="animate-pulse space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
-                  ))}
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+        {/* Left Column: Tasks and Events (5/7 width) */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Priority Tasks */}
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-xl">Priority Tasks</CardTitle>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1" 
+                    onClick={() => navigate("/study-plan?tab=tasks")}
+                  >
+                    View All <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="gap-1"
+                    onClick={() => navigate("/study-plan?tab=tasks&action=add")}
+                  >
+                    <PlusCircle className="h-4 w-4" /> Add
+                  </Button>
                 </div>
               </div>
-            ) : recentTasks.length > 0 ? (
-              <div className="space-y-3">
-                {recentTasks.map((task) => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
-                    onClick={() => navigate("/study-plan")}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="pt-1">
-                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-pulse space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
+                    ))}
+                  </div>
+                </div>
+              ) : recentTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {recentTasks.map((task) => (
+                    <div 
+                      key={task.id} 
+                      className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
+                      onClick={() => navigate("/study-plan?tab=tasks")}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="pt-1">
+                          <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-sm line-clamp-1">{task.title}</h3>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {task.dueDate && (
+                              <p className="text-xs text-muted-foreground">
+                                Due: {formatDateWithRelative(new Date(task.dueDate))}
+                              </p>
+                            )}
+                            {task.estimatedTime && (
+                              <p className="text-xs text-muted-foreground ml-1">
+                                <Clock className="h-3 w-3 inline mr-1" />
+                                {task.estimatedTime} min
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-sm">{task.title}</h3>
-                        {task.dueDate && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
-                          </p>
+                      <div className="flex items-center gap-2">
+                        {task.category && (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {task.category}
+                          </Badge>
+                        )}
+                        {task.priority && (
+                          <Badge className={`${getPriorityColor(task.priority)} text-xs`}>
+                            {task.priority}
+                          </Badge>
                         )}
                       </div>
                     </div>
-                    {task.priority && (
-                      <Badge className={getPriorityColor(task.priority)}>
-                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p>No pending tasks</p>
-                <Button
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => navigate("/study-plan")}
-                >
-                  Add a task
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events */}
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Upcoming Events</CardTitle>
-              <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate("/study-plan?tab=calendar")}>
-                View Calendar <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <div className="animate-pulse space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
                   ))}
                 </div>
-              </div>
-            ) : upcomingEvents.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingEvents.map((event) => (
-                  <div 
-                    key={event.id} 
-                    className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p>No pending tasks</p>
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => navigate("/study-plan?tab=tasks&action=add")}
+                  >
+                    Add a task
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Events */}
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-xl">Upcoming Events</CardTitle>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1" 
                     onClick={() => navigate("/study-plan?tab=calendar")}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="pt-1">
-                        <Bell className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-sm">{event.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(event.date), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    </div>
-                    {event.type && (
-                      <Badge className={getEventTypeStyles(event.type)}>
-                        {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
+                    View Calendar <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="gap-1"
+                    onClick={() => navigate("/study-plan?tab=calendar&action=add")}
+                  >
+                    <PlusCircle className="h-4 w-4" /> Add
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p>No upcoming events</p>
-                <Button
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => navigate("/study-plan?tab=calendar")}
-                >
-                  Add an event
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-pulse space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-14 bg-muted/20 rounded-md w-full"></div>
+                    ))}
+                  </div>
+                </div>
+              ) : upcomingEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingEvents.map((event) => (
+                    <div 
+                      key={event.id} 
+                      className="flex items-start justify-between p-3 border border-border/30 rounded-md bg-muted/5 hover:bg-muted/10 transition cursor-pointer"
+                      onClick={() => navigate("/study-plan?tab=calendar")}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="pt-1">
+                          <Bell className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-sm line-clamp-1">{event.title}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDateWithRelative(new Date(event.date))}
+                          </p>
+                        </div>
+                      </div>
+                      {event.type && (
+                        <Badge className={`${getEventTypeStyles(event.type)} text-xs`}>
+                          {event.type}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p>No upcoming events</p>
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => navigate("/study-plan?tab=calendar&action=add")}
+                  >
+                    Add an event
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column: Stats & Quick Access (2/7 width) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Focus Timer */}
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Quick Focus</CardTitle>
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=15")}>
+                    15 min
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=25")}>
+                    25 min
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/study-plan?tab=focus&duration=50")}>
+                    50 min
+                  </Button>
+                </div>
+                <Button className="w-full" onClick={() => navigate("/study-plan?tab=focus")}>
+                  Start Focus Session
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          
+          {/* Progress Summary */}
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Progress</CardTitle>
+                <BarChart2 className="h-5 w-5 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Tasks Completion</span>
+                  <span>{totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0}%</span>
+                </div>
+                <Progress 
+                  value={totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0} 
+                  className="h-2"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Study Time Goal</span>
+                  <span>{Math.min(Math.round((studyTimeToday / 120) * 100), 100)}%</span>
+                </div>
+                <Progress 
+                  value={Math.min((studyTimeToday / 120) * 100, 100)} 
+                  className="h-2"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formatMinutes(studyTimeToday)} of 2h daily goal
+                </p>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full" 
+                onClick={() => navigate("/study-plan?tab=stats")}
+              >
+                View Detailed Stats
+              </Button>
+            </CardContent>
+          </Card>
+          
+          {/* Pro Tips */}
+          <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Pro Tips</CardTitle>
+                <Lightbulb className="h-5 w-5 text-amber-500" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-amber-500/10 rounded-md border border-amber-200/20">
+                <h4 className="font-medium text-sm">Pomodoro Technique</h4>
+                <p className="text-xs mt-1 text-muted-foreground">
+                  Try studying in 25-minute intervals with 5-minute breaks to maintain focus and productivity.
+                </p>
+              </div>
+              
+              <div className="p-3 bg-primary/10 rounded-md border border-primary/20">
+                <h4 className="font-medium text-sm">Active Recall</h4>
+                <p className="text-xs mt-1 text-muted-foreground">
+                  Test yourself regularly instead of passive re-reading to improve memory retention.
+                </p>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full text-muted-foreground"
+                onClick={() => navigate("/chat")}
+              >
+                Ask AI for More Tips
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Study Resources Preview */}
+      {/* Quick Access Tools */}
       <Card className="border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 py-3 px-6">
-          <h2 className="text-lg font-medium">Quick Study Access</h2>
-        </div>
-        <CardContent className="pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Button 
-              variant="outline"
-              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
-              onClick={() => navigate("/case-brief")}
-            >
-              <Gavel className="h-5 w-5" />
-              <span>Create New Case Brief</span>
-            </Button>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">Quick Access</CardTitle>
+            <BookOpenCheck className="h-5 w-5 text-primary" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            {quickTools.map((tool, index) => (
+              <button
+                key={index}
+                onClick={() => navigate(tool.link)}
+                className="flex flex-col items-center p-4 rounded-lg border border-border/40 bg-muted/5 hover:bg-muted/20 transition text-center gap-2"
+              >
+                <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-1">
+                  {tool.icon}
+                </div>
+                <span className="font-medium text-sm">{tool.title}</span>
+                <span className="text-xs text-muted-foreground">{tool.description}</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Achievements */}
+      <Card className="border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">Achievements</CardTitle>
+            <Trophy className="h-5 w-5 text-amber-500" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="flex flex-col items-center p-4 border border-border/40 rounded-lg bg-muted/5">
+              <div className="rounded-full bg-amber-500/10 w-10 h-10 flex items-center justify-center mb-3">
+                <Trophy className="h-5 w-5 text-amber-500" />
+              </div>
+              <h4 className="font-medium">Early Bird</h4>
+              <p className="text-xs text-muted-foreground mt-1">Studied before 8AM</p>
+            </div>
             
-            <Button 
-              variant="outline"
-              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
-              onClick={() => navigate("/flashcards")}
-            >
-              <Library className="h-5 w-5" />
-              <span>Study Flashcards</span>
-            </Button>
+            <div className="flex flex-col items-center p-4 border border-border/40 rounded-lg bg-muted/5">
+              <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-3">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <h4 className="font-medium">Focus Master</h4>
+              <p className="text-xs text-muted-foreground mt-1">4 focus sessions in a day</p>
+            </div>
             
-            <Button 
-              variant="outline"
-              className="h-auto py-3 flex flex-col items-center gap-2 justify-start"
-              onClick={() => navigate("/chat")}
-            >
-              <MessageSquare className="h-5 w-5" />
-              <span>Ask AI Assistant</span>
-            </Button>
+            <div className="flex flex-col items-center p-4 border border-border/40 rounded-lg bg-muted/5">
+              <div className="rounded-full bg-green-500/10 w-10 h-10 flex items-center justify-center mb-3">
+                <CheckSquare className="h-5 w-5 text-green-500" />
+              </div>
+              <h4 className="font-medium">Task Crusher</h4>
+              <p className="text-xs text-muted-foreground mt-1">Completed 10 tasks</p>
+            </div>
+            
+            <div className="flex flex-col items-center p-4 border border-border/40 rounded-lg bg-muted/5">
+              <div className="rounded-full bg-blue-500/10 w-10 h-10 flex items-center justify-center mb-3">
+                <BookOpenCheck className="h-5 w-5 text-blue-500" />
+              </div>
+              <h4 className="font-medium">Knowledge Seeker</h4>
+              <p className="text-xs text-muted-foreground mt-1">Created 5 flashcard decks</p>
+            </div>
           </div>
         </CardContent>
       </Card>
