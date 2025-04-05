@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Edit, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 // Simple markdown parser (basic implementation)
 const parseMarkdown = (markdown: string) => {
@@ -37,9 +38,11 @@ const parseMarkdown = (markdown: string) => {
 interface EssayPreviewPanelProps {
   content: string;
   onContentChange: (content: string) => void;
+  title: string;
+  onTitleChange: (title: string) => void;
 }
 
-const EssayPreviewPanel = ({ content, onContentChange }: EssayPreviewPanelProps) => {
+const EssayPreviewPanel = ({ content, onContentChange, title, onTitleChange }: EssayPreviewPanelProps) => {
   const [mode, setMode] = useState<'edit' | 'preview'>('preview');
   
   return (
@@ -57,6 +60,17 @@ const EssayPreviewPanel = ({ content, onContentChange }: EssayPreviewPanelProps)
         </Tabs>
       </div>
       
+      {mode === 'edit' && (
+        <div className="p-3 border-b border-border/40 bg-background/30">
+          <Input 
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            className="font-medium text-lg"
+            placeholder="Essay Title..."
+          />
+        </div>
+      )}
+      
       <ScrollArea className="flex-1 p-4">
         {mode === 'edit' ? (
           <Textarea 
@@ -66,10 +80,13 @@ const EssayPreviewPanel = ({ content, onContentChange }: EssayPreviewPanelProps)
             placeholder="Write your legal essay here..."
           />
         ) : (
-          <div 
-            className="prose prose-sm dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
-          />
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold">{title}</h1>
+            <div 
+              className="prose prose-sm dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
+            />
+          </div>
         )}
       </ScrollArea>
       
