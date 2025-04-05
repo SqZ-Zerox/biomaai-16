@@ -3,19 +3,27 @@ import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Clock, PlusCircle, BarChart2, CalendarDays, ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { dataService, StudyTask, StudyEvent } from "@/services/dataService";
 import { useToast } from "@/hooks/use-toast";
+import TaskList from "@/components/productivity/TaskList";
+import StudyTimer from "@/components/productivity/StudyTimer";
+import AddTaskModal from "@/components/productivity/AddTaskModal";
+import EventsList from "@/components/productivity/EventsList";
+import ProductivityStats from "@/components/productivity/ProductivityStats";
 
-const StudyPlanPage = () => {
+const ProductivityHubPage = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [tasks, setTasks] = useState<StudyTask[]>([]);
   const [events, setEvents] = useState<StudyEvent[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("tasks");
   const { toast } = useToast();
   
   // Fetch tasks and events on mount
@@ -35,11 +43,11 @@ const StudyPlanPage = () => {
         
         setIsError(false);
       } catch (error) {
-        console.error("Error loading study plan data:", error);
+        console.error("Error loading productivity data:", error);
         setIsError(true);
         toast({
           title: "Error Loading Data",
-          description: "Failed to load your study plan. Please try again later.",
+          description: "Failed to load your productivity data. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -50,6 +58,24 @@ const StudyPlanPage = () => {
 
     fetchData();
   }, [toast]);
+
+  // Function to highlight important dates on the calendar
+  const isDayMarked = (day: Date) => {
+    return events.some(
+      (event) =>
+        event.date.getDate() === day.getDate() &&
+        event.date.getMonth() === day.getMonth() &&
+        event.date.getFullYear() === day.getFullYear()
+    );
+  };
+
+  const handleTaskAdded = (newTask: StudyTask) => {
+    setTasks([...tasks, newTask]);
+    toast({
+      title: "Task Added",
+      description: `"${newTask.title}" has been added to your tasks.`
+    });
+  };
 
   const toggleTaskCompletion = async (taskId: string) => {
     try {
@@ -70,30 +96,20 @@ const StudyPlanPage = () => {
     }
   };
 
-  // Function to highlight important dates on the calendar
-  const isDayMarked = (day: Date) => {
-    return events.some(
-      (event) =>
-        event.date.getDate() === day.getDate() &&
-        event.date.getMonth() === day.getMonth() &&
-        event.date.getFullYear() === day.getFullYear()
-    );
-  };
-
   // Error state
   if (isError) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold mb-6">Study Plan</h1>
+        <h1 className="text-3xl font-bold mb-6">Productivity Hub</h1>
         <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-6 w-6 text-destructive" />
-              <CardTitle>Error Loading Study Plan</CardTitle>
+              <CardTitle>Error Loading Data</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <p>Failed to load your study plan data. Please try again later.</p>
+            <p>Failed to load your productivity data. Please try again later.</p>
             <Button 
               className="mt-4" 
               onClick={() => window.location.reload()}
@@ -108,133 +124,95 @@ const StudyPlanPage = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold mb-6">Study Plan</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Calendar Section */}
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Calendar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingEvents ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
-                  className="rounded-md border"
-                  modifiers={{
-                    marked: (date) => isDayMarked(date),
-                  }}
-                  modifiersClassNames={{
-                    marked: "bg-primary/20 text-primary font-bold",
-                  }}
-                />
-                
-                <div className="mt-4 space-y-2">
-                  <h3 className="font-medium text-lg">Important Dates</h3>
-                  {events.map((event, index) => (
-                    <div 
-                      key={index} 
-                      className={cn(
-                        "p-2 rounded-md",
-                        date && 
-                        event.date.getDate() === date.getDate() && 
-                        event.date.getMonth() === date.getMonth() && 
-                        event.date.getFullYear() === date.getFullYear()
-                        ? "bg-primary/20 neon-border"
-                        : "bg-muted/30"
-                      )}
-                    >
-                      <p className="font-medium">{event.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {event.date.toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      {event.description && <p className="mt-1 text-sm">{event.description}</p>}
-                      <span className={cn(
-                        "inline-block mt-2 text-xs px-2 py-0.5 rounded-full",
-                        event.type === "exam" ? "bg-red-500/20 text-red-500" :
-                        event.type === "assignment" ? "bg-amber-500/20 text-amber-500" :
-                        event.type === "class" ? "bg-primary/20 text-primary" :
-                        "bg-gray-500/20 text-gray-500"
-                      )}>
-                        {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        
-        {/* Daily Tasks */}
-        <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>
-              Study Tasks for {date.toLocaleDateString('en-US', {
-                month: 'long', 
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoadingTasks ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map((task) => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-start space-x-3 p-3 rounded-md transition-colors hover:bg-muted/30"
-                  >
-                    <Checkbox 
-                      id={task.id} 
-                      checked={task.completed} 
-                      onCheckedChange={() => toggleTaskCompletion(task.id)}
-                      className="mt-1"
-                    />
-                    <label 
-                      htmlFor={task.id}
-                      className={`text-base cursor-pointer ${task.completed ? 'line-through text-muted-foreground' : ''}`}
-                    >
-                      {task.title}
-                    </label>
-                  </div>
-                ))}
-                
-                <div className="pt-4 border-t border-border/40 mt-6">
-                  <p className="text-muted-foreground">
-                    Completed {tasks.filter(t => t.completed).length} of {tasks.length} tasks
-                  </p>
-                  <div className="w-full bg-muted/30 h-2 rounded-full mt-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-primary" 
-                      style={{
-                        width: `${(tasks.filter(t => t.completed).length / tasks.length) * 100}%`
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Productivity Hub</h1>
+        <Button onClick={() => setIsAddTaskModalOpen(true)} className="gap-2">
+          <PlusCircle className="h-4 w-4" /> Add Task
+        </Button>
       </div>
+      
+      <Tabs defaultValue="tasks" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4 w-full justify-start">
+          <TabsTrigger value="tasks" className="flex items-center gap-2">
+            <ListTodo className="h-4 w-4" /> Tasks
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" /> Calendar
+          </TabsTrigger>
+          <TabsTrigger value="focus" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" /> Focus Timer
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4" /> Statistics
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tasks Tab */}
+        <TabsContent value="tasks" className="mt-0">
+          <div className="grid grid-cols-1 gap-6">
+            <TaskList 
+              tasks={tasks} 
+              isLoading={isLoadingTasks} 
+              toggleTaskCompletion={toggleTaskCompletion}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Calendar Tab */}
+        <TabsContent value="calendar" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Calendar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingEvents ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => newDate && setDate(newDate)}
+                    className="rounded-md border"
+                    modifiers={{
+                      marked: (date) => isDayMarked(date),
+                    }}
+                    modifiersClassNames={{
+                      marked: "bg-primary/20 text-primary font-bold",
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <EventsList 
+              events={events} 
+              isLoading={isLoadingEvents}
+              selectedDate={date}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Focus Timer Tab */}
+        <TabsContent value="focus" className="mt-0">
+          <StudyTimer />
+        </TabsContent>
+
+        {/* Statistics Tab */}
+        <TabsContent value="stats" className="mt-0">
+          <ProductivityStats tasks={tasks} />
+        </TabsContent>
+      </Tabs>
+
+      <AddTaskModal 
+        isOpen={isAddTaskModalOpen} 
+        onClose={() => setIsAddTaskModalOpen(false)}
+        onTaskAdded={handleTaskAdded}
+      />
     </div>
   );
 };
 
-export default StudyPlanPage;
+export default ProductivityHubPage;

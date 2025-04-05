@@ -25,18 +25,36 @@ export type StudyMaterial = {
   uploadDate: Date;
 }
 
+export type TaskCategory = 'homework' | 'reading' | 'research' | 'preparation' | 'exam' | 'other';
+export type TaskPriority = 'high' | 'medium' | 'low';
+
 export type StudyTask = {
   id: string;
   title: string;
   completed: boolean;
   dueDate?: Date;
+  category?: TaskCategory;
+  priority?: TaskPriority; 
+  description?: string;
+  createdAt: Date;
+  estimatedTime?: number; // In minutes
 }
 
 export type StudyEvent = {
+  id: string;
   date: Date;
   title: string;
   description?: string;
   type: 'exam' | 'assignment' | 'class' | 'other';
+}
+
+export type StudySession = {
+  id: string;
+  start: Date;
+  end?: Date;
+  duration: number; // In minutes
+  taskId?: string;
+  notes?: string;
 }
 
 // Mock data
@@ -128,30 +146,107 @@ const studyMaterials: StudyMaterial[] = [
 ];
 
 const studyTasks: StudyTask[] = [
-  { id: "task1", title: "Read Chapter 5: Constitutional Law", completed: false },
-  { id: "task2", title: "Review case notes: Brown v. Board of Education", completed: true },
-  { id: "task3", title: "Practice essay questions on Property Law", completed: false },
-  { id: "task4", title: "Create flashcards for Legal Terms", completed: false },
-  { id: "task5", title: "Watch lecture on Criminal Procedure", completed: true },
+  { 
+    id: "task1", 
+    title: "Read Chapter 5: Constitutional Law", 
+    completed: false, 
+    category: "reading",
+    priority: "high",
+    dueDate: new Date(2025, 3, 10),
+    createdAt: new Date(2025, 3, 5),
+    estimatedTime: 60
+  },
+  { 
+    id: "task2", 
+    title: "Review case notes: Brown v. Board of Education", 
+    completed: true,
+    category: "preparation",
+    priority: "medium",
+    createdAt: new Date(2025, 3, 3),
+    estimatedTime: 45
+  },
+  { 
+    id: "task3", 
+    title: "Practice essay questions on Property Law", 
+    completed: false,
+    category: "homework",
+    priority: "medium",
+    dueDate: new Date(2025, 3, 12),
+    createdAt: new Date(2025, 3, 6),
+    estimatedTime: 90
+  },
+  { 
+    id: "task4", 
+    title: "Create flashcards for Legal Terms", 
+    completed: false,
+    category: "preparation",
+    priority: "low",
+    createdAt: new Date(2025, 3, 4),
+    estimatedTime: 30
+  },
+  { 
+    id: "task5", 
+    title: "Watch lecture on Criminal Procedure", 
+    completed: true,
+    category: "other",
+    priority: "high",
+    createdAt: new Date(2025, 3, 2),
+    estimatedTime: 120
+  },
 ];
 
 const studyEvents: StudyEvent[] = [
   { 
+    id: "event1",
     date: new Date(2025, 3, 12), 
     title: "Constitutional Law Exam",
     type: "exam" 
   },
   { 
+    id: "event2",
     date: new Date(2025, 3, 15), 
     title: "Property Law Assignment Due",
-    type: "assignment" 
+    type: "assignment",
+    description: "Final case study analysis due by 11:59 PM"
   },
   { 
+    id: "event3",
     date: new Date(2025, 3, 20), 
     title: "Criminal Law Mock Trial",
     type: "other" 
   },
+  { 
+    id: "event4",
+    date: new Date(2025, 3, 8), 
+    title: "Contract Law Lecture",
+    type: "class",
+    description: "Room 302B, Professor Johnson"
+  },
 ];
+
+const studySessions: StudySession[] = [
+  {
+    id: "session1",
+    start: new Date(2025, 3, 1, 14, 0), // April 1, 2025, 2:00 PM
+    end: new Date(2025, 3, 1, 16, 0),   // April 1, 2025, 4:00 PM
+    duration: 120,
+    taskId: "task1",
+    notes: "Completed reading first half of the chapter"
+  },
+  {
+    id: "session2",
+    start: new Date(2025, 3, 2, 10, 0), // April 2, 2025, 10:00 AM
+    end: new Date(2025, 3, 2, 11, 30),  // April 2, 2025, 11:30 AM
+    duration: 90,
+    taskId: "task2",
+    notes: "Reviewed all key points from the case"
+  },
+];
+
+// Generate a unique ID
+const generateId = (prefix: string) => {
+  return `${prefix}${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
+};
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -233,6 +328,59 @@ export const dataService = {
     }
   },
   
+  getTaskById: async (taskId: string): Promise<StudyTask> => {
+    try {
+      await delay(300);
+      const task = studyTasks.find(t => t.id === taskId);
+      
+      if (!task) {
+        throw new AppError(`Task not found: ${taskId}`, 404);
+      }
+      
+      return {...task};
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to fetch task", 500);
+    }
+  },
+  
+  addTask: async (task: Omit<StudyTask, 'id'>): Promise<StudyTask> => {
+    try {
+      await delay(800);
+      
+      const newTask: StudyTask = {
+        ...task,
+        id: generateId('task'),
+      };
+      
+      studyTasks.push(newTask);
+      return newTask;
+    } catch (error) {
+      throw new AppError("Failed to add task", 500);
+    }
+  },
+  
+  updateTask: async (taskId: string, updates: Partial<StudyTask>): Promise<StudyTask> => {
+    try {
+      await delay(500);
+      const taskIndex = studyTasks.findIndex(t => t.id === taskId);
+      
+      if (taskIndex === -1) {
+        throw new AppError(`Task not found: ${taskId}`, 404);
+      }
+      
+      studyTasks[taskIndex] = {
+        ...studyTasks[taskIndex],
+        ...updates
+      };
+      
+      return {...studyTasks[taskIndex]};
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to update task", 500);
+    }
+  },
+  
   toggleTaskCompletion: async (taskId: string): Promise<StudyTask> => {
     try {
       await delay(500);
@@ -250,6 +398,23 @@ export const dataService = {
     }
   },
   
+  deleteTask: async (taskId: string): Promise<boolean> => {
+    try {
+      await delay(600);
+      const taskIndex = studyTasks.findIndex(t => t.id === taskId);
+      
+      if (taskIndex === -1) {
+        throw new AppError(`Task not found: ${taskId}`, 404);
+      }
+      
+      studyTasks.splice(taskIndex, 1);
+      return true;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to delete task", 500);
+    }
+  },
+  
   // Study Events
   getEvents: async (): Promise<StudyEvent[]> => {
     try {
@@ -257,6 +422,104 @@ export const dataService = {
       return [...studyEvents];
     } catch (error) {
       throw new AppError("Failed to fetch events", 500);
+    }
+  },
+  
+  addEvent: async (event: Omit<StudyEvent, 'id'>): Promise<StudyEvent> => {
+    try {
+      await delay(800);
+      
+      const newEvent: StudyEvent = {
+        ...event,
+        id: generateId('event'),
+      };
+      
+      studyEvents.push(newEvent);
+      return newEvent;
+    } catch (error) {
+      throw new AppError("Failed to add event", 500);
+    }
+  },
+  
+  // Study Sessions
+  getSessions: async (): Promise<StudySession[]> => {
+    try {
+      await delay(700);
+      return [...studySessions];
+    } catch (error) {
+      throw new AppError("Failed to fetch study sessions", 500);
+    }
+  },
+  
+  startSession: async (taskId?: string): Promise<StudySession> => {
+    try {
+      await delay(300);
+      
+      const newSession: StudySession = {
+        id: generateId('session'),
+        start: new Date(),
+        duration: 0,
+        taskId
+      };
+      
+      studySessions.push(newSession);
+      return newSession;
+    } catch (error) {
+      throw new AppError("Failed to start study session", 500);
+    }
+  },
+  
+  endSession: async (sessionId: string, notes?: string): Promise<StudySession> => {
+    try {
+      await delay(500);
+      const sessionIndex = studySessions.findIndex(s => s.id === sessionId);
+      
+      if (sessionIndex === -1) {
+        throw new AppError(`Session not found: ${sessionId}`, 404);
+      }
+      
+      const session = studySessions[sessionIndex];
+      const end = new Date();
+      
+      // Calculate duration in minutes
+      const durationMs = end.getTime() - session.start.getTime();
+      const durationMinutes = Math.round(durationMs / (1000 * 60));
+      
+      studySessions[sessionIndex] = {
+        ...session,
+        end,
+        duration: durationMinutes,
+        notes: notes || session.notes
+      };
+      
+      return {...studySessions[sessionIndex]};
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to end study session", 500);
+    }
+  },
+  
+  getProductivityStats: async (): Promise<{
+    tasksCompleted: number;
+    totalStudyTime: number;
+    averageSessionLength: number;
+  }> => {
+    try {
+      await delay(900);
+      
+      const tasksCompleted = studyTasks.filter(t => t.completed).length;
+      const totalStudyTime = studySessions.reduce((total, session) => total + session.duration, 0);
+      const averageSessionLength = studySessions.length > 0 
+        ? totalStudyTime / studySessions.length
+        : 0;
+      
+      return {
+        tasksCompleted,
+        totalStudyTime,
+        averageSessionLength
+      };
+    } catch (error) {
+      throw new AppError("Failed to calculate productivity stats", 500);
     }
   }
 };

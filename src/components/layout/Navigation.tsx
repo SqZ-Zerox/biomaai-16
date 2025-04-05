@@ -26,7 +26,7 @@ const Navigation: React.FC = () => {
     },
     {
       icon: <Calendar size={20} />,
-      label: "Plan",
+      label: "Productivity",
       path: "/study-plan",
     },
     {

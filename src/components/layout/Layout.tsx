@@ -42,10 +42,10 @@ const Layout: React.FC = () => {
       return newMode;
     });
     
-    // Reduced transition time from 150ms to 100ms for faster mode switching
+    // Reduced transition time to 50ms for faster mode switching
     setTimeout(() => {
       setIsTransitioning(false);
-    }, 100);
+    }, 50);
   };
 
   return (

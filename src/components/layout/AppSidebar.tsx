@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -51,7 +52,7 @@ const AppSidebar = () => {
       icon: MessageSquare,
     },
     {
-      title: "Study Plan",
+      title: "Productivity Hub",
       path: "/study-plan",
       icon: Calendar,
     },
