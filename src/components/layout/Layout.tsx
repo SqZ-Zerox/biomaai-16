@@ -8,6 +8,7 @@ import AppSidebar from "./AppSidebar";
 
 const Layout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true); // Default to dark
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -25,6 +26,8 @@ const Layout: React.FC = () => {
   }, []);
 
   const toggleDarkMode = () => {
+    setIsTransitioning(true);
+    
     setIsDarkMode((prev) => {
       const newMode = !prev;
       if (newMode) {
@@ -38,11 +41,16 @@ const Layout: React.FC = () => {
       }
       return newMode;
     });
+    
+    // Reset transition state after animation completes
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
   };
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex flex-col min-h-screen bg-background w-full animated-bg">
+      <div className={`flex flex-col min-h-screen bg-background w-full animated-bg mode-transition ${isTransitioning ? 'transitioning' : ''}`}>
         <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
         
         <div className="flex flex-1 w-full">
@@ -66,9 +74,9 @@ const Layout: React.FC = () => {
         
         <Navigation />
         
-        {/* Copyright mark - moved to bottom right corner */}
-        <div className="fixed bottom-4 right-4 z-20 text-center">
-          <div className="inline-block px-3 py-1 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 shadow-sm">
+        {/* Copyright mark - fixed position at bottom right corner */}
+        <div className="fixed bottom-4 right-4 z-20">
+          <div className="px-3 py-1 rounded-full bg-background/80 backdrop-blur-sm border border-border/30 shadow-sm">
             <span className="text-xs opacity-60">© 2025 LegalAid</span>
             <span className="mx-1 text-primary/40 text-xs">•</span>
             <span className="text-xs opacity-60">Created by Zawad</span>

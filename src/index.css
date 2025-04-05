@@ -87,7 +87,7 @@
 
 @layer base {
   * {
-    @apply border-border transition-colors;
+    @apply border-border;
   }
 
   body {
@@ -96,7 +96,6 @@
       radial-gradient(circle at 25% 10%, rgba(65, 88, 208, 0.05) 0%, transparent 35%),
       radial-gradient(circle at 75% 75%, rgba(54, 77, 204, 0.05) 0%, transparent 35%);
     background-attachment: fixed;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -201,6 +200,17 @@
                 color 0.3s ease,
                 box-shadow 0.3s ease;
   }
+  
+  /* Enhanced transitions for mode switching */
+  .transitioning {
+    animation: mode-transition-flash 0.3s ease;
+  }
+  
+  @keyframes mode-transition-flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+  }
 
   /* Legal colors (using blue instead of cyan) */
   .legal-primary {
@@ -215,6 +225,21 @@
     background-color: #4F78FF; /* Blue instead of cyan */
   }
   
+  /* Dialog overlay - fix for color issues */
+  [data-radix-popper-content-wrapper] {
+    z-index: 50 !important;
+  }
+  
+  .Dialog__overlay {
+    @apply bg-background/80 backdrop-blur-sm;
+    animation: overlayShow 0.2s ease-in-out;
+  }
+  
+  @keyframes overlayShow {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
   /* Message animations */
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
@@ -227,5 +252,10 @@
   
   .chat-container > div {
     transform-origin: center bottom;
+  }
+  
+  /* Fix for ScrollArea in Chat components */
+  .scroll-area-viewport {
+    height: 100% !important;
   }
 }
