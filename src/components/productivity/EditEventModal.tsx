@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -86,14 +87,13 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     try {
       setIsSubmitting(true);
       
-      // Add second argument (false) to updateEvent function
-      const updatedEvent = await dataService.updateEvent({
-        id: event.id,
+      // Update to use the eventId separately from the updates object
+      const updatedEvent = await dataService.updateEvent(event.id, {
         title,
         description,
         date,
         type: eventType
-      }, false);
+      });
       
       onEventUpdated(updatedEvent);
       toast({

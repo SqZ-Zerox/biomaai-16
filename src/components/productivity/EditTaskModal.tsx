@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -81,8 +82,8 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     try {
       setIsSubmitting(true);
       
-      const updatedTask = await dataService.updateTask({
-        id: task.id,
+      // Update to use the taskId separately from the updates object
+      const updatedTask = await dataService.updateTask(task.id, {
         title,
         description,
         category,
@@ -90,7 +91,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         dueDate,
         estimatedTime: estimatedTime ? parseInt(estimatedTime) : undefined,
         completed: task.completed
-      }, false);
+      });
       
       onTaskUpdated(updatedTask);
       toast({
