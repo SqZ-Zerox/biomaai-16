@@ -594,7 +594,7 @@ const FlashcardsPage: React.FC = () => {
                 Incorrect
               </Button>
               <Button 
-                variant="success" 
+                variant="default" 
                 onClick={() => markCard('correct')}
                 className="flex items-center bg-green-600 hover:bg-green-700"
               >
