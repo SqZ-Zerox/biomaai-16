@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, AlertTriangle, Clock, PlusCircle, BarChart2, CalendarDays, ListTodo, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, AlertTriangle, Clock, PlusCircle, BarChart2, CalendarDays, ListTodo, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { dataService, StudyTask, StudyEvent, TaskCategory, TaskPriority } from "@/services/dataService";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +27,7 @@ const ProductivityHubPage = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("tasks");
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   
   // Filter states
@@ -38,6 +40,7 @@ const ProductivityHubPage = () => {
     setPriorityFilter('all');
     setCategoryFilter('all');
     setShowCompleted(false);
+    setSearchQuery("");
   };
   
   // Fetch tasks and events on mount
@@ -94,6 +97,9 @@ const ProductivityHubPage = () => {
     // Filter by category
     if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
     
+    // Filter by search query
+    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    
     return true;
   });
 
@@ -111,6 +117,25 @@ const ProductivityHubPage = () => {
       title: "Event Added",
       description: `"${newEvent.title}" has been added to your calendar.`
     });
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await dataService.deleteEvent(eventId);
+      setEvents(events.filter(event => event.id !== eventId));
+      
+      toast({
+        title: "Event Deleted",
+        description: "The event has been removed.",
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleTaskCompletion = async (taskId: string) => {
@@ -228,6 +253,19 @@ const ProductivityHubPage = () => {
 
         {/* Tasks Tab */}
         <TabsContent value="tasks" className="mt-0">
+          <div className="flex items-center mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search tasks..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          
           <TaskFilters
             priorityFilter={priorityFilter}
             setPriorityFilter={setPriorityFilter}
@@ -289,6 +327,7 @@ const ProductivityHubPage = () => {
               events={events} 
               isLoading={isLoadingEvents}
               selectedDate={date}
+              onDeleteEvent={handleDeleteEvent}
             />
           </div>
         </TabsContent>

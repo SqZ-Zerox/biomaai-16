@@ -1,18 +1,42 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Calendar, Info, CalendarDays } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Loader2, Calendar, Info, CalendarDays, Trash2, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudyEvent } from "@/services/dataService";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface EventsListProps {
   events: StudyEvent[];
   isLoading: boolean;
   selectedDate: Date;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
-const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate }) => {
+const EventsList: React.FC<EventsListProps> = ({ 
+  events, 
+  isLoading, 
+  selectedDate,
+  onDeleteEvent
+}) => {
   // Filter events for selected date
   const eventsForSelectedDate = events.filter(event => 
     event.date.getDate() === selectedDate.getDate() &&
@@ -67,6 +91,47 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
     return format(date, 'EEE, MMM d');
   };
 
+  const EventActions = ({ event }: { event: StudyEvent }) => {
+    if (!onDeleteEvent) return null;
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this event? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => onDeleteEvent(event.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   if (isLoading) {
     return (
       <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
@@ -91,6 +156,11 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
             : "Upcoming Events"
           }
         </CardTitle>
+        {eventsForSelectedDate.length > 0 && (
+          <CardDescription>
+            You have {eventsForSelectedDate.length} event{eventsForSelectedDate.length !== 1 ? 's' : ''} on this day
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         {eventsForSelectedDate.length > 0 ? (
@@ -109,12 +179,15 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
                       </p>
                     )}
                   </div>
-                  <span className={cn(
-                    "text-xs px-2 py-0.5 rounded-full",
-                    getEventTypeStyles(event.type)
-                  )}>
-                    {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={cn(
+                      "text-xs px-2 py-0.5 rounded-full",
+                      getEventTypeStyles(event.type)
+                    )}>
+                      {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                    </span>
+                    <EventActions event={event} />
+                  </div>
                 </div>
               </div>
             ))}
@@ -155,12 +228,15 @@ const EventsList: React.FC<EventsListProps> = ({ events, isLoading, selectedDate
                               </p>
                             )}
                           </div>
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 rounded-full",
-                            getEventTypeStyles(event.type)
-                          )}>
-                            {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className={cn(
+                              "text-xs px-2 py-0.5 rounded-full",
+                              getEventTypeStyles(event.type)
+                            )}>
+                              {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                            </span>
+                            <EventActions event={event} />
+                          </div>
                         </div>
                       </div>
                     </React.Fragment>

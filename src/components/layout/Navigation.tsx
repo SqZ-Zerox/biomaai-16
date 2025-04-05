@@ -7,7 +7,8 @@ import {
   Calendar, 
   Gavel,
   Library,
-  Link
+  Link,
+  CheckSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +28,7 @@ const Navigation: React.FC = () => {
       path: "/chat",
     },
     {
-      icon: <Calendar size={20} />,
+      icon: <CheckSquare size={20} />,
       label: "Productivity",
       path: "/study-plan",
     },

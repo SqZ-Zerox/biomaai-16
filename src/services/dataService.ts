@@ -1,4 +1,3 @@
-
 import { AppError } from "@/lib/error";
 
 // Types
@@ -441,7 +440,44 @@ export const dataService = {
     }
   },
   
-  // Study Sessions
+  deleteEvent: async (eventId: string): Promise<boolean> => {
+    try {
+      await delay(600);
+      const eventIndex = studyEvents.findIndex(e => e.id === eventId);
+      
+      if (eventIndex === -1) {
+        throw new AppError(`Event not found: ${eventId}`, 404);
+      }
+      
+      studyEvents.splice(eventIndex, 1);
+      return true;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to delete event", 500);
+    }
+  },
+  
+  updateEvent: async (eventId: string, updates: Partial<StudyEvent>): Promise<StudyEvent> => {
+    try {
+      await delay(500);
+      const eventIndex = studyEvents.findIndex(e => e.id === eventId);
+      
+      if (eventIndex === -1) {
+        throw new AppError(`Event not found: ${eventId}`, 404);
+      }
+      
+      studyEvents[eventIndex] = {
+        ...studyEvents[eventIndex],
+        ...updates
+      };
+      
+      return {...studyEvents[eventIndex]};
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError("Failed to update event", 500);
+    }
+  },
+  
   getSessions: async (): Promise<StudySession[]> => {
     try {
       await delay(700);
