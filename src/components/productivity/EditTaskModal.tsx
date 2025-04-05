@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -91,7 +90,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         dueDate,
         estimatedTime: estimatedTime ? parseInt(estimatedTime) : undefined,
         completed: task.completed
-      });
+      }, false);
       
       onTaskUpdated(updatedTask);
       toast({
