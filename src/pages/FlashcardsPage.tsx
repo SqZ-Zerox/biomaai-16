@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Card, 
@@ -57,7 +56,9 @@ import {
   FileCheck,
   Shield,
   Brain,
-  Clock
+  Clock,
+  Globe,
+  FileText
 } from "lucide-react";
 import { 
   FlashcardDeck, 
@@ -96,7 +97,6 @@ const FlashcardsPage: React.FC = () => {
   });
   const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
   
-  // Study mode state
   const [studyCards, setStudyCards] = useState<Flashcard[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -109,7 +109,6 @@ const FlashcardsPage: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize sample flashcards if none exist
     initializeFlashcards();
     loadDecks();
   }, []);
@@ -306,7 +305,6 @@ const FlashcardsPage: React.FC = () => {
       return;
     }
     
-    // Filter cards if category filter is active
     let cardsToStudy = [...selectedDeck.cards];
     if (filterCategory !== 'all') {
       cardsToStudy = cardsToStudy.filter(card => card.category === filterCategory);
@@ -321,7 +319,6 @@ const FlashcardsPage: React.FC = () => {
       }
     }
     
-    // Shuffle the cards
     const shuffledCards = [...cardsToStudy].sort(() => Math.random() - 0.5);
     
     setStudyCards(shuffledCards);
@@ -331,7 +328,6 @@ const FlashcardsPage: React.FC = () => {
     setReviewedCards({});
     setIsStudyMode(true);
     
-    // Update last studied timestamp
     if (selectedDeck) {
       updateDeck(selectedDeck.id, selectedDeck.name, selectedDeck.description);
     }
@@ -349,7 +345,6 @@ const FlashcardsPage: React.FC = () => {
         description: `You got ${correctCount} out of ${totalCount} cards correct (${Math.round(correctCount / totalCount * 100)}%)`,
       });
       
-      // Update confidence for reviewed cards
       if (selectedDeck) {
         Object.entries(reviewedCards).forEach(([cardId, result]) => {
           const card = selectedDeck.cards.find(c => c.id === cardId);
@@ -369,7 +364,6 @@ const FlashcardsPage: React.FC = () => {
           }
         });
         
-        // Refresh the deck data
         const updatedDeck = getDeck(selectedDeck.id);
         if (updatedDeck) {
           setSelectedDeck(updatedDeck);
@@ -416,7 +410,6 @@ const FlashcardsPage: React.FC = () => {
       [currentCard.id]: result
     }));
     
-    // Move to next card after marking
     nextCard();
   };
 
@@ -500,7 +493,6 @@ const FlashcardsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Study Mode */}
       {isStudyMode && selectedDeck && studyCards.length > 0 ? (
         <div className="h-[calc(100vh-16rem)]">
           <div className="flex justify-between items-center mb-4">
@@ -632,7 +624,6 @@ const FlashcardsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Normal view */}
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Flashcards</h1>
@@ -687,7 +678,6 @@ const FlashcardsPage: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Decks List */}
             <Card className="md:col-span-1 border-border/40 bg-card/60 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Your Flashcard Decks</CardTitle>
@@ -772,7 +762,6 @@ const FlashcardsPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Deck Viewer */}
             <Card className="md:col-span-2 border-border/40 bg-card/60 backdrop-blur-sm">
               {selectedDeck ? (
                 <>
@@ -1035,7 +1024,6 @@ const FlashcardsPage: React.FC = () => {
             </Card>
           </div>
           
-          {/* Edit Deck Dialog */}
           <Dialog open={isEditDeckDialogOpen} onOpenChange={setIsEditDeckDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -1075,7 +1063,6 @@ const FlashcardsPage: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Delete Deck Dialog */}
           <Dialog open={isDeleteDeckDialogOpen} onOpenChange={setIsDeleteDeckDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -1104,7 +1091,6 @@ const FlashcardsPage: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Edit Card Dialog */}
           <Dialog open={isEditCardDialogOpen} onOpenChange={setIsEditCardDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -1169,7 +1155,6 @@ const FlashcardsPage: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Delete Card Dialog */}
           <Dialog open={isDeleteCardDialogOpen} onOpenChange={setIsDeleteCardDialogOpen}>
             <DialogContent>
               <DialogHeader>
