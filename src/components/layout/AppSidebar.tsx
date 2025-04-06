@@ -13,7 +13,8 @@ import {
   FileText,
   Gavel,
   BookmarkCheck,
-  Library
+  Library,
+  ExternalLink
 } from "lucide-react";
 
 import {
@@ -40,8 +41,8 @@ const AppSidebar = () => {
   
   const menuItems = [
     {
-      title: "Home",
-      path: "/",
+      title: "Dashboard",
+      path: "/dashboard",
       icon: Home,
     },
     {
@@ -88,6 +89,12 @@ const AppSidebar = () => {
   
   const secondaryMenuItems = [
     {
+      title: "Landing Page",
+      path: "/",
+      icon: ExternalLink,
+      external: true,
+    },
+    {
       title: "Resources",
       path: "/resources",
       icon: BookOpenCheck,
@@ -103,6 +110,14 @@ const AppSidebar = () => {
       icon: HelpCircle,
     }
   ];
+
+  const handleNavigation = (path, external = false) => {
+    if (external) {
+      window.open(path, '_blank');
+    } else {
+      navigate(path);
+    }
+  };
 
   return (
     <Sidebar data-state={state}>
@@ -148,7 +163,7 @@ const AppSidebar = () => {
                   <SidebarMenuButton 
                     tooltip={item.title}
                     isActive={location.pathname === item.path} 
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigation(item.path, item.external)}
                     className="transition-all duration-300 hover:bg-primary/10"
                   >
                     <item.icon className="text-primary" />

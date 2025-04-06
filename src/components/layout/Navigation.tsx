@@ -8,7 +8,8 @@ import {
   Gavel,
   Library,
   Link,
-  CheckSquare
+  CheckSquare,
+  Home
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,11 @@ const Navigation: React.FC = () => {
   const location = useLocation();
   
   const navItems = [
+    {
+      icon: <Home size={20} />,
+      label: "Dashboard",
+      path: "/dashboard",
+    },
     {
       icon: <BookOpen size={20} />,
       label: "Study",

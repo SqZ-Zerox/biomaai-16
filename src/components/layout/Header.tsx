@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon } from "lucide-react";
+import { MoonIcon, SunIcon, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
           
           <div 
             className="flex items-center gap-2 ml-2" 
-            onClick={() => navigate("/")} 
+            onClick={() => navigate("/dashboard")} 
             role="button"
             tabIndex={0}
           >
@@ -33,6 +33,15 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => window.open('/', '_blank')}
+            className="gap-1"
+          >
+            Landing Page <ExternalLink className="h-3 w-3" />
+          </Button>
+          
           <Button 
             variant="ghost" 
             size="icon"
