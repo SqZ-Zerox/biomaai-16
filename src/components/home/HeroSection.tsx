@@ -1,7 +1,15 @@
-
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Scale, MessageSquare, GraduationCap } from "lucide-react";
+import { 
+  ArrowRight, 
+  BookOpen, 
+  Scale, 
+  MessageSquare, 
+  GraduationCap,
+  FileText,
+  CheckSquare,
+  Briefcase
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
