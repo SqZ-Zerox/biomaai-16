@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   ArrowRight, 
@@ -10,7 +10,10 @@ import {
   FileText, 
   CheckSquare, 
   Library,
-  Briefcase
+  Briefcase,
+  PinIcon,
+  Settings2,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,60 +22,123 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TestimonialCard from "@/components/home/TestimonialCard";
 import FeatureCard from "@/components/home/FeatureCard";
 import HeroSection from "@/components/home/HeroSection";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetClose,
+  SheetFooter
+} from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SwitchButtons } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const features = [
-    {
-      icon: <Scale className="h-10 w-10 text-primary" />,
-      title: "Case Brief Generator",
-      description: "Transform complex legal cases into clear, concise briefs in seconds.",
-      path: "/case-brief",
-      usageCount: 8,
-      isPinned: true
-    },
-    {
-      icon: <MessageSquare className="h-10 w-10 text-primary" />,
-      title: "AI Legal Chat",
-      description: "Get instant answers to your legal questions from our AI assistant.",
-      path: "/chat",
-      usageCount: 12,
-      isPinned: false
-    },
-    {
-      icon: <FileText className="h-10 w-10 text-primary" />,
-      title: "Legal Essay Assistant",
-      description: "Write better legal essays with AI-powered suggestions and formatting.",
-      path: "/legal-essays",
-      usageCount: 5,
-      isPinned: true
-    },
-    {
-      icon: <BookOpen className="h-10 w-10 text-primary" />,
-      title: "Study Resources",
-      description: "Access comprehensive study materials organized by legal subjects.",
-      path: "/study",
-      usageCount: 15,
-      isPinned: false
-    },
-    {
-      icon: <Library className="h-10 w-10 text-primary" />,
-      title: "Flashcards",
-      description: "Master legal concepts with customizable flashcards and spaced repetition.",
-      path: "/flashcards",
-      usageCount: 7,
-      isPinned: false
-    },
-    {
-      icon: <CheckSquare className="h-10 w-10 text-primary" />,
-      title: "Productivity Hub",
-      description: "Stay organized with task management tools designed for law students.",
-      path: "/study-plan",
-      usageCount: 10,
-      isPinned: false
-    }
-  ];
+  // Initialize from localStorage or use default features
+  const [features, setFeatures] = useState(() => {
+    const savedFeatures = localStorage.getItem('studyTools');
+    return savedFeatures ? JSON.parse(savedFeatures) : [
+      {
+        icon: <Scale className="h-10 w-10 text-primary" />,
+        title: "Case Brief Generator",
+        description: "Transform complex legal cases into clear, concise briefs in seconds.",
+        path: "/case-brief",
+        isPinned: true,
+        isVisible: true
+      },
+      {
+        icon: <MessageSquare className="h-10 w-10 text-primary" />,
+        title: "AI Legal Chat",
+        description: "Get instant answers to your legal questions from our AI assistant.",
+        path: "/chat",
+        isPinned: false,
+        isVisible: true
+      },
+      {
+        icon: <FileText className="h-10 w-10 text-primary" />,
+        title: "Legal Essay Assistant",
+        description: "Write better legal essays with AI-powered suggestions and formatting.",
+        path: "/legal-essays",
+        isPinned: true,
+        isVisible: true
+      },
+      {
+        icon: <BookOpen className="h-10 w-10 text-primary" />,
+        title: "Study Resources",
+        description: "Access comprehensive study materials organized by legal subjects.",
+        path: "/study",
+        isPinned: false,
+        isVisible: true
+      },
+      {
+        icon: <Library className="h-10 w-10 text-primary" />,
+        title: "Flashcards",
+        description: "Master legal concepts with customizable flashcards and spaced repetition.",
+        path: "/flashcards",
+        isPinned: false,
+        isVisible: true
+      },
+      {
+        icon: <CheckSquare className="h-10 w-10 text-primary" />,
+        title: "Productivity Hub",
+        description: "Stay organized with task management tools designed for law students.",
+        path: "/study-plan",
+        isPinned: false,
+        isVisible: true
+      }
+    ];
+  });
+
+  // Save to localStorage whenever features change
+  useEffect(() => {
+    localStorage.setItem('studyTools', JSON.stringify(features));
+  }, [features]);
+
+  // Handle dragging and reordering
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(features);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setFeatures(items);
+    toast({
+      title: "Tools rearranged",
+      description: "Your study tools have been reordered."
+    });
+  };
+
+  const togglePinned = (index) => {
+    const newFeatures = [...features];
+    newFeatures[index].isPinned = !newFeatures[index].isPinned;
+    setFeatures(newFeatures);
+  };
+
+  const toggleVisibility = (index) => {
+    const newFeatures = [...features];
+    newFeatures[index].isVisible = !newFeatures[index].isVisible;
+    setFeatures(newFeatures);
+  };
+
+  // Reset to defaults
+  const resetDefaults = () => {
+    localStorage.removeItem('studyTools');
+    window.location.reload();
+  };
+
+  // Show only visible features on the dashboard
+  const visibleFeatures = features.filter(feature => feature.isVisible);
 
   // Recent activity - this would typically come from a backend API
   const recentActivity = [
@@ -139,28 +205,126 @@ const Index = () => {
                 >
                   My Study Tools
                 </motion.h2>
-                <Button variant="ghost" size="sm" className="gap-1" onClick={() => {}}>
-                  Customize <ArrowRight className="h-4 w-4" />
-                </Button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      Customize <Settings2 className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="sm:max-w-md overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Customize Study Tools</SheetTitle>
+                      <SheetDescription>
+                        Reorder, pin, or hide study tools to customize your dashboard.
+                      </SheetDescription>
+                    </SheetHeader>
+                    
+                    <div className="py-6">
+                      <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="toolsList">
+                          {(provided) => (
+                            <div
+                              {...provided.droppableProps}
+                              ref={provided.innerRef}
+                              className="space-y-2"
+                            >
+                              {features.map((feature, index) => (
+                                <Draggable key={feature.title} draggableId={feature.title} index={index}>
+                                  {(provided) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={`flex items-center justify-between p-3 rounded-md border ${feature.isVisible ? 'bg-card' : 'bg-muted/30'}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        {React.cloneElement(feature.icon, { 
+                                          className: `h-5 w-5 ${feature.isVisible ? 'text-primary' : 'text-muted-foreground'}` 
+                                        })}
+                                        <span className={feature.isVisible ? '' : 'text-muted-foreground'}>
+                                          {feature.title}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => togglePinned(index)}
+                                        >
+                                          <PinIcon 
+                                            className={`h-4 w-4 ${feature.isPinned ? 'text-primary' : 'text-muted-foreground'}`} 
+                                          />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => toggleVisibility(index)}
+                                        >
+                                          {feature.isVisible ? (
+                                            <span className="text-green-500">✓</span>
+                                          ) : (
+                                            <X className="h-4 w-4 text-muted-foreground" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      </DragDropContext>
+                      
+                      <div className="mt-6">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <span className="text-green-500">✓</span> = Visible | 
+                          <PinIcon className="h-3 w-3 inline mx-1 text-primary" /> = Pinned to top
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Drag and drop to reorder your tools.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <SheetFooter className="flex flex-row justify-between sm:justify-between">
+                      <Button variant="outline" onClick={resetDefaults}>
+                        Reset to Default
+                      </Button>
+                      <SheetClose asChild>
+                        <Button>Save Changes</Button>
+                      </SheetClose>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                {features.slice(0, 4).map((feature, index) => (
-                  <FeatureCard 
-                    key={index}
-                    icon={feature.icon}
-                    title={feature.title}
-                    description={feature.description}
-                    onClick={() => navigate(feature.path)}
-                    delay={index * 0.1}
-                    usageCount={feature.usageCount}
-                    isPinned={feature.isPinned}
-                  />
-                ))}
+                {/* Display pinned items first, then others */}
+                {visibleFeatures
+                  .sort((a, b) => {
+                    if (a.isPinned === b.isPinned) return 0;
+                    return a.isPinned ? -1 : 1;
+                  })
+                  .slice(0, 4)
+                  .map((feature, index) => (
+                    <FeatureCard 
+                      key={index}
+                      icon={feature.icon}
+                      title={feature.title}
+                      description={feature.description}
+                      onClick={() => navigate(feature.path)}
+                      delay={index * 0.1}
+                      isPinned={feature.isPinned}
+                    />
+                  ))}
               </div>
 
               <div className="mt-6">
-                <Button variant="outline" className="w-full" onClick={() => {}}>
+                <Button variant="outline" className="w-full" onClick={() => navigate("/study")}>
                   View All Tools
                 </Button>
               </div>
