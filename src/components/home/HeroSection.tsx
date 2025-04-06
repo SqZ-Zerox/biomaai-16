@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, ArrowUpRight, CheckCircle2, GraduateCap, Scale, BookText, Bookmark } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CheckCircle2, GraduationCap, Scale, BookText, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ const HeroSection: React.FC = () => {
       text: "Smart Study Tools"
     },
     {
-      icon: <GraduateCap className="h-5 w-5 text-primary" />,
+      icon: <GraduationCap className="h-5 w-5 text-primary" />,
       text: "Personalized Learning"
     },
     {
@@ -132,7 +132,7 @@ const HeroSection: React.FC = () => {
               <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl shadow-xl overflow-hidden">
                 <div className="p-6 sm:p-8">
                   <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <GraduateCap className="mr-2 h-5 w-5 text-primary" />
+                    <GraduationCap className="mr-2 h-5 w-5 text-primary" />
                     Your Learning Hub
                   </h3>
                   

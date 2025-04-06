@@ -1,616 +1,239 @@
-
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { ArrowRight, ArrowUpRight, CheckCircle2, GraduationCap, Scale, BookText, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-interface AuthFormProps {
-  redirectUrl?: string;
-  onSuccess?: () => void;
-}
-
-// Schema for authentication form validation
-const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
-  rememberMe: z.boolean().default(false),
-});
-
-const signupSchema = z.object({
-  fullName: z.string().min(2, { message: "Please enter your full name." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms and conditions." }),
-  }),
-  occupation: z.string().optional(),
-  legalInterest: z.string().optional(),
-});
-
-const AuthForm: React.FC<AuthFormProps> = ({ 
-  redirectUrl = "/dashboard", 
-  onSuccess 
-}) => {
-  const [activeTab, setActiveTab] = useState<string>("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const { toast } = useToast();
+const HeroSection: React.FC = () => {
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.2]);
+  const yPos = useTransform(scrollYProgress, [0, 0.2], [0, -50]);
 
-  // Login form
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      rememberMe: false,
+  const features = [
+    {
+      icon: <Scale className="h-5 w-5 text-primary" />,
+      text: "Case Brief Generator"
     },
-  });
-
-  // Signup form
-  const signupForm = useForm<z.infer<typeof signupSchema>>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
-      acceptTerms: false,
-      occupation: "",
-      legalInterest: "",
+    {
+      icon: <BookText className="h-5 w-5 text-primary" />,
+      text: "Smart Study Tools"
     },
-  });
-
-  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in to your account.",
-        variant: "default",
-      });
-      
-      if (values.rememberMe) {
-        localStorage.setItem('rememberedEmail', values.email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-      }
-      
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        setTimeout(() => {
-          navigate(redirectUrl);
-        }, 1000);
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      
-      toast({
-        title: "Sign in failed",
-        description: error?.message || "Please check your credentials and try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    {
+      icon: <GraduationCap className="h-5 w-5 text-primary" />,
+      text: "Personalized Learning"
+    },
+    {
+      icon: <Bookmark className="h-5 w-5 text-primary" />,
+      text: "Powerful Research"
     }
-  };
-
-  const handleSignup = async (values: z.infer<typeof signupSchema>) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            full_name: values.fullName,
-            occupation: values.occupation || null,
-            legal_interest: values.legalInterest || null,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Registration successful!",
-        description: "Please check your email to verify your account.",
-        variant: "default",
-      });
-      
-      setShowFeedback(true);
-      
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      
-      toast({
-        title: "Registration failed",
-        description: error?.message || "An error occurred during registration",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Load remembered email if exists
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    if (rememberedEmail) {
-      loginForm.setValue('email', rememberedEmail);
-      loginForm.setValue('rememberMe', true);
-    }
-  }, [loginForm]);
-
-  const legalInterestOptions = [
-    { value: 'constitutional', label: 'Constitutional Law' },
-    { value: 'criminal', label: 'Criminal Law' },
-    { value: 'corporate', label: 'Corporate Law' },
-    { value: 'intellectual', label: 'Intellectual Property' },
-    { value: 'international', label: 'International Law' },
-    { value: 'environmental', label: 'Environmental Law' },
-    { value: 'family', label: 'Family Law' },
-    { value: 'other', label: 'Other' },
-  ];
-
-  const occupationOptions = [
-    { value: 'student', label: 'Law Student' },
-    { value: 'attorney', label: 'Attorney' },
-    { value: 'professor', label: 'Law Professor' },
-    { value: 'judge', label: 'Judge' },
-    { value: 'paralegal', label: 'Paralegal' },
-    { value: 'other', label: 'Other Legal Professional' },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="w-full max-w-md mx-auto border-border/30 shadow-xl bg-card/70 backdrop-blur-md">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-2">
-            <TabsTrigger value="login" className="rounded-md">Sign In</TabsTrigger>
-            <TabsTrigger value="signup" className="rounded-md">Create Account</TabsTrigger>
-          </TabsList>
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
+    <section className="relative overflow-hidden py-20 md:py-28 lg:py-36">
+      {/* Background elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full filter blur-3xl" />
+        <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-primary/3 rounded-full filter blur-3xl" />
+        <div className="absolute top-3/4 left-1/3 w-64 h-64 bg-primary/3 rounded-full filter blur-3xl" />
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background pointer-events-none" />
+      </div>
+
+      <motion.div 
+        className="container px-4 md:px-6 mx-auto relative z-10"
+        style={{ opacity, y: yPos }}
+      >
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">
+          <div className="flex-1 text-center lg:text-left space-y-8">
+            <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <Badge className="mb-2 text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20 rounded-full">
+                  Legal Education, Reimagined
+                </Badge>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+                    Master Legal Studies
+                  </span>{" "}
+                  <br className="hidden md:inline" />
+                  <span>With AI-Powered Tools</span>
+                </h1>
+              </motion.div>
+              
+              <motion.p 
+                className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mt-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                Your comprehensive legal education platform that simplifies studying, 
+                research, and case analysis with intelligent AI assistance.
+              </motion.p>
+            </div>
+            
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <TabsContent value="login" className="mt-0">
-                {showFeedback ? (
-                  <div className="p-6 space-y-4">
-                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-                        <CheckCircle2 className="h-8 w-8 text-primary" />
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/login")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-medium rounded-full"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/chat")}
+                className="h-12 px-6 rounded-full"
+              >
+                Try Law Assistant
+                <ArrowUpRight className="ml-2 h-4 w-4" />
+              </Button>
+            </motion.div>
+            
+            <motion.div
+              className="pt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <p className="text-sm text-muted-foreground mb-4">Trusted by law students from</p>
+              <div className="flex flex-wrap gap-6 justify-center lg:justify-start items-center">
+                <div className="text-muted-foreground/70 font-semibold">Harvard Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Stanford Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Yale Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Columbia Law</div>
+              </div>
+            </motion.div>
+          </div>
+          
+          <motion.div 
+            className="flex-1 w-full max-w-xl"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="relative">
+              {/* Decorative elements */}
+              <div className="absolute -inset-px bg-gradient-to-r from-primary/20 to-primary/10 rounded-xl blur-lg opacity-50"></div>
+              
+              <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl shadow-xl overflow-hidden">
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                    <GraduationCap className="mr-2 h-5 w-5 text-primary" />
+                    Your Learning Hub
+                  </h3>
+                  
+                  <div className="space-y-4 mb-6">
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Scale className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Case Brief Progress</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Constitutional Law · Brown v. Board of Education</p>
+                          <div className="w-full bg-muted rounded-full h-2 mt-2">
+                            <div className="bg-primary h-2 rounded-full w-3/4"></div>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="text-xl font-semibold">Check Your Email</h3>
-                      <p className="text-muted-foreground">
-                        We've sent a verification link to your email address.
-                        Please check your inbox and follow the instructions.
-                      </p>
-                      <Button 
-                        className="mt-4" 
-                        variant="outline"
-                        onClick={() => setShowFeedback(false)}
-                      >
-                        Back to Sign In
-                      </Button>
+                    </div>
+                    
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Study Streak</h4>
+                          <p className="text-xs text-muted-foreground mt-1">You've been consistently studying for 7 days</p>
+                          <div className="flex gap-1 mt-2">
+                            {[...Array(7)].map((_, i) => (
+                              <div key={i} className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <BookText className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Today's Focus</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Complete Constitutional Law case brief</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">3 tasks remaining</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4 px-4 py-2">
-                      <CardContent className="space-y-4 p-2">
-                        <FormField
-                          control={loginForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <div className="relative">
-                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <FormControl>
-                                  <Input
-                                    placeholder="your.email@example.com"
-                                    className="pl-10"
-                                    {...field}
-                                  />
-                                </FormControl>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={loginForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center justify-between">
-                                <FormLabel>Password</FormLabel>
-                                <Button
-                                  variant="link"
-                                  className="px-0 h-auto text-xs font-normal"
-                                  type="button"
-                                  onClick={() => {
-                                    toast({
-                                      title: "Reset password",
-                                      description: "Password reset functionality coming soon.",
-                                    });
-                                  }}
-                                >
-                                  Forgot password?
-                                </Button>
-                              </div>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <FormControl>
-                                  <Input
-                                    type={showPassword ? "text" : "password"}
-                                    className="pl-10 pr-10"
-                                    placeholder="••••••••"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute right-0 top-0 h-full px-3 py-2"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                >
-                                  {showPassword ? (
-                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                  ) : (
-                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </Button>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={loginForm.control}
-                          name="rememberMe"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-sm font-normal">
-                                  Remember me
-                                </FormLabel>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                      
-                      <CardFooter className="flex flex-col space-y-3 px-2 pt-0">
-                        <Button
-                          type="submit"
-                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? "Signing in..." : "Sign In"}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                        
-                        <p className="px-2 text-center text-sm text-muted-foreground">
-                          Don't have an account?{" "}
-                          <Button
-                            variant="link"
-                            className="p-0"
-                            onClick={() => setActiveTab("signup")}
-                            type="button"
-                          >
-                            Sign up
-                          </Button>
-                        </p>
-                      </CardFooter>
-                    </form>
-                  </Form>
-                )}
-              </TabsContent>
-            </motion.div>
-
-            <motion.div
-              key={activeTab === "signup" ? "signup" : "login-placeholder"}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <TabsContent value="signup" className="mt-0">
-                {showFeedback ? (
-                  <div className="p-6 space-y-4">
-                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-                        <CheckCircle2 className="h-8 w-8 text-primary" />
-                      </div>
-                      <h3 className="text-xl font-semibold">Check Your Email</h3>
-                      <p className="text-muted-foreground">
-                        We've sent a verification link to your email address.
-                        Please check your inbox and follow the instructions.
-                      </p>
-                      <Button 
-                        className="mt-4" 
-                        variant="outline"
-                        onClick={() => {
-                          setShowFeedback(false);
-                          setActiveTab("login");
+                  
+                  <Button 
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="bg-muted/30 border-t border-border/20 p-4">
+                  <div className="flex flex-wrap gap-2 justify-around">
+                    {features.map((feature, i) => (
+                      <motion.div 
+                        key={i}
+                        className="flex items-center gap-1.5"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          transition: { delay: 0.4 + (i * 0.1) }
                         }}
                       >
-                        Back to Sign In
-                      </Button>
-                    </div>
+                        {feature.icon}
+                        <span className="text-xs font-medium">{feature.text}</span>
+                      </motion.div>
+                    ))}
                   </div>
-                ) : (
-                  <Form {...signupForm}>
-                    <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4 px-4 py-2">
-                      <CardContent className="space-y-4 p-2">
-                        <FormField
-                          control={signupForm.control}
-                          name="fullName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Full Name</FormLabel>
-                              <div className="relative">
-                                <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <FormControl>
-                                  <Input
-                                    placeholder="John Doe"
-                                    className="pl-10"
-                                    {...field}
-                                  />
-                                </FormControl>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={signupForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <div className="relative">
-                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <FormControl>
-                                  <Input
-                                    type="email"
-                                    placeholder="your.email@example.com"
-                                    className="pl-10"
-                                    {...field}
-                                  />
-                                </FormControl>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={signupForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <FormControl>
-                                  <Input
-                                    type={showPassword ? "text" : "password"}
-                                    className="pl-10 pr-10"
-                                    placeholder="••••••••"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute right-0 top-0 h-full px-3 py-2"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                >
-                                  {showPassword ? (
-                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                  ) : (
-                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </Button>
-                              </div>
-                              <FormMessage />
-                              <FormDescription className="text-xs">
-                                Must be at least 6 characters
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={signupForm.control}
-                          name="occupation"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Occupation (Optional)</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select your occupation" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {occupationOptions.map(option => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                This helps us personalize your experience
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={signupForm.control}
-                          name="legalInterest"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Area of Legal Interest (Optional)</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select an area of interest" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {legalInterestOptions.map(option => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormDescription>
-                                Helps us tailor content to your interests
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={signupForm.control}
-                          name="acceptTerms"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-xs font-normal">
-                                  I accept the <Button variant="link" className="p-0 h-auto text-xs" type="button" onClick={() => window.open('/terms', '_blank')}>
-                                    Terms of Service
-                                  </Button> and{" "}
-                                  <Button variant="link" className="p-0 h-auto text-xs" type="button" onClick={() => window.open('/privacy', '_blank')}>
-                                    Privacy Policy
-                                  </Button>
-                                </FormLabel>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                      
-                      <CardFooter className="flex flex-col space-y-3 px-2 pt-0">
-                        <Button
-                          type="submit"
-                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? "Creating Account..." : "Create Account"}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                        
-                        <p className="px-2 text-center text-sm text-muted-foreground">
-                          Already have an account?{" "}
-                          <Button
-                            variant="link"
-                            className="p-0"
-                            onClick={() => setActiveTab("login")}
-                            type="button"
-                          >
-                            Sign in
-                          </Button>
-                        </p>
-                      </CardFooter>
-                    </form>
-                  </Form>
-                )}
-              </TabsContent>
-            </motion.div>
-          </AnimatePresence>
-        </Tabs>
-      </Card>
-    </motion.div>
+                </div>
+              </div>
+              
+              {/* Decorative elements */}
+              <div className="absolute -bottom-4 -right-4 bg-card border border-border/40 shadow-lg rounded-lg p-3 w-48">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium">Case Brief Complete</p>
+                    <p className="text-xs text-muted-foreground">Just now</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    </section>
   );
 };
 
-export default AuthForm;
+export default HeroSection;

@@ -1,4 +1,3 @@
-
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +13,7 @@ import {
   Lock,
   ArrowUpRight,
   ExternalLink,
-  GraduateCap,
+  GraduationCap,
   LibraryBig,
   Brain,
   Users
@@ -60,13 +59,13 @@ const LandingPage: React.FC = () => {
           </div>
           
           <nav className="hidden md:flex items-center space-x-1">
-            <Button variant="ghost" size="sm" onClick={() => scrollToRef(featuredRef)}>
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection(featuredRef)}>
               Features
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => scrollToRef(testimonialRef)}>
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection(testimonialRef)}>
               Testimonials
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => scrollToRef(pricingRef)}>
+            <Button variant="ghost" size="sm" onClick={() => scrollToSection(pricingRef)}>
               Pricing
             </Button>
             <Button variant="outline" size="sm" className="ml-2" onClick={() => navigate("/login")}>
