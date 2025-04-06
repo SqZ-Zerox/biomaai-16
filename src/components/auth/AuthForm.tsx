@@ -1,17 +1,19 @@
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight, UserRound, School, Gavel, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -22,6 +24,9 @@ const signupSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  userType: z.enum(["student", "professor", "legal_professional", "researcher"], {
+    required_error: "Please select your profession",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -36,6 +41,7 @@ const AuthForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentSignupStep, setCurrentSignupStep] = useState<'credentials' | 'persona'>('credentials');
   
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -53,6 +59,7 @@ const AuthForm: React.FC = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      userType: "student",
     },
   });
 
@@ -82,12 +89,43 @@ const AuthForm: React.FC = () => {
     }
   };
 
+  const proceedToPersonaStep = () => {
+    const { email, password, confirmPassword } = signupForm.getValues();
+    
+    // Validate current fields before proceeding
+    if (!email || !password || !confirmPassword || password !== confirmPassword) {
+      signupForm.trigger(["email", "password", "confirmPassword"]);
+      return;
+    }
+    
+    setCurrentSignupStep('persona');
+  };
+
+  const backToCredentialsStep = () => {
+    setCurrentSignupStep('credentials');
+  };
+
   const onSignupSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
       console.log("Signup values:", values);
       // Here you would integrate with your authentication provider
-      // await supabase.auth.signUp(values);
+      // const { data, error } = await supabase.auth.signUp({
+      //   email: values.email,
+      //   password: values.password,
+      //   options: {
+      //     data: {
+      //       user_type: values.userType
+      //     }
+      //   }
+      // });
+      
+      // if (error) {
+      //   if (error.message.includes("already registered")) {
+      //     throw new Error("This email is already registered. Please login or use a different email.");
+      //   }
+      //   throw error;
+      // }
       
       toast({
         title: "Account created!",
@@ -99,7 +137,7 @@ const AuthForm: React.FC = () => {
       }, 1000);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Sign up failed",
         description: error.message || "Failed to create account. Please try again.",
         variant: "destructive",
       });
@@ -107,6 +145,13 @@ const AuthForm: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const userTypeOptions = [
+    { value: 'student', label: 'Law Student', icon: School },
+    { value: 'professor', label: 'Law Professor', icon: BookOpen },
+    { value: 'legal_professional', label: 'Legal Professional', icon: Gavel },
+    { value: 'researcher', label: 'Legal Researcher', icon: UserRound },
+  ];
 
   return (
     <motion.div
@@ -136,6 +181,7 @@ const AuthForm: React.FC = () => {
                         <Input 
                           placeholder="you@example.com" 
                           className="pl-10" 
+                          disabled={isLoading}
                           {...field} 
                         />
                       </div>
@@ -158,6 +204,7 @@ const AuthForm: React.FC = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••" 
                           className="pl-10" 
+                          disabled={isLoading}
                           {...field} 
                         />
                         <Button
@@ -166,6 +213,7 @@ const AuthForm: React.FC = () => {
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
                         >
                           {showPassword ? (
                             <EyeOff className="h-5 w-5 text-muted-foreground" />
@@ -186,6 +234,7 @@ const AuthForm: React.FC = () => {
                   className="px-0 font-normal text-sm text-muted-foreground"
                   onClick={() => navigate("/forgot-password")}
                   type="button"
+                  disabled={isLoading}
                 >
                   Forgot password?
                 </Button>
@@ -197,15 +246,15 @@ const AuthForm: React.FC = () => {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <>
+                  <span className="flex items-center">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
-                  </>
+                    Signing in...
+                  </span>
                 ) : (
-                  <>
+                  <span className="flex items-center">
                     Sign In
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+                  </span>
                 )}
               </Button>
             </form>
@@ -215,114 +264,198 @@ const AuthForm: React.FC = () => {
         <TabsContent value="signup">
           <Form {...signupForm}>
             <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
-              <FormField
-                control={signupForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                          placeholder="you@example.com" 
-                          className="pl-10" 
-                          {...field} 
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={signupForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••" 
-                          className="pl-10" 
-                          {...field} 
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={signupForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••" 
-                          className="pl-10" 
-                          {...field} 
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-5 w-5 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
-                  </>
+              <AnimatePresence mode="wait">
+                {currentSignupStep === 'credentials' ? (
+                  <motion.div
+                    key="credentials"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={signupForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                placeholder="you@example.com" 
+                                className="pl-10" 
+                                disabled={isLoading}
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••" 
+                                className="pl-10" 
+                                disabled={isLoading}
+                                {...field} 
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                                disabled={isLoading}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-5 w-5 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="••••••••" 
+                                className="pl-10" 
+                                disabled={isLoading}
+                                {...field} 
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                disabled={isLoading}
+                              >
+                                {showConfirmPassword ? (
+                                  <EyeOff className="h-5 w-5 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="button" 
+                      className="w-full" 
+                      onClick={proceedToPersonaStep}
+                      disabled={isLoading}
+                    >
+                      Next: Tell us about yourself
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </motion.div>
                 ) : (
-                  <>
-                    Create Account
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+                  <motion.div
+                    key="persona"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={signupForm.control}
+                      name="userType"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>I am a...</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-1 gap-3"
+                              disabled={isLoading}
+                            >
+                              {userTypeOptions.map((option) => {
+                                const Icon = option.icon;
+                                return (
+                                  <Label
+                                    key={option.value}
+                                    htmlFor={`userType-${option.value}`}
+                                    className={`flex items-center space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent transition-colors ${field.value === option.value ? 'border-primary' : 'border-input'}`}
+                                  >
+                                    <RadioGroupItem value={option.value} id={`userType-${option.value}`} />
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <Icon className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <span>{option.label}</span>
+                                  </Label>
+                                );
+                              })}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={backToCredentialsStep}
+                        disabled={isLoading}
+                      >
+                        Back
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating account...
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            Create Account
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                  </motion.div>
                 )}
-              </Button>
+              </AnimatePresence>
             </form>
           </Form>
         </TabsContent>
@@ -338,7 +471,7 @@ const AuthForm: React.FC = () => {
       </div>
       
       <div className="flex flex-col gap-3">
-        <Button variant="outline" type="button" className="w-full">
+        <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
           <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
             <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
               <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
@@ -350,7 +483,7 @@ const AuthForm: React.FC = () => {
           Google
         </Button>
         
-        <Button variant="outline" type="button" className="w-full">
+        <Button variant="outline" type="button" className="w-full" disabled={isLoading}>
           <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" />
             <path d="M10 2c1 .5 2 2 2 5" />
