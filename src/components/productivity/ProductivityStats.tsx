@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +18,17 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { CheckCircle2, Clock, CalendarClock, Sparkles, Calendar, BarChart2, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+import { 
+  CheckCircle2, 
+  Clock, 
+  CalendarClock, 
+  Sparkles, 
+  Calendar, 
+  BarChart2, 
+  TrendingUp, 
+  PieChart as PieChartIcon, 
+  Target 
+} from "lucide-react";
 import { StudyTask, dataService } from "@/services/dataService";
 import { format, subDays, isSameDay } from "date-fns";
 import { Progress } from "@/components/ui/progress";
