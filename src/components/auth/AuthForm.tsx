@@ -1,239 +1,372 @@
-import React from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, ArrowUpRight, CheckCircle2, GraduationCap, Scale, BookText, Bookmark } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Eye, EyeOff, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const HeroSection: React.FC = () => {
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+const signupSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
+
+const AuthForm: React.FC = () => {
   const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.2]);
-  const yPos = useTransform(scrollYProgress, [0, 0.2], [0, -50]);
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Login form
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const features = [
-    {
-      icon: <Scale className="h-5 w-5 text-primary" />,
-      text: "Case Brief Generator"
+  // Signup form
+  const signupForm = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
     },
-    {
-      icon: <BookText className="h-5 w-5 text-primary" />,
-      text: "Smart Study Tools"
-    },
-    {
-      icon: <GraduationCap className="h-5 w-5 text-primary" />,
-      text: "Personalized Learning"
-    },
-    {
-      icon: <Bookmark className="h-5 w-5 text-primary" />,
-      text: "Powerful Research"
+  });
+
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    setIsLoading(true);
+    try {
+      console.log("Login values:", values);
+      // Here you would integrate with your authentication provider
+      // await supabase.auth.signInWithPassword(values);
+      
+      toast({
+        title: "Success!",
+        description: "You've been logged in successfully.",
+      });
+      
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to login. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  const onSignupSubmit = async (values: SignupFormValues) => {
+    setIsLoading(true);
+    try {
+      console.log("Signup values:", values);
+      // Here you would integrate with your authentication provider
+      // await supabase.auth.signUp(values);
+      
+      toast({
+        title: "Account created!",
+        description: "Please check your email to confirm your account.",
+      });
+      
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <section className="relative overflow-hidden py-20 md:py-28 lg:py-36">
-      {/* Background elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full filter blur-3xl" />
-        <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-primary/3 rounded-full filter blur-3xl" />
-        <div className="absolute top-3/4 left-1/3 w-64 h-64 bg-primary/3 rounded-full filter blur-3xl" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="w-full"
+    >
+      <Tabs defaultValue="login" className="w-full">
+        <TabsList className="grid grid-cols-2 mb-6">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        </TabsList>
         
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background pointer-events-none" />
-      </div>
-
-      <motion.div 
-        className="container px-4 md:px-6 mx-auto relative z-10"
-        style={{ opacity, y: yPos }}
-      >
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">
-          <div className="flex-1 text-center lg:text-left space-y-8">
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Badge className="mb-2 text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20 rounded-full">
-                  Legal Education, Reimagined
-                </Badge>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-                    Master Legal Studies
-                  </span>{" "}
-                  <br className="hidden md:inline" />
-                  <span>With AI-Powered Tools</span>
-                </h1>
-              </motion.div>
+        <TabsContent value="login">
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+              <FormField
+                control={loginForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                          placeholder="you@example.com" 
+                          className="pl-10" 
+                          {...field} 
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
-              <motion.p 
-                className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mt-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                Your comprehensive legal education platform that simplifies studying, 
-                research, and case analysis with intelligent AI assistance.
-              </motion.p>
-            </div>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <Button 
-                size="lg" 
-                onClick={() => navigate("/login")}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-medium rounded-full"
-              >
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate("/chat")}
-                className="h-12 px-6 rounded-full"
-              >
-                Try Law Assistant
-                <ArrowUpRight className="ml-2 h-4 w-4" />
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              className="pt-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <p className="text-sm text-muted-foreground mb-4">Trusted by law students from</p>
-              <div className="flex flex-wrap gap-6 justify-center lg:justify-start items-center">
-                <div className="text-muted-foreground/70 font-semibold">Harvard Law</div>
-                <div className="text-muted-foreground/70 font-semibold">Stanford Law</div>
-                <div className="text-muted-foreground/70 font-semibold">Yale Law</div>
-                <div className="text-muted-foreground/70 font-semibold">Columbia Law</div>
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••" 
+                          className="pl-10" 
+                          {...field} 
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="link" 
+                  className="px-0 font-normal text-sm text-muted-foreground"
+                  onClick={() => navigate("/forgot-password")}
+                  type="button"
+                >
+                  Forgot password?
+                </Button>
               </div>
-            </motion.div>
-          </div>
-          
-          <motion.div 
-            className="flex-1 w-full max-w-xl"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <div className="relative">
-              {/* Decorative elements */}
-              <div className="absolute -inset-px bg-gradient-to-r from-primary/20 to-primary/10 rounded-xl blur-lg opacity-50"></div>
               
-              <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl shadow-xl overflow-hidden">
-                <div className="p-6 sm:p-8">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <GraduationCap className="mr-2 h-5 w-5 text-primary" />
-                    Your Learning Hub
-                  </h3>
-                  
-                  <div className="space-y-4 mb-6">
-                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Scale className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm">Case Brief Progress</h4>
-                          <p className="text-xs text-muted-foreground mt-1">Constitutional Law · Brown v. Board of Education</p>
-                          <div className="w-full bg-muted rounded-full h-2 mt-2">
-                            <div className="bg-primary h-2 rounded-full w-3/4"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm">Study Streak</h4>
-                          <p className="text-xs text-muted-foreground mt-1">You've been consistently studying for 7 days</p>
-                          <div className="flex gap-1 mt-2">
-                            {[...Array(7)].map((_, i) => (
-                              <div key={i} className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                          <BookText className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm">Today's Focus</h4>
-                          <p className="text-xs text-muted-foreground mt-1">Complete Constitutional Law case brief</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">3 tasks remaining</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-                    onClick={() => navigate("/login")}
-                  >
-                    Get Started
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait
+                  </>
+                ) : (
+                  <>
+                    Sign In
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="bg-muted/30 border-t border-border/20 p-4">
-                  <div className="flex flex-wrap gap-2 justify-around">
-                    {features.map((feature, i) => (
-                      <motion.div 
-                        key={i}
-                        className="flex items-center gap-1.5"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ 
-                          opacity: 1, 
-                          y: 0,
-                          transition: { delay: 0.4 + (i * 0.1) }
-                        }}
-                      >
-                        {feature.icon}
-                        <span className="text-xs font-medium">{feature.text}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </TabsContent>
+        
+        <TabsContent value="signup">
+          <Form {...signupForm}>
+            <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
+              <FormField
+                control={signupForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                          placeholder="you@example.com" 
+                          className="pl-10" 
+                          {...field} 
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
-              {/* Decorative elements */}
-              <div className="absolute -bottom-4 -right-4 bg-card border border-border/40 shadow-lg rounded-lg p-3 w-48">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium">Case Brief Complete</p>
-                    <p className="text-xs text-muted-foreground">Just now</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+              <FormField
+                control={signupForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••" 
+                          className="pl-10" 
+                          {...field} 
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={signupForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••" 
+                          className="pl-10" 
+                          {...field} 
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </TabsContent>
+      </Tabs>
+      
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border"></div>
         </div>
-      </motion.div>
-    </section>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+        </div>
+      </div>
+      
+      <div className="flex flex-col gap-3">
+        <Button variant="outline" type="button" className="w-full">
+          <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+              <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+              <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+              <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+              <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+            </g>
+          </svg>
+          Google
+        </Button>
+        
+        <Button variant="outline" type="button" className="w-full">
+          <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" />
+            <path d="M10 2c1 .5 2 2 2 5" />
+          </svg>
+          Apple
+        </Button>
+      </div>
+      
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        By continuing, you agree to our{" "}
+        <Button variant="link" className="p-0 font-normal text-sm h-auto">Terms of Service</Button>
+        {" "}and{" "}
+        <Button variant="link" className="p-0 font-normal text-sm h-auto">Privacy Policy</Button>
+      </p>
+    </motion.div>
   );
 };
 
-export default HeroSection;
+export default AuthForm;

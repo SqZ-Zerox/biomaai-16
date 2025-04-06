@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import AuthForm from "./AuthForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const LoginPage: React.FC = () => {
   return (
@@ -38,13 +39,19 @@ const LoginPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-8 text-center"
           >
-            <h2 className="text-3xl font-bold mb-2">Welcome to LegalAid</h2>
-            <p className="text-muted-foreground">Sign in to access your legal study resources</p>
+            <Card className="border-border/30 shadow-xl bg-card/60 backdrop-blur-sm">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold text-center">Welcome to LegalAid</CardTitle>
+                <CardDescription className="text-center">
+                  Sign in to access your legal study resources
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AuthForm />
+              </CardContent>
+            </Card>
           </motion.div>
-          
-          <AuthForm />
         </div>
       </main>
       
