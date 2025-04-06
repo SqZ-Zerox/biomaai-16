@@ -4,11 +4,11 @@ import { toast } from "@/hooks/use-toast";
 
 export interface UserProfile {
   id: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   birth_date: string | null;
   phone_number: string | null;
-  profession: string;
+  profession: string | null;
   created_at: string;
 }
 
