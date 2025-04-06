@@ -1,9 +1,10 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Scale, MessageSquare } from "lucide-react";
+import { ArrowRight, BookOpen, Scale, MessageSquare, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const HeroSection: React.FC = () => {
   const navigate = useNavigate();
@@ -25,8 +26,9 @@ const HeroSection: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
+              <Badge className="mb-4 px-3 py-1 bg-primary/10 text-primary">Student Dashboard</Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                Your AI-Powered <span className="text-primary">Legal Study</span> Assistant
+                Welcome to Your <span className="text-primary">Legal Study</span> Hub
               </h1>
             </motion.div>
             
@@ -36,7 +38,7 @@ const HeroSection: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0">
-                Master legal concepts, generate case briefs, craft perfect essays, and organize your studies with the power of AI.
+                Continue your legal studies journey with personalized tools and resources designed for your success.
               </p>
             </motion.div>
             
@@ -46,11 +48,11 @@ const HeroSection: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <Button size="lg" onClick={() => navigate("/chat")} className="gap-2">
-                Get Started <ArrowRight className="h-4 w-4" />
+              <Button size="lg" onClick={() => navigate("/chat")} className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md">
+                Continue Learning <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/study")}>
-                Explore Study Tools
+              <Button size="lg" variant="outline" onClick={() => navigate("/study")} className="border-primary/20 hover:bg-primary/5">
+                My Study Hub
               </Button>
             </motion.div>
             
@@ -80,10 +82,17 @@ const HeroSection: React.FC = () => {
                 </div>
                 <span className="text-sm">Legal AI Chat</span>
               </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm">Study Progress</span>
+              </div>
             </motion.div>
           </div>
           
-          {/* Hero image */}
+          {/* Hero image with recent activity */}
           <motion.div 
             className="flex-1"
             initial={{ opacity: 0, x: 20 }}
@@ -93,15 +102,60 @@ const HeroSection: React.FC = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl transform rotate-3 scale-105"></div>
               <div className="relative bg-card border border-border/40 shadow-xl rounded-2xl overflow-hidden">
-                <img 
-                  src="/hero-mockup.png" 
-                  alt="LegalAid Platform" 
-                  className="w-full h-auto" 
-                  onError={(e) => {
-                    // Fallback if image doesn't exist
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2342&q=80";
-                  }}
-                />
+                <div className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
+                  
+                  {/* Recent activity items */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Contract Law Notes</p>
+                        <p className="text-xs text-muted-foreground">Updated 2 hours ago</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
+                      <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                        <Scale className="h-4 w-4 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Brown v. Board of Education Brief</p>
+                        <p className="text-xs text-muted-foreground">Created yesterday</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <CheckSquare className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Prepare for Constitutional Law Exam</p>
+                        <p className="text-xs text-muted-foreground">Due in 5 days</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <Button variant="outline" className="w-full text-primary" onClick={() => navigate("/study-plan")}>
+                      View All Activities
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="bg-primary/5 p-4 border-t border-border/20">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="text-sm font-medium">Today's Focus</h4>
+                      <p className="text-xs text-muted-foreground">Constitutional Law</p>
+                    </div>
+                    <div className="bg-primary/10 px-3 py-1 rounded-full">
+                      <span className="text-xs font-medium text-primary">3 tasks remaining</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Floating badges */}
@@ -133,8 +187,8 @@ const HeroSection: React.FC = () => {
                     <BookOpen className="h-4 w-4 text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Flashcards</p>
-                    <p className="text-xs text-muted-foreground">Study efficiently</p>
+                    <p className="text-xs font-medium">Study Streak</p>
+                    <p className="text-xs text-muted-foreground">7 days</p>
                   </div>
                 </div>
               </motion.div>
