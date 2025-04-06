@@ -14,7 +14,9 @@ import LegalEssaysPage from "./pages/LegalEssaysPage";
 import CaseBriefPage from "./pages/CaseBriefPage";
 import CitationToolPage from "./pages/CitationToolPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
-import LandingPage from "./pages/LandingPage"; // Import the new LandingPage
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -39,6 +41,10 @@ const App = () => {
             <Routes>
               {/* Landing page as the main route */}
               <Route path="/" element={<LandingPage />} />
+              
+              {/* Auth routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
               
               {/* Dashboard and other pages inside the Layout */}
               <Route element={<Layout />}>
