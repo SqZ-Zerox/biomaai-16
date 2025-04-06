@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { 
   Eye, EyeOff, Mail, Lock, Loader2, ArrowRight, 
   UserRound, School, Gavel, BookOpen, Calendar, 
-  Phone, User, UserPlus, UserCheck, BookText
+  Phone, User, UserPlus, UserCheck, BookText,
+  AlertCircle, MailOpen
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn, signUp } from "@/services/authService";
@@ -19,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -51,6 +52,8 @@ const AuthForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentSignupStep, setCurrentSignupStep] = useState<'credentials' | 'personal' | 'profession'>('credentials');
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -178,10 +181,9 @@ const AuthForm: React.FC = () => {
         return;
       }
       
-      toast({
-        title: "Account created!",
-        description: "Please check your email to confirm your account.",
-      });
+      // Set success state and store email for display
+      setRegistrationSuccess(true);
+      setRegisteredEmail(values.email);
       
       // Automatically navigate to dashboard if email confirmation is disabled in Supabase
       if (data?.session) {
@@ -220,6 +222,13 @@ const AuthForm: React.FC = () => {
     exitToRight: { x: 50, opacity: 0, transition: { duration: 0.3 } }
   };
 
+  // Reset success notification when switching tabs
+  const handleTabChange = (value: string) => {
+    if (value === "login") {
+      setRegistrationSuccess(false);
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -227,7 +236,38 @@ const AuthForm: React.FC = () => {
       variants={formVariants}
       className="w-full"
     >
-      <Tabs defaultValue="login" className="w-full">
+      {registrationSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <Alert className="bg-primary/10 border-primary text-foreground">
+            <MailOpen className="h-5 w-5 text-primary" />
+            <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p className="mb-2">We've sent a verification email to <span className="font-bold">{registeredEmail}</span></p>
+              <p>Please check your inbox and click the verification link to activate your account.</p>
+              <Button 
+                variant="outline" 
+                className="mt-3 bg-background border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={() => window.open(`https://mail.google.com`, '_blank')}
+              >
+                Open Gmail
+              </Button>
+              <Button 
+                variant="outline" 
+                className="mt-3 ml-2 bg-background border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={() => setRegistrationSuccess(false)}
+              >
+                Dismiss
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
         <TabsList className="grid grid-cols-2 mb-6">
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
