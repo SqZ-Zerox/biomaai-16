@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { createClient } from "@supabase/supabase-js";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface AuthFormProps {
   redirectUrl?: string;
@@ -76,6 +70,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSucce
       });
 
       if (error) throw error;
+      
+      console.log("Login successful", data);
       
       toast({
         title: "Login successful",
@@ -158,6 +154,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSucce
       });
 
       if (error) throw error;
+      
+      console.log("Signup successful", data);
       
       toast({
         title: "Registration successful",

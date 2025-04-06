@@ -1,17 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthCallback: React.FC = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
