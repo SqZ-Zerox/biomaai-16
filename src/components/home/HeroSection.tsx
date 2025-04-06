@@ -65,7 +65,7 @@ const HeroSection: React.FC = () => {
                   <br className="hidden md:inline" />
                   <span>With AI-Powered Tools</span>
                 </h1>
-              </motion.motion>
+              </motion.div>
               
               <motion.p 
                 className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mt-4"
