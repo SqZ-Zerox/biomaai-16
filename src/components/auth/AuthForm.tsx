@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +33,27 @@ const signupSchema = z.object({
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
   first_name: z.string().min(1, { message: "First name is required" }),
   last_name: z.string().min(1, { message: "Last name is required" }),
-  birth_date: z.string().optional().nullable(),
+  birth_date: z.string()
+    .refine(val => {
+      if (!val) return false;
+      
+      const birthDate = new Date(val);
+      const today = new Date();
+      
+      // Check if date is invalid
+      if (isNaN(birthDate.getTime())) return false;
+      
+      // Calculate age
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      // Check if age is between 13 and 100
+      return age >= 13 && age <= 100;
+    }, { message: "You must be at least 13 years old and not older than 100 years" }),
   phone_number: z.string().optional().nullable(),
   profession: z.enum(["student", "professor", "legal_professional", "researcher"], {
     required_error: "Please select your profession",
@@ -184,6 +205,10 @@ const AuthForm: React.FC = () => {
       // Set success state and store email for display
       setRegistrationSuccess(true);
       setRegisteredEmail(values.email);
+      
+      // Reset form and go back to login tab
+      signupForm.reset();
+      document.querySelector('[data-value="login"]')?.click();
       
       // Automatically navigate to dashboard if email confirmation is disabled in Supabase
       if (data?.session) {
