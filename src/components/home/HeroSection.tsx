@@ -1,209 +1,238 @@
+
 import React from "react";
-import { motion } from "framer-motion";
-import { 
-  ArrowRight, 
-  BookOpen, 
-  Scale, 
-  MessageSquare, 
-  GraduationCap,
-  FileText,
-  CheckSquare,
-  Briefcase
-} from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { ArrowRight, ArrowUpRight, CheckCircle2, GraduateCap, Scale, BookText, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection: React.FC = () => {
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.2]);
+  const yPos = useTransform(scrollYProgress, [0, 0.2], [0, -50]);
+
+  const features = [
+    {
+      icon: <Scale className="h-5 w-5 text-primary" />,
+      text: "Case Brief Generator"
+    },
+    {
+      icon: <BookText className="h-5 w-5 text-primary" />,
+      text: "Smart Study Tools"
+    },
+    {
+      icon: <GraduateCap className="h-5 w-5 text-primary" />,
+      text: "Personalized Learning"
+    },
+    {
+      icon: <Bookmark className="h-5 w-5 text-primary" />,
+      text: "Powerful Research"
+    }
+  ];
 
   return (
-    <section className="relative pt-20 pb-16 overflow-hidden">
+    <section className="relative overflow-hidden py-20 md:py-28 lg:py-36">
       {/* Background elements */}
-      <div className="absolute inset-0 pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-primary/5 filter blur-3xl animate-pulse" style={{ animationDuration: '15s' }}></div>
-        <div className="absolute bottom-1/3 right-1/6 w-80 h-80 rounded-full bg-primary/5 filter blur-3xl animate-pulse" style={{ animationDuration: '20s', animationDelay: '2s' }}></div>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/5 rounded-full filter blur-3xl" />
+        <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-primary/3 rounded-full filter blur-3xl" />
+        <div className="absolute top-3/4 left-1/3 w-64 h-64 bg-primary/3 rounded-full filter blur-3xl" />
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/60 to-background pointer-events-none" />
       </div>
-      
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center gap-12">
-          {/* Hero content */}
-          <div className="flex-1 text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Badge className="mb-4 px-3 py-1 bg-primary/10 text-primary">Student Dashboard</Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                Welcome to Your <span className="text-primary">Legal Study</span> Hub
-              </h1>
-            </motion.div>
+
+      <motion.div 
+        className="container px-4 md:px-6 mx-auto relative z-10"
+        style={{ opacity, y: yPos }}
+      >
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center">
+          <div className="flex-1 text-center lg:text-left space-y-8">
+            <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <Badge className="mb-2 text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20 rounded-full">
+                  Legal Education, Reimagined
+                </Badge>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+                    Master Legal Studies
+                  </span>{" "}
+                  <br className="hidden md:inline" />
+                  <span>With AI-Powered Tools</span>
+                </h1>
+              </motion.motion>
+              
+              <motion.p 
+                className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mt-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                Your comprehensive legal education platform that simplifies studying, 
+                research, and case analysis with intelligent AI assistance.
+              </motion.p>
+            </div>
             
-            <motion.div
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0">
-                Continue your legal studies journey with personalized tools and resources designed for your success.
-              </p>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            >
-              <Button size="lg" onClick={() => navigate("/chat")} className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md">
-                Continue Learning <ArrowRight className="h-4 w-4" />
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/login")}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-medium rounded-full"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/study")} className="border-primary/20 hover:bg-primary/5">
-                My Study Hub
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/chat")}
+                className="h-12 px-6 rounded-full"
+              >
+                Try Law Assistant
+                <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
             </motion.div>
             
             <motion.div
+              className="pt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="mt-12 flex flex-wrap gap-6 justify-center lg:justify-start"
+              transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Scale className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-sm">Case Briefs</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-sm">Study Notes</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-sm">Legal AI Chat</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-sm">Study Progress</span>
+              <p className="text-sm text-muted-foreground mb-4">Trusted by law students from</p>
+              <div className="flex flex-wrap gap-6 justify-center lg:justify-start items-center">
+                <div className="text-muted-foreground/70 font-semibold">Harvard Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Stanford Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Yale Law</div>
+                <div className="text-muted-foreground/70 font-semibold">Columbia Law</div>
               </div>
             </motion.div>
           </div>
           
-          {/* Hero image with recent activity */}
           <motion.div 
-            className="flex-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            className="flex-1 w-full max-w-xl"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl transform rotate-3 scale-105"></div>
-              <div className="relative bg-card border border-border/40 shadow-xl rounded-2xl overflow-hidden">
-                <div className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
+              {/* Decorative elements */}
+              <div className="absolute -inset-px bg-gradient-to-r from-primary/20 to-primary/10 rounded-xl blur-lg opacity-50"></div>
+              
+              <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl shadow-xl overflow-hidden">
+                <div className="p-6 sm:p-8">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                    <GraduateCap className="mr-2 h-5 w-5 text-primary" />
+                    Your Learning Hub
+                  </h3>
                   
-                  {/* Recent activity items */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
-                      <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-blue-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Contract Law Notes</p>
-                        <p className="text-xs text-muted-foreground">Updated 2 hours ago</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
-                      <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <Scale className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Brown v. Board of Education Brief</p>
-                        <p className="text-xs text-muted-foreground">Created yesterday</p>
+                  <div className="space-y-4 mb-6">
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Scale className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Case Brief Progress</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Constitutional Law · Brown v. Board of Education</p>
+                          <div className="w-full bg-muted rounded-full h-2 mt-2">
+                            <div className="bg-primary h-2 rounded-full w-3/4"></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
-                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-                        <CheckSquare className="h-4 w-4 text-amber-500" />
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Study Streak</h4>
+                          <p className="text-xs text-muted-foreground mt-1">You've been consistently studying for 7 days</p>
+                          <div className="flex gap-1 mt-2">
+                            {[...Array(7)].map((_, i) => (
+                              <div key={i} className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Prepare for Constitutional Law Exam</p>
-                        <p className="text-xs text-muted-foreground">Due in 5 days</p>
+                    </div>
+
+                    <div className="bg-muted/50 border border-border/30 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <BookText className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">Today's Focus</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Complete Constitutional Law case brief</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">3 tasks remaining</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="mt-6">
-                    <Button variant="outline" className="w-full text-primary" onClick={() => navigate("/study-plan")}>
-                      View All Activities
-                    </Button>
-                  </div>
+                  <Button 
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
                 
-                <div className="bg-primary/5 p-4 border-t border-border/20">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="text-sm font-medium">Today's Focus</h4>
-                      <p className="text-xs text-muted-foreground">Constitutional Law</p>
-                    </div>
-                    <div className="bg-primary/10 px-3 py-1 rounded-full">
-                      <span className="text-xs font-medium text-primary">3 tasks remaining</span>
-                    </div>
+                <div className="bg-muted/30 border-t border-border/20 p-4">
+                  <div className="flex flex-wrap gap-2 justify-around">
+                    {features.map((feature, i) => (
+                      <motion.div 
+                        key={i}
+                        className="flex items-center gap-1.5"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          transition: { delay: 0.4 + (i * 0.1) }
+                        }}
+                      >
+                        {feature.icon}
+                        <span className="text-xs font-medium">{feature.text}</span>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               </div>
               
-              {/* Floating badges */}
-              <motion.div 
-                className="absolute -top-4 -left-4 bg-card shadow-lg p-3 rounded-lg border border-border/40"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-              >
+              {/* Decorative elements */}
+              <div className="absolute -bottom-4 -right-4 bg-card border border-border/40 shadow-lg rounded-lg p-3 w-48">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Scale className="h-4 w-4 text-green-500" />
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Case Brief</p>
-                    <p className="text-xs text-muted-foreground">Generated in seconds</p>
+                    <p className="text-xs font-medium">Case Brief Complete</p>
+                    <p className="text-xs text-muted-foreground">Just now</p>
                   </div>
                 </div>
-              </motion.div>
-              
-              <motion.div 
-                className="absolute -bottom-4 -right-4 bg-card shadow-lg p-3 rounded-lg border border-border/40"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1 }}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium">Study Streak</p>
-                    <p className="text-xs text-muted-foreground">7 days</p>
-                  </div>
-                </div>
-              </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };

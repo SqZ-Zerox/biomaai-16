@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,141 +14,145 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { motion } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useNavigate } from "react-router-dom";
 
 interface AuthFormProps {
   redirectUrl?: string;
   onSuccess?: () => void;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSuccess }) => {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+// Schema for authentication form validation
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+  rememberMe: z.boolean().default(false),
+});
+
+const signupSchema = z.object({
+  fullName: z.string().min(2, { message: "Please enter your full name." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms and conditions." }),
+  }),
+  occupation: z.string().optional(),
+  legalInterest: z.string().optional(),
+});
+
+const AuthForm: React.FC<AuthFormProps> = ({ 
+  redirectUrl = "/dashboard", 
+  onSuccess 
+}) => {
+  const [activeTab, setActiveTab] = useState<string>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const validateEmail = (email: string) => {
-    return String(email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      );
-  };
+  // Login form
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
+  });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  // Signup form
+  const signupForm = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      acceptTerms: false,
+      occupation: "",
+      legalInterest: "",
+    },
+  });
+
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
       });
 
       if (error) throw error;
       
-      console.log("Login successful", data);
-      
       toast({
-        title: "Login successful",
-        description: "Welcome back to LegalAid!",
+        title: "Welcome back!",
+        description: "Successfully signed in to your account.",
+        variant: "default",
       });
+      
+      if (values.rememberMe) {
+        localStorage.setItem('rememberedEmail', values.email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
       
       if (onSuccess) {
         onSuccess();
       } else {
         setTimeout(() => {
-          window.location.href = redirectUrl;
+          navigate(redirectUrl);
         }, 1000);
       }
-      
     } catch (error: any) {
       console.error("Login error:", error);
       
       toast({
-        title: "Login failed",
+        title: "Sign in failed",
         description: error?.message || "Please check your credentials and try again",
         variant: "destructive",
       });
-      
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!fullName.trim()) {
-      toast({
-        title: "Name required",
-        description: "Please enter your full name",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!acceptTerms) {
-      toast({
-        title: "Terms not accepted",
-        description: "Please accept the terms and conditions to create an account",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  const handleSignup = async (values: z.infer<typeof signupSchema>) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: values.fullName,
+            occupation: values.occupation || null,
+            legal_interest: values.legalInterest || null,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -155,12 +160,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSucce
 
       if (error) throw error;
       
-      console.log("Signup successful", data);
-      
       toast({
-        title: "Registration successful",
+        title: "Registration successful!",
         description: "Please check your email to verify your account.",
+        variant: "default",
       });
+      
+      setShowFeedback(true);
       
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -170,11 +176,39 @@ const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSucce
         description: error?.message || "An error occurred during registration",
         variant: "destructive",
       });
-      
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Load remembered email if exists
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      loginForm.setValue('email', rememberedEmail);
+      loginForm.setValue('rememberMe', true);
+    }
+  }, [loginForm]);
+
+  const legalInterestOptions = [
+    { value: 'constitutional', label: 'Constitutional Law' },
+    { value: 'criminal', label: 'Criminal Law' },
+    { value: 'corporate', label: 'Corporate Law' },
+    { value: 'intellectual', label: 'Intellectual Property' },
+    { value: 'international', label: 'International Law' },
+    { value: 'environmental', label: 'Environmental Law' },
+    { value: 'family', label: 'Family Law' },
+    { value: 'other', label: 'Other' },
+  ];
+
+  const occupationOptions = [
+    { value: 'student', label: 'Law Student' },
+    { value: 'attorney', label: 'Attorney' },
+    { value: 'professor', label: 'Law Professor' },
+    { value: 'judge', label: 'Judge' },
+    { value: 'paralegal', label: 'Paralegal' },
+    { value: 'other', label: 'Other Legal Professional' },
+  ];
 
   return (
     <motion.div
@@ -182,222 +216,397 @@ const AuthForm: React.FC<AuthFormProps> = ({ redirectUrl = "/dashboard", onSucce
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="w-full max-w-md mx-auto border-border/40 bg-card/60 backdrop-blur-sm shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-center">
-            {activeTab === "login" ? "Welcome Back" : "Create Account"}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {activeTab === "login"
-              ? "Enter your credentials to access your account"
-              : "Fill in your details to create a new account"}
-          </CardDescription>
-        </CardHeader>
-        
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+      <Card className="w-full max-w-md mx-auto border-border/30 shadow-xl bg-card/70 backdrop-blur-md">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-2">
+            <TabsTrigger value="login" className="rounded-md">Sign In</TabsTrigger>
+            <TabsTrigger value="signup" className="rounded-md">Create Account</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="login">
-            <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <TabsContent value="login" className="mt-0">
+                {showFeedback ? (
+                  <div className="p-6 space-y-4">
+                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+                        <CheckCircle2 className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold">Check Your Email</h3>
+                      <p className="text-muted-foreground">
+                        We've sent a verification link to your email address.
+                        Please check your inbox and follow the instructions.
+                      </p>
+                      <Button 
+                        className="mt-4" 
+                        variant="outline"
+                        onClick={() => setShowFeedback(false)}
+                      >
+                        Back to Sign In
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="px-0 text-xs"
-                      onClick={() => toast({
-                        title: "Password Reset",
-                        description: "Password reset functionality will be available soon"
-                      })}
-                    >
-                      Forgot password?
-                    </Button>
+                ) : (
+                  <Form {...loginForm}>
+                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4 px-4 py-2">
+                      <CardContent className="space-y-4 p-2">
+                        <FormField
+                          control={loginForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                  <Input
+                                    placeholder="your.email@example.com"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={loginForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>Password</FormLabel>
+                                <Button
+                                  variant="link"
+                                  className="px-0 h-auto text-xs font-normal"
+                                  type="button"
+                                  onClick={() => {
+                                    toast({
+                                      title: "Reset password",
+                                      description: "Password reset functionality coming soon.",
+                                    });
+                                  }}
+                                >
+                                  Forgot password?
+                                </Button>
+                              </div>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                  <Input
+                                    type={showPassword ? "text" : "password"}
+                                    className="pl-10 pr-10"
+                                    placeholder="••••••••"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-0 top-0 h-full px-3 py-2"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                >
+                                  {showPassword ? (
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </Button>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={loginForm.control}
+                          name="rememberMe"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="text-sm font-normal">
+                                  Remember me
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                      
+                      <CardFooter className="flex flex-col space-y-3 px-2 pt-0">
+                        <Button
+                          type="submit"
+                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Signing in..." : "Sign In"}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        
+                        <p className="px-2 text-center text-sm text-muted-foreground">
+                          Don't have an account?{" "}
+                          <Button
+                            variant="link"
+                            className="p-0"
+                            onClick={() => setActiveTab("signup")}
+                            type="button"
+                          >
+                            Sign up
+                          </Button>
+                        </p>
+                      </CardFooter>
+                    </form>
+                  </Form>
+                )}
+              </TabsContent>
+            </motion.div>
+
+            <motion.div
+              key={activeTab === "signup" ? "signup" : "login-placeholder"}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <TabsContent value="signup" className="mt-0">
+                {showFeedback ? (
+                  <div className="p-6 space-y-4">
+                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
+                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+                        <CheckCircle2 className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold">Check Your Email</h3>
+                      <p className="text-muted-foreground">
+                        We've sent a verification link to your email address.
+                        Please check your inbox and follow the instructions.
+                      </p>
+                      <Button 
+                        className="mt-4" 
+                        variant="outline"
+                        onClick={() => {
+                          setShowFeedback(false);
+                          setActiveTab("login");
+                        }}
+                      >
+                        Back to Sign In
+                      </Button>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      className="pl-10 pr-10"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-              
-              <CardFooter className="flex flex-col space-y-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Sign In"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                
-                <div className="text-center text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Button
-                    variant="link"
-                    className="p-0"
-                    onClick={() => setActiveTab("signup")}
-                  >
-                    Sign up
-                  </Button>
-                </div>
-              </CardFooter>
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      placeholder="John Doe"
-                      className="pl-10"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signupEmail">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signupEmail"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signupPassword">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signupPassword"
-                      type={showPassword ? "text" : "password"}
-                      className="pl-10 pr-10"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Password must be at least 6 characters long
-                  </p>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="terms"
-                    checked={acceptTerms}
-                    onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                    required
-                  />
-                  <Label
-                    htmlFor="terms"
-                    className="text-sm leading-tight"
-                  >
-                    I accept the{" "}
-                    <Button variant="link" className="p-0 h-auto" onClick={() => window.open('/terms', '_blank')}>
-                      Terms of Service
-                    </Button>{" "}
-                    and{" "}
-                    <Button variant="link" className="p-0 h-auto" onClick={() => window.open('/privacy', '_blank')}>
-                      Privacy Policy
-                    </Button>
-                  </Label>
-                </div>
-              </CardContent>
-              
-              <CardFooter className="flex flex-col space-y-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Creating Account..." : "Create Account"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                
-                <div className="text-center text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <Button
-                    variant="link"
-                    className="p-0"
-                    onClick={() => setActiveTab("login")}
-                  >
-                    Sign in
-                  </Button>
-                </div>
-              </CardFooter>
-            </form>
-          </TabsContent>
+                ) : (
+                  <Form {...signupForm}>
+                    <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4 px-4 py-2">
+                      <CardContent className="space-y-4 p-2">
+                        <FormField
+                          control={signupForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Full Name</FormLabel>
+                              <div className="relative">
+                                <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                  <Input
+                                    placeholder="John Doe"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={signupForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                  <Input
+                                    type="email"
+                                    placeholder="your.email@example.com"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={signupForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Password</FormLabel>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <FormControl>
+                                  <Input
+                                    type={showPassword ? "text" : "password"}
+                                    className="pl-10 pr-10"
+                                    placeholder="••••••••"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-0 top-0 h-full px-3 py-2"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                >
+                                  {showPassword ? (
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </Button>
+                              </div>
+                              <FormMessage />
+                              <FormDescription className="text-xs">
+                                Must be at least 6 characters
+                              </FormDescription>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={signupForm.control}
+                          name="occupation"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Occupation (Optional)</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select your occupation" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {occupationOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                This helps us personalize your experience
+                              </FormDescription>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={signupForm.control}
+                          name="legalInterest"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Area of Legal Interest (Optional)</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select an area of interest" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {legalInterestOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Helps us tailor content to your interests
+                              </FormDescription>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={signupForm.control}
+                          name="acceptTerms"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="text-xs font-normal">
+                                  I accept the <Button variant="link" className="p-0 h-auto text-xs" type="button" onClick={() => window.open('/terms', '_blank')}>
+                                    Terms of Service
+                                  </Button> and{" "}
+                                  <Button variant="link" className="p-0 h-auto text-xs" type="button" onClick={() => window.open('/privacy', '_blank')}>
+                                    Privacy Policy
+                                  </Button>
+                                </FormLabel>
+                                <FormMessage />
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                      
+                      <CardFooter className="flex flex-col space-y-3 px-2 pt-0">
+                        <Button
+                          type="submit"
+                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Creating Account..." : "Create Account"}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        
+                        <p className="px-2 text-center text-sm text-muted-foreground">
+                          Already have an account?{" "}
+                          <Button
+                            variant="link"
+                            className="p-0"
+                            onClick={() => setActiveTab("login")}
+                            type="button"
+                          >
+                            Sign in
+                          </Button>
+                        </p>
+                      </CardFooter>
+                    </form>
+                  </Form>
+                )}
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
         </Tabs>
       </Card>
     </motion.div>
