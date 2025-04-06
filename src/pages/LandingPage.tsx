@@ -45,7 +45,6 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background/90 backdrop-blur-md border-b border-border/20">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -85,7 +84,6 @@ const LandingPage: React.FC = () => {
       </header>
 
       <main className="flex-1 pt-16">
-        {/* Hero Section */}
         <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-1/4 left-1/6 w-64 h-64 rounded-full bg-primary/5 filter blur-3xl" />
@@ -136,7 +134,7 @@ const LandingPage: React.FC = () => {
                     { icon: <Scale className="h-5 w-5 text-primary" />, label: "Case Briefs" },
                     { icon: <BookOpen className="h-5 w-5 text-primary" />, label: "Study Tools" },
                     { icon: <MessageSquare className="h-5 w-5 text-primary" />, label: "AI Assistant" },
-                    { icon: <GraduateCap className="h-5 w-5 text-primary" />, label: "Progress Tracking" }
+                    { icon: <GraduationCap className="h-5 w-5 text-primary" />, label: "Progress Tracking" }
                   ].map((item, idx) => (
                     <motion.div 
                       key={idx}
@@ -260,7 +258,6 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
         
-        {/* Features Section */}
         <section className="py-20 bg-muted/30" ref={featuredRef} id="features">
           <div className="container mx-auto px-4">
             <motion.div
@@ -337,7 +334,6 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
         
-        {/* Testimonials Section */}
         <section className="py-20" ref={testimonialRef} id="testimonials">
           <div className="container mx-auto px-4">
             <motion.div
@@ -409,7 +405,6 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
         
-        {/* Pricing Section */}
         <section className="py-20 bg-muted/30" ref={pricingRef} id="pricing">
           <div className="container mx-auto px-4">
             <motion.div
@@ -536,7 +531,6 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
         
-        {/* FAQ Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
             <motion.div
@@ -593,7 +587,6 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
         
-        {/* CTA Section */}
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <motion.div
