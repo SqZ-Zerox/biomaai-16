@@ -14,6 +14,7 @@ import LegalEssaysPage from "./pages/LegalEssaysPage";
 import CaseBriefPage from "./pages/CaseBriefPage";
 import CitationToolPage from "./pages/CitationToolPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import React from "react";
 
@@ -46,6 +47,7 @@ const App = () => {
                 <Route path="/case-brief" element={<CaseBriefPage />} />
                 <Route path="/citation-tool" element={<CitationToolPage />} />
                 <Route path="/flashcards" element={<FlashcardsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
