@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -18,12 +17,6 @@ import {
   FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import HeroSection from "@/components/landing/HeroSection";
-import FeatureSection from "@/components/landing/FeatureSection";
-import TestimonialSection from "@/components/landing/TestimonialSection";
-import PricingSection from "@/components/landing/PricingSection";
-import FAQSection from "@/components/landing/FAQSection";
-import Footer from "@/components/landing/Footer";
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
