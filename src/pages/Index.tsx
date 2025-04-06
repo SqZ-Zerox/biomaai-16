@@ -40,16 +40,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+// Define the feature structure to avoid circular references when storing in localStorage
+interface Feature {
+  iconName: string;
+  title: string;
+  description: string;
+  path: string;
+  isPinned: boolean;
+  isVisible: boolean;
+}
+
+// Helper function to render icon based on name
+const renderIcon = (iconName: string, className: string) => {
+  switch (iconName) {
+    case "Scale":
+      return <Scale className={className} />;
+    case "MessageSquare":
+      return <MessageSquare className={className} />;
+    case "FileText":
+      return <FileText className={className} />;
+    case "BookOpen":
+      return <BookOpen className={className} />;
+    case "Library":
+      return <Library className={className} />;
+    case "CheckSquare":
+      return <CheckSquare className={className} />;
+    default:
+      return <GraduationCap className={className} />;
+  }
+};
+
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Initialize from localStorage or use default features
-  const [features, setFeatures] = useState(() => {
+  const [features, setFeatures] = useState<Feature[]>(() => {
     const savedFeatures = localStorage.getItem('studyTools');
     return savedFeatures ? JSON.parse(savedFeatures) : [
       {
-        icon: <Scale className="h-10 w-10 text-primary" />,
+        iconName: "Scale",
         title: "Case Brief Generator",
         description: "Transform complex legal cases into clear, concise briefs in seconds.",
         path: "/case-brief",
@@ -57,7 +87,7 @@ const Index = () => {
         isVisible: true
       },
       {
-        icon: <MessageSquare className="h-10 w-10 text-primary" />,
+        iconName: "MessageSquare",
         title: "AI Legal Chat",
         description: "Get instant answers to your legal questions from our AI assistant.",
         path: "/chat",
@@ -65,7 +95,7 @@ const Index = () => {
         isVisible: true
       },
       {
-        icon: <FileText className="h-10 w-10 text-primary" />,
+        iconName: "FileText",
         title: "Legal Essay Assistant",
         description: "Write better legal essays with AI-powered suggestions and formatting.",
         path: "/legal-essays",
@@ -73,7 +103,7 @@ const Index = () => {
         isVisible: true
       },
       {
-        icon: <BookOpen className="h-10 w-10 text-primary" />,
+        iconName: "BookOpen",
         title: "Study Resources",
         description: "Access comprehensive study materials organized by legal subjects.",
         path: "/study",
@@ -81,7 +111,7 @@ const Index = () => {
         isVisible: true
       },
       {
-        icon: <Library className="h-10 w-10 text-primary" />,
+        iconName: "Library",
         title: "Flashcards",
         description: "Master legal concepts with customizable flashcards and spaced repetition.",
         path: "/flashcards",
@@ -89,7 +119,7 @@ const Index = () => {
         isVisible: true
       },
       {
-        icon: <CheckSquare className="h-10 w-10 text-primary" />,
+        iconName: "CheckSquare",
         title: "Productivity Hub",
         description: "Stay organized with task management tools designed for law students.",
         path: "/study-plan",
@@ -238,9 +268,7 @@ const Index = () => {
                                       className={`flex items-center justify-between p-3 rounded-md border ${feature.isVisible ? 'bg-card' : 'bg-muted/30'}`}
                                     >
                                       <div className="flex items-center gap-3">
-                                        {React.cloneElement(feature.icon, { 
-                                          className: `h-5 w-5 ${feature.isVisible ? 'text-primary' : 'text-muted-foreground'}` 
-                                        })}
+                                        {renderIcon(feature.iconName, `h-5 w-5 ${feature.isVisible ? 'text-primary' : 'text-muted-foreground'}`)}
                                         <span className={feature.isVisible ? '' : 'text-muted-foreground'}>
                                           {feature.title}
                                         </span>
@@ -313,7 +341,7 @@ const Index = () => {
                   .map((feature, index) => (
                     <FeatureCard 
                       key={index}
-                      icon={feature.icon}
+                      icon={renderIcon(feature.iconName, "h-10 w-10 text-primary")}
                       title={feature.title}
                       description={feature.description}
                       onClick={() => navigate(feature.path)}
