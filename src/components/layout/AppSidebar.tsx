@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuLabel, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Home, MessageSquareText, BookOpen, Scale, Library, FileText, PenTool, CheckSquare, Upload, HelpCircle, Globe, Settings } from "lucide-react";
@@ -57,7 +57,7 @@ const AppSidebar: React.FC = () => {
                 {mainMenuItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
-                      active={isActive(item.path)}
+                      isActive={isActive(item.path)}
                       onClick={() => navigate(item.path)}
                     >
                       <item.icon className="h-4 w-4 mr-2" />
@@ -81,7 +81,7 @@ const AppSidebar: React.FC = () => {
                 {toolsMenuItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
-                      active={isActive(item.path)}
+                      isActive={isActive(item.path)}
                       onClick={() => navigate(item.path)}
                     >
                       <item.icon className="h-4 w-4 mr-2" />
@@ -98,7 +98,7 @@ const AppSidebar: React.FC = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
-                active={isActive("/settings")}
+                isActive={isActive("/settings")}
                 onClick={() => navigate("/settings")}
               >
                 <Settings className="h-4 w-4 mr-2" />

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   Home, 
   BookOpen, 
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   
   const navigationItems = [
     { path: "/", label: "Home", icon: Home },
