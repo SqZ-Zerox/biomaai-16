@@ -1,71 +1,88 @@
 
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  Home, 
   BookOpen, 
-  MessageSquareText, 
-  Scale, 
-  FileText, 
-  PenTool, 
+  MessageSquare, 
+  Calendar, 
+  Gavel,
   Library,
-  CheckSquare,
-  Upload,
-  Settings
+  Link,
+  CheckSquare
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
   
-  const navigationItems = [
-    { path: "/", label: "Home", icon: Home },
-    { path: "/study", label: "Study", icon: BookOpen },
-    { path: "/chat", label: "Chat", icon: MessageSquareText },
-    { path: "/case-brief", label: "Case Brief", icon: Scale },
-    { path: "/legal-essays", label: "Essays", icon: FileText },
-    { path: "/citation-tool", label: "Citations", icon: PenTool },
-    { path: "/flashcards", label: "Flashcards", icon: Library },
-    { path: "/study-plan", label: "Tasks", icon: CheckSquare },
-    { path: "/upload", label: "Upload", icon: Upload },
-    { path: "/settings", label: "Settings", icon: Settings },
+  const navItems = [
+    {
+      icon: <BookOpen size={20} />,
+      label: "Study",
+      path: "/study",
+    },
+    {
+      icon: <MessageSquare size={20} />,
+      label: "Chat",
+      path: "/chat",
+    },
+    {
+      icon: <CheckSquare size={20} />,
+      label: "Productivity",
+      path: "/study-plan",
+    },
+    {
+      icon: <Gavel size={20} />,
+      label: "Case Brief",
+      path: "/case-brief",
+    },
+    {
+      icon: <Library size={20} />,
+      label: "Flashcards",
+      path: "/flashcards",
+    },
+    {
+      icon: <Link size={20} />,
+      label: "Citations",
+      path: "/citation-tool",
+    },
   ];
-  
-  // Filter navigation for mobile view
-  const mobileNavItems = navigationItems.slice(0, 5);
-  const itemsToShow = isMobile ? mobileNavItems : navigationItems;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-      <nav className="flex items-center justify-around p-2 pb-3 border-t bg-background/90 backdrop-blur-md">
-        {itemsToShow.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
-          
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/70 backdrop-blur-md border-t border-border/40 shadow-lg shadow-black/20 z-50">
+      <div className="container mx-auto flex justify-around items-center py-2">
+        {navItems.map((item) => {
+          // Check if the current path matches this nav item's path
+          // Also consider exact path or starting with path (for nested routes)
+          const isActive = location.pathname === item.path || 
+                         (item.path !== "/" && location.pathname.startsWith(item.path));
           return (
-            <Button
+            <button
               key={item.path}
-              variant="ghost"
-              size="sm"
               className={cn(
-                "flex flex-col h-16 w-16 gap-1 items-center justify-center rounded-lg",
-                isActive ? "text-primary bg-primary/10 border border-primary/20" : "text-muted-foreground"
+                "flex flex-col items-center py-2 px-2 sm:px-4 rounded-md transition-all relative",
+                isActive 
+                  ? "text-accent font-medium" 
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => navigate(item.path)}
             >
-              <Icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
-              <span className="text-xs font-medium">
-                {item.label}
-              </span>
-            </Button>
+              <div className={cn(
+                "mb-1",
+                isActive ? "text-accent" : ""
+              )}>
+                {item.icon}
+              </div>
+              <span className="text-xs">{item.label}</span>
+              {isActive && (
+                <div className="absolute -bottom-2 h-0.5 w-12 bg-accent rounded-full opacity-80" />
+              )}
+            </button>
           );
         })}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 };
 

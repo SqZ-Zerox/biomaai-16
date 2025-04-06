@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,6 @@ import EventsList from "@/components/productivity/EventsList";
 import AddEventModal from "@/components/productivity/AddEventModal";
 import TaskFilters from "@/components/productivity/TaskFilters";
 import ProductivityStats from "@/components/productivity/ProductivityStats";
-import { motion, AnimatePresence } from "framer-motion";
 
 const ProductivityHubPage = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -30,26 +30,31 @@ const ProductivityHubPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   
+  // Filter states
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(false);
   
+  // Reset filters
   const resetFilters = () => {
     setPriorityFilter('all');
     setCategoryFilter('all');
     setShowCompleted(false);
     setSearchQuery("");
   };
-
+  
+  // Fetch tasks and events on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoadingTasks(true);
         setIsLoadingEvents(true);
         
+        // Fetch tasks
         const tasksData = await dataService.getTasks();
         setTasks(tasksData);
         
+        // Fetch events
         const eventsData = await dataService.getEvents();
         setEvents(eventsData);
         
@@ -71,6 +76,7 @@ const ProductivityHubPage = () => {
     fetchData();
   }, [toast]);
 
+  // Function to highlight important dates on the calendar
   const isDayMarked = (day: Date) => {
     return events.some(
       (event) =>
@@ -80,11 +86,20 @@ const ProductivityHubPage = () => {
     );
   };
 
+  // Apply filters to tasks
   const filteredTasks = tasks.filter(task => {
+    // Filter by completion status
     if (!showCompleted && task.completed) return false;
+    
+    // Filter by priority
     if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+    
+    // Filter by category
     if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
+    
+    // Filter by search query
     if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    
     return true;
   });
 
@@ -180,6 +195,7 @@ const ProductivityHubPage = () => {
   const handleCalendarDateClick = (newDate: Date | undefined) => {
     if (newDate) {
       setDate(newDate);
+      // Check if there are events on this date
       const eventsOnDate = events.filter(
         event => 
           event.date.getDate() === newDate.getDate() &&
@@ -187,17 +203,12 @@ const ProductivityHubPage = () => {
           event.date.getFullYear() === newDate.getFullYear()
       );
       
+      // If clicking a date, switch to calendar tab to show events for that date
       setActiveTab("calendar");
     }
   };
 
-  const fadeInAnimation = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 },
-    transition: { duration: 0.3 }
-  };
-
+  // Error state
   if (isError) {
     return (
       <div className="space-y-6">
@@ -256,124 +267,98 @@ const ProductivityHubPage = () => {
           </TabsTrigger>
         </TabsList>
 
-        <AnimatePresence mode="wait">
-          {activeTab === "tasks" && (
-            <motion.div
-              key="tasks-tab"
-              {...fadeInAnimation}
-            >
-              <TabsContent value="tasks" className="mt-0">
-                <div className="flex items-center mb-4">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search tasks..."
-                      className="pl-9"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+        {/* Tasks Tab */}
+        <TabsContent value="tasks" className="mt-0">
+          <div className="flex items-center mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search tasks..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <TaskFilters
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            showCompleted={showCompleted}
+            setShowCompleted={setShowCompleted}
+            resetFilters={resetFilters}
+          />
+          
+          <div className="grid grid-cols-1 gap-6">
+            <TaskList 
+              tasks={filteredTasks} 
+              isLoading={isLoadingTasks} 
+              toggleTaskCompletion={toggleTaskCompletion}
+              onDeleteTask={handleDeleteTask}
+              onUpdateTask={handleUpdateTask}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Calendar Tab */}
+        <TabsContent value="calendar" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Calendar</CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => setIsAddEventModalOpen(true)}
+                >
+                  <PlusCircle className="h-4 w-4" /> Event
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingEvents ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                </div>
-                
-                <TaskFilters
-                  priorityFilter={priorityFilter}
-                  setPriorityFilter={setPriorityFilter}
-                  categoryFilter={categoryFilter}
-                  setCategoryFilter={setCategoryFilter}
-                  showCompleted={showCompleted}
-                  setShowCompleted={setShowCompleted}
-                  resetFilters={resetFilters}
-                />
-                
-                <div className="grid grid-cols-1 gap-6">
-                  <TaskList 
-                    tasks={filteredTasks} 
-                    isLoading={isLoadingTasks} 
-                    toggleTaskCompletion={toggleTaskCompletion}
-                    onDeleteTask={handleDeleteTask}
-                    onUpdateTask={handleUpdateTask}
+                ) : (
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={handleCalendarDateClick}
+                    className="rounded-md border"
+                    modifiers={{
+                      marked: (date) => isDayMarked(date),
+                    }}
+                    modifiersClassNames={{
+                      marked: "bg-primary/20 text-primary font-bold",
+                    }}
                   />
-                </div>
-              </TabsContent>
-            </motion.div>
-          )}
+                )}
+              </CardContent>
+            </Card>
 
-          {activeTab === "calendar" && (
-            <motion.div
-              key="calendar-tab"
-              {...fadeInAnimation}
-            >
-              <TabsContent value="calendar" className="mt-0">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="border-border/40 bg-card/60 backdrop-blur-sm">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle>Calendar</CardTitle>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center gap-1"
-                        onClick={() => setIsAddEventModalOpen(true)}
-                      >
-                        <PlusCircle className="h-4 w-4" /> Event
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoadingEvents ? (
-                        <div className="flex justify-center py-8">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                      ) : (
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={handleCalendarDateClick}
-                          className="rounded-md border"
-                          modifiers={{
-                            marked: (date) => isDayMarked(date),
-                          }}
-                          modifiersClassNames={{
-                            marked: "bg-primary/20 text-primary font-bold",
-                          }}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
+            <EventsList 
+              events={events} 
+              isLoading={isLoadingEvents}
+              selectedDate={date}
+              onDeleteEvent={handleDeleteEvent}
+              onUpdateEvent={handleUpdateEvent}
+            />
+          </div>
+        </TabsContent>
 
-                  <EventsList 
-                    events={events} 
-                    isLoading={isLoadingEvents}
-                    selectedDate={date}
-                    onDeleteEvent={handleDeleteEvent}
-                    onUpdateEvent={handleUpdateEvent}
-                  />
-                </div>
-              </TabsContent>
-            </motion.div>
-          )}
+        {/* Focus Timer Tab */}
+        <TabsContent value="focus" className="mt-0">
+          <StudyTimer />
+        </TabsContent>
 
-          {activeTab === "focus" && (
-            <motion.div
-              key="focus-tab"
-              {...fadeInAnimation}
-            >
-              <TabsContent value="focus" className="mt-0">
-                <StudyTimer />
-              </TabsContent>
-            </motion.div>
-          )}
-
-          {activeTab === "stats" && (
-            <motion.div
-              key="stats-tab"
-              {...fadeInAnimation}
-            >
-              <TabsContent value="stats" className="mt-0">
-                <ProductivityStats tasks={tasks} />
-              </TabsContent>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Statistics Tab */}
+        <TabsContent value="stats" className="mt-0">
+          <ProductivityStats tasks={tasks} />
+        </TabsContent>
       </Tabs>
 
       <AddTaskModal 
