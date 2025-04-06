@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -69,6 +70,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const AuthForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -94,8 +96,8 @@ const AuthForm: React.FC = () => {
       confirmPassword: "",
       first_name: "",
       last_name: "",
-      birth_date: null,
-      phone_number: null,
+      birth_date: "",
+      phone_number: "",
       profession: "student",
     },
   });
@@ -125,6 +127,9 @@ const AuthForm: React.FC = () => {
       }
       
       if (data?.session) {
+        // Refresh the auth context to ensure it has the latest session data
+        await checkSession();
+        
         toast({
           title: "Success!",
           description: "You've been logged in successfully.",
@@ -156,11 +161,11 @@ const AuthForm: React.FC = () => {
   };
 
   const proceedToProfessionStep = () => {
-    const { first_name, last_name } = signupForm.getValues();
+    const { first_name, last_name, birth_date } = signupForm.getValues();
     
     // Validate current fields before proceeding
-    if (!first_name || !last_name) {
-      signupForm.trigger(["first_name", "last_name"]);
+    if (!first_name || !last_name || !birth_date) {
+      signupForm.trigger(["first_name", "last_name", "birth_date"]);
       return;
     }
     
@@ -199,6 +204,7 @@ const AuthForm: React.FC = () => {
           description: errorMessage,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
@@ -209,7 +215,7 @@ const AuthForm: React.FC = () => {
       // Reset form and go back to login tab
       signupForm.reset();
       
-      // Use type assertion to ensure the element has a click method
+      // Switch to the login tab
       const loginTab = document.querySelector('[data-value="login"]') as HTMLElement;
       if (loginTab) {
         loginTab.click();
@@ -217,8 +223,20 @@ const AuthForm: React.FC = () => {
       
       // Automatically navigate to dashboard if email confirmation is disabled in Supabase
       if (data?.session) {
-        navigate("/dashboard");
+        // Refresh the auth context to ensure it has the latest session data
+        await checkSession();
+        
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       }
+      
+      toast({
+        title: "Account created!",
+        description: data?.session 
+          ? "Your account has been created successfully. Redirecting to dashboard..."
+          : "Please check your email to verify your account.",
+      });
     } catch (error: any) {
       toast({
         title: "Sign up failed",
