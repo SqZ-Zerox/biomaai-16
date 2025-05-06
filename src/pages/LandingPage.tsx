@@ -1,9 +1,10 @@
+
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
   ArrowRight, 
-  BookOpen, 
+  Activity, 
   Scale, 
   MessageSquare, 
   CheckCircle, 
@@ -13,10 +14,13 @@ import {
   Lock,
   ArrowUpRight,
   ExternalLink,
-  GraduationCap,
-  LibraryBig,
-  Brain,
-  Users
+  Heart,
+  Dumbbell,
+  Apple,
+  Weight,
+  Thermometer,
+  ChartLine,
+  Dna
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,10 +55,10 @@ const LandingPage: React.FC = () => {
             <div className="relative flex items-center justify-center w-9 h-9">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-[6px]"></div>
               <div className="relative rounded-full p-1.5 w-8 h-8 flex items-center justify-center bg-primary/10 border border-primary/20">
-                <span className="text-primary font-bold">L</span>
+                <Dna className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <h1 className="text-xl font-bold">Legal<span className="text-primary">Aid</span></h1>
+            <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>
           </div>
           
           <nav className="hidden md:flex items-center space-x-1">
@@ -100,14 +104,14 @@ const LandingPage: React.FC = () => {
                 transition={{ duration: 0.6 }}
               >
                 <Badge className="mb-4 px-3 py-1 bg-primary/10 text-primary border-primary/20">
-                  Legal Education Reinvented
+                  Health Analytics Reinvented
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                  Master <span className="text-primary">Legal Studies</span> With Modern Tools
+                  Unlock Your <span className="text-primary">Optimal Health</span> With Lab Test Analysis
                 </h1>
                 
                 <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0">
-                  Transform your legal education experience with AI-powered tools designed specifically for law students, educators, and professionals.
+                  Transform your health journey with AI-powered analysis of your lab tests, delivering personalized nutrition and fitness recommendations tailored to your unique biology.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -122,7 +126,7 @@ const LandingPage: React.FC = () => {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => scrollToSection(featuredRef)}
                   >
                     Explore Features
                     <ArrowUpRight className="ml-2 h-4 w-4" />
@@ -131,10 +135,10 @@ const LandingPage: React.FC = () => {
                 
                 <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6 justify-center lg:justify-start">
                   {[
-                    { icon: <Scale className="h-5 w-5 text-primary" />, label: "Case Briefs" },
-                    { icon: <BookOpen className="h-5 w-5 text-primary" />, label: "Study Tools" },
-                    { icon: <MessageSquare className="h-5 w-5 text-primary" />, label: "AI Assistant" },
-                    { icon: <GraduationCap className="h-5 w-5 text-primary" />, label: "Progress Tracking" }
+                    { icon: <Dna className="h-5 w-5 text-primary" />, label: "Lab Analysis" },
+                    { icon: <Apple className="h-5 w-5 text-primary" />, label: "Nutrition Plans" },
+                    { icon: <Dumbbell className="h-5 w-5 text-primary" />, label: "Fitness Advice" },
+                    { icon: <ChartLine className="h-5 w-5 text-primary" />, label: "Health Tracking" }
                   ].map((item, idx) => (
                     <motion.div 
                       key={idx}
@@ -165,30 +169,30 @@ const LandingPage: React.FC = () => {
                   <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl blur-xl"></div>
                   <div className="relative bg-card/70 border border-border/40 shadow-xl rounded-xl overflow-hidden backdrop-blur-sm">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium mb-4">Your Legal Study Hub</h3>
+                      <h3 className="text-lg font-medium mb-4">Your Health Dashboard</h3>
                       
                       <div className="space-y-4 mb-6">
                         <div className="bg-background/40 border border-border/30 rounded-lg p-4">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Scale className="h-5 w-5 text-primary" />
+                              <Activity className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <h4 className="font-medium">Case Brief Generator</h4>
-                              <p className="text-sm text-muted-foreground">Create comprehensive case briefs in minutes</p>
+                              <h4 className="font-medium">Latest Analysis</h4>
+                              <p className="text-sm text-muted-foreground">Your comprehensive health insights</p>
                             </div>
                           </div>
                           <div className="bg-muted/50 rounded-lg p-3 text-sm">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium">Brown v. Board of Education</span>
-                              <Badge variant="outline" className="text-xs">In Progress</Badge>
+                              <span className="font-medium">Blood Panel Analysis</span>
+                              <Badge variant="outline" className="text-xs">Recent</Badge>
                             </div>
                             <div className="w-full bg-background/50 h-2 rounded-full overflow-hidden">
                               <div className="bg-primary h-full w-3/4 rounded-full"></div>
                             </div>
                             <div className="flex justify-between mt-1">
-                              <span className="text-xs text-muted-foreground">75% Complete</span>
-                              <span className="text-xs text-primary">20 min left</span>
+                              <span className="text-xs text-muted-foreground">Health Score: 75/100</span>
+                              <span className="text-xs text-primary">View Details</span>
                             </div>
                           </div>
                         </div>
@@ -196,28 +200,28 @@ const LandingPage: React.FC = () => {
                         <div className="bg-background/40 border border-border/30 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-primary" />
-                              <span className="font-medium">Today's Study Plan</span>
+                              <Apple className="h-4 w-4 text-primary" />
+                              <span className="font-medium">Today's Nutrition Plan</span>
                             </div>
-                            <Badge variant="secondary" className="text-xs">3 Tasks</Badge>
+                            <Badge variant="secondary" className="text-xs">Personalized</Badge>
                           </div>
                           <div className="space-y-2 mt-3">
                             <div className="flex items-start gap-2">
                               <div className="mt-0.5 h-4 w-4 rounded-full border border-primary/50 flex items-center justify-center">
                                 <CheckCircle className="h-3 w-3 text-primary" />
                               </div>
-                              <span className="text-sm text-muted-foreground/80">Complete Case Brief</span>
+                              <span className="text-sm text-muted-foreground/80">Increase protein intake</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <div className="mt-0.5 h-4 w-4 rounded-full border border-primary/50 flex items-center justify-center">
                                 <CheckCircle className="h-3 w-3 text-primary" />
                               </div>
-                              <span className="text-sm text-muted-foreground/80">Review Constitutional Law Notes</span>
+                              <span className="text-sm text-muted-foreground/80">Add vitamin D supplement</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <div className="mt-0.5 h-4 w-4 rounded-full border border-primary/50 flex items-center justify-center">
                               </div>
-                              <span className="text-sm text-muted-foreground/80">Practice Quiz</span>
+                              <span className="text-sm text-muted-foreground/80">Reduce processed carbs</span>
                             </div>
                           </div>
                         </div>
@@ -235,7 +239,7 @@ const LandingPage: React.FC = () => {
                     <div className="bg-muted/30 border-t border-border/20 p-4 flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                        <span className="text-xs text-muted-foreground">7-day study streak</span>
+                        <span className="text-xs text-muted-foreground">7-day health streak</span>
                       </div>
                       <span className="text-xs text-primary">See your progress</span>
                     </div>
@@ -247,7 +251,7 @@ const LandingPage: React.FC = () => {
                         <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-500" />
                       </div>
                       <div>
-                        <p className="text-xs font-medium">Case Brief Complete</p>
+                        <p className="text-xs font-medium">Nutrition Plan Updated</p>
                         <p className="text-xs text-muted-foreground">Just now</p>
                       </div>
                     </div>
@@ -270,48 +274,48 @@ const LandingPage: React.FC = () => {
               <Badge className="mb-4 px-3 py-1 bg-primary/10 text-primary">
                 Features
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Legal Study Tools</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Comprehensive Health Analysis</h2>
               <p className="text-lg text-muted-foreground">
-                Our comprehensive suite of features is designed to optimize your legal studies and enhance your understanding of complex legal concepts.
+                Our AI analyzes your lab test results to create personalized health recommendations, nutrition plans, and fitness regimens.
               </p>
             </motion.div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {[
                 {
-                  icon: <Scale className="h-6 w-6 text-primary" />,
-                  title: "AI Case Brief Generator",
-                  description: "Generate comprehensive case briefs with facts, issues, holdings, and analysis in seconds.",
+                  icon: <Dna className="h-6 w-6 text-primary" />,
+                  title: "Lab Test Analysis",
+                  description: "Upload your blood work and receive comprehensive insights and health markers explained in plain language.",
                   delay: 0
                 },
                 {
-                  icon: <MessageSquare className="h-6 w-6 text-primary" />,
-                  title: "Legal Research Assistant",
-                  description: "Get instant answers to your legal questions from our AI tutor that understands complex legal concepts.",
+                  icon: <Apple className="h-6 w-6 text-primary" />,
+                  title: "Personalized Nutrition",
+                  description: "Get tailored food recommendations based on your unique biomarkers and health goals.",
                   delay: 0.1
                 },
                 {
-                  icon: <FileText className="h-6 w-6 text-primary" />,
-                  title: "Citation Tool",
-                  description: "Generate perfect Bluebook citations for any source with our intuitive citation tool.",
+                  icon: <Dumbbell className="h-6 w-6 text-primary" />,
+                  title: "Fitness Recommendations",
+                  description: "Receive exercise plans calibrated to your physiology and fitness level for optimal results.",
                   delay: 0.2
                 },
                 {
-                  icon: <BookOpen className="h-6 w-6 text-primary" />,
-                  title: "Flashcards & Quizzes",
-                  description: "Create and study with interactive flashcards tailored to your courses and exams.",
+                  icon: <Heart className="h-6 w-6 text-primary" />,
+                  title: "Health Monitoring",
+                  description: "Track improvements in your biomarkers over time and get alerts for concerning changes.",
                   delay: 0.3
                 },
                 {
-                  icon: <Brain className="h-6 w-6 text-primary" />,
-                  title: "Smart Study Planner",
-                  description: "Our AI creates personalized study schedules based on your learning style and goals.",
+                  icon: <MessageSquare className="h-6 w-6 text-primary" />,
+                  title: "AI Health Advisor",
+                  description: "Chat with our AI to answer questions about your health data and get personalized advice.",
                   delay: 0.4
                 },
                 {
-                  icon: <LibraryBig className="h-6 w-6 text-primary" />,
-                  title: "Legal Writing Assistant",
-                  description: "Get guidance on structuring legal arguments and improving your legal writing.",
+                  icon: <ChartLine className="h-6 w-6 text-primary" />,
+                  title: "Progress Tracking",
+                  description: "Visualize your health journey with intuitive charts and metrics to stay motivated.",
                   delay: 0.5
                 }
               ].map((feature, index) => (
@@ -346,30 +350,30 @@ const LandingPage: React.FC = () => {
               <Badge className="mb-4 px-3 py-1 bg-primary/10 text-primary">
                 Testimonials
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Law Students Say</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Users Say</h2>
               <p className="text-lg text-muted-foreground">
-                Hear from students who have transformed their legal studies with our platform.
+                Hear from people who have transformed their health with BIOMA AI's insights.
               </p>
             </motion.div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 {
-                  quote: "LegalAid has completely transformed my study routine. I can create comprehensive case briefs in minutes instead of hours, giving me more time to focus on understanding concepts.",
+                  quote: "BIOMA AI helped me understand my lab results in a way doctors never explained. The personalized nutrition plan helped me resolve my vitamin D deficiency in just 3 months.",
                   author: "Sarah Johnson",
-                  role: "2L at Columbia Law School",
+                  role: "Health Enthusiast, 34",
                   avatar: "/avatars/avatar-1.png"
                 },
                 {
-                  quote: "The AI research assistant is like having a personal tutor available 24/7. It helps me understand complex legal concepts and provides clear explanations whenever I'm stuck.",
+                  quote: "After years of struggling with fatigue, BIOMA AI analyzed my bloodwork and identified patterns my doctors missed. Their recommendations transformed my energy levels completely.",
                   author: "Michael Chen",
-                  role: "3L at Stanford Law School",
+                  role: "Marathon Runner, 42",
                   avatar: "/avatars/avatar-2.png"
                 },
                 {
-                  quote: "As a first-year law student, I was struggling with the volume of reading and case briefs. LegalAid's tools have helped me stay organized and ahead of my coursework.",
+                  quote: "The personalized fitness plan based on my biomarkers was a game-changer. I've lost 20 pounds and my cholesterol numbers have improved dramatically after just 4 months.",
                   author: "Jessica Rodriguez",
-                  role: "1L at Harvard Law School",
+                  role: "Working Professional, 38",
                   avatar: "/avatars/avatar-3.png"
                 }
               ].map((testimonial, index) => (
@@ -419,7 +423,7 @@ const LandingPage: React.FC = () => {
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
               <p className="text-lg text-muted-foreground">
-                Choose the plan that works best for your needs
+                Choose the plan that works best for your health goals
               </p>
             </motion.div>
             
@@ -427,31 +431,31 @@ const LandingPage: React.FC = () => {
               {[
                 {
                   popular: false,
-                  name: "Free",
+                  name: "Basic",
                   price: "$0",
-                  description: "Perfect for trying out the platform",
+                  description: "Start your health journey",
                   features: [
-                    "5 Case Briefs per month",
-                    "Basic AI research assistant",
-                    "Limited citation tool",
-                    "Basic study planner"
+                    "1 Lab test analysis per month",
+                    "Basic nutrition recommendations",
+                    "Limited health tracking",
+                    "7-day chat history"
                   ],
                   cta: "Get Started",
                   ctaVariant: "outline"
                 },
                 {
                   popular: true,
-                  name: "Pro",
-                  price: "$19",
+                  name: "Premium",
+                  price: "$19.99",
                   period: "/month",
-                  description: "Everything you need for law school",
+                  description: "Complete health optimization",
                   features: [
-                    "Unlimited case briefs",
-                    "Advanced AI research assistant",
-                    "Complete citation tool",
-                    "Personalized study planner",
-                    "Customizable flashcards",
-                    "Essay feedback",
+                    "Unlimited lab test analysis",
+                    "Advanced nutrition planner",
+                    "Personalized fitness regimens",
+                    "Supplement recommendations",
+                    "Continuous health monitoring",
+                    "Unlimited chat history",
                     "Priority support"
                   ],
                   cta: "Get Started",
@@ -459,18 +463,18 @@ const LandingPage: React.FC = () => {
                 },
                 {
                   popular: false,
-                  name: "Team",
-                  price: "$49",
+                  name: "Family",
+                  price: "$39.99",
                   period: "/month",
-                  description: "Perfect for study groups",
+                  description: "Health benefits for everyone",
                   features: [
-                    "Everything in Pro",
-                    "Up to 5 user accounts",
-                    "Collaborative study tools",
-                    "Document sharing",
-                    "Group analytics",
-                    "Priority support",
-                    "Dedicated success manager"
+                    "Everything in Premium",
+                    "Up to 5 family members",
+                    "Family health dashboard",
+                    "Genetic insights",
+                    "Shared health goals",
+                    "Family nutrition planning",
+                    "Dedicated health advisor"
                   ],
                   cta: "Contact Sales",
                   ctaVariant: "outline"
@@ -545,7 +549,7 @@ const LandingPage: React.FC = () => {
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
               <p className="text-lg text-muted-foreground">
-                Everything you need to know about LegalAid
+                Everything you need to know about BIOMA AI
               </p>
             </motion.div>
             
@@ -553,24 +557,24 @@ const LandingPage: React.FC = () => {
               <Accordion type="single" collapsible className="w-full">
                 {[
                   {
-                    question: "How does the AI case brief generator work?",
-                    answer: "Our AI case brief generator uses advanced natural language processing to analyze legal cases and extract key information. Simply upload or paste in the case text, and our AI will identify the facts, issues, holdings, reasoning, and more in seconds."
+                    question: "How does BIOMA AI analyze my lab tests?",
+                    answer: "BIOMA AI uses advanced machine learning algorithms to analyze your lab test results, comparing them with reference ranges and scientific research. Our AI identifies patterns and correlations in your biomarkers to generate personalized health insights and recommendations."
                   },
                   {
-                    question: "Is my data secure on the platform?",
-                    answer: "Yes, we take data security very seriously. All your data is encrypted both in transit and at rest. We never share your information with third parties, and you maintain ownership of all your content."
+                    question: "Is my health data secure with BIOMA AI?",
+                    answer: "Yes, we take data security very seriously. All your health data is encrypted both in transit and at rest. We comply with HIPAA regulations and never share your information with third parties without your explicit consent."
                   },
                   {
                     question: "Can I cancel my subscription anytime?",
                     answer: "Absolutely. You can cancel your subscription at any time from your account settings. Your subscription will remain active until the end of your current billing period."
                   },
                   {
-                    question: "Is there a student discount available?",
-                    answer: "Yes! We offer special pricing for law students with a valid .edu email address. Contact our support team after signing up to apply your student discount."
+                    question: "What types of lab tests can BIOMA AI analyze?",
+                    answer: "BIOMA AI can analyze a wide range of lab tests, including complete blood count (CBC), comprehensive metabolic panel (CMP), lipid panels, hormone tests, vitamin levels, and many more. If you have questions about a specific test, please contact our support team."
                   },
                   {
-                    question: "How accurate is the AI research assistant?",
-                    answer: "Our AI research assistant is trained on extensive legal databases and updated regularly. While it provides highly accurate information, we always recommend verifying critical legal information with official sources or your professors."
+                    question: "How accurate are the nutrition and fitness recommendations?",
+                    answer: "Our recommendations are based on peer-reviewed scientific research and continuously updated algorithms. While highly personalized, they are designed to complement, not replace, advice from healthcare professionals. We recommend discussing significant health changes with your doctor."
                   }
                 ].map((faq, i) => (
                   <AccordionItem key={i} value={`item-${i}`} className="border-b border-border/40">
@@ -601,9 +605,9 @@ const LandingPage: React.FC = () => {
                 <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]"></div>
                 <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
                   <div className="max-w-xl">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to transform your legal studies?</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to optimize your health?</h2>
                     <p className="text-muted-foreground mb-6 md:mb-0">
-                      Join thousands of law students already using LegalAid to excel in their studies. Get started for free today.
+                      Join thousands of users who are using BIOMA AI to understand their lab results and transform their health. Get started for free today.
                     </p>
                   </div>
                   
@@ -620,7 +624,7 @@ const LandingPage: React.FC = () => {
                       size="lg"
                       variant="outline"
                       className="border-primary/20"
-                      onClick={() => window.location.href = "#features"}
+                      onClick={() => scrollToSection(featuredRef)}
                     >
                       Learn More
                       <ArrowUpRight className="ml-2 h-4 w-4" />
@@ -639,12 +643,12 @@ const LandingPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="rounded-full p-1.5 w-8 h-8 flex items-center justify-center bg-primary/10">
-                  <span className="text-primary font-bold">L</span>
+                  <Dna className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold">LegalAid</h3>
+                <h3 className="text-lg font-bold">BIOMA AI</h3>
               </div>
               <p className="text-muted-foreground mb-4 text-sm">
-                Revolutionizing legal education with AI-powered study tools designed for today's law students.
+                Revolutionizing personal health optimization with AI-powered lab test analysis and personalized recommendations.
               </p>
               <div className="flex space-x-4">
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -663,17 +667,17 @@ const LandingPage: React.FC = () => {
               <ul className="space-y-2">
                 <li><a href="#features" className="text-muted-foreground hover:text-foreground text-sm">Features</a></li>
                 <li><a href="#pricing" className="text-muted-foreground hover:text-foreground text-sm">Pricing</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Testimonials</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">For Schools</a></li>
+                <li><a href="#testimonials" className="text-muted-foreground hover:text-foreground text-sm">Testimonials</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">For Professionals</a></li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold mb-3">Resources</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Blog</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Health Blog</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Help Center</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Webinars</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Research</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">API</a></li>
               </ul>
             </div>
@@ -691,7 +695,7 @@ const LandingPage: React.FC = () => {
           
           <div className="pt-8 border-t border-border/20 flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground mb-4 md:mb-0">
-              © 2024 LegalAid. All rights reserved.
+              © 2025 BIOMA AI. All rights reserved.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</a>

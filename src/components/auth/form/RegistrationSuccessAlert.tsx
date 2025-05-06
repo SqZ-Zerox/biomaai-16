@@ -25,7 +25,7 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
         <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">We've sent a verification email to <span className="font-bold">{email}</span></p>
-          <p>Please check your inbox and click the verification link to activate your account.</p>
+          <p>Please check your inbox and click the verification link to activate your account and start analyzing your health data.</p>
           <Button 
             variant="outline" 
             className="mt-3 bg-background border-primary text-primary hover:bg-primary hover:text-white"
