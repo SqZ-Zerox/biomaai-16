@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, ExternalLink } from "lucide-react";
+import { MoonIcon, SunIcon, Bell, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
   toggleDarkMode: () => void;
@@ -26,20 +27,30 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             tabIndex={0}
           >
             <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
-              <span className="text-primary font-bold">L</span>
+              <span className="text-primary font-bold">B</span>
             </div>
-            <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary">Aid</span></h1>
+            <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
-            size="sm"
-            onClick={() => window.open('/', '_blank')}
-            className="gap-1"
+            size="icon"
+            onClick={() => navigate("/notifications")}
+            className="rounded-full relative hover:bg-card"
           >
-            Landing Page <ExternalLink className="h-3 w-3" />
+            <Bell className="h-[1.2rem] w-[1.2rem] text-muted-foreground" />
+            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center">2</Badge>
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate("/profile")}
+            className="rounded-full hover:bg-card"
+          >
+            <User className="h-[1.2rem] w-[1.2rem] text-muted-foreground" />
           </Button>
           
           <Button 

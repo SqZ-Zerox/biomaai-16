@@ -2,14 +2,13 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  BookOpen, 
-  MessageSquare, 
-  Calendar, 
-  Gavel,
-  Library,
-  Link,
-  CheckSquare,
-  Home
+  Home, 
+  MessageCircle, 
+  FileText, 
+  Apple, 
+  Dumbbell,
+  HeartPulse,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,35 +23,35 @@ const Navigation: React.FC = () => {
       path: "/dashboard",
     },
     {
-      icon: <BookOpen size={20} />,
-      label: "Study",
-      path: "/study",
+      icon: <FileText size={20} />,
+      label: "Lab Reports",
+      path: "/upload",
     },
     {
-      icon: <MessageSquare size={20} />,
-      label: "Chat",
+      icon: <Apple size={20} />,
+      label: "Nutrition",
+      path: "/nutrition",
+    },
+    {
+      icon: <Dumbbell size={20} />,
+      label: "Fitness",
+      path: "/fitness",
+    },
+    {
+      icon: <HeartPulse size={20} />,
+      label: "Progress",
+      path: "/progress",
+    },
+    {
+      icon: <MessageCircle size={20} />,
+      label: "Bioma Bot",
       path: "/chat",
     },
     {
-      icon: <CheckSquare size={20} />,
-      label: "Productivity",
-      path: "/study-plan",
-    },
-    {
-      icon: <Gavel size={20} />,
-      label: "Case Brief",
-      path: "/case-brief",
-    },
-    {
-      icon: <Library size={20} />,
-      label: "Flashcards",
-      path: "/flashcards",
-    },
-    {
-      icon: <Link size={20} />,
-      label: "Citations",
-      path: "/citation-tool",
-    },
+      icon: <Settings size={20} />,
+      label: "Settings",
+      path: "/settings",
+    }
   ];
 
   return (
@@ -69,20 +68,20 @@ const Navigation: React.FC = () => {
               className={cn(
                 "flex flex-col items-center py-2 px-2 sm:px-4 rounded-md transition-all relative",
                 isActive 
-                  ? "text-accent font-medium" 
+                  ? "text-primary font-medium" 
                   : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => navigate(item.path)}
             >
               <div className={cn(
                 "mb-1",
-                isActive ? "text-accent" : ""
+                isActive ? "text-primary" : ""
               )}>
                 {item.icon}
               </div>
               <span className="text-xs">{item.label}</span>
               {isActive && (
-                <div className="absolute -bottom-2 h-0.5 w-12 bg-accent rounded-full opacity-80" />
+                <div className="absolute -bottom-2 h-0.5 w-12 bg-primary rounded-full opacity-80" />
               )}
             </button>
           );
