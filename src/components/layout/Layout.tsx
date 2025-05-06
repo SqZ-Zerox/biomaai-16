@@ -8,9 +8,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: React.ReactNode;
+  toggleDarkMode: () => void;
+  isDarkMode: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, toggleDarkMode, isDarkMode }) => {
   const isMobile = useIsMobile();
   
   return (
@@ -18,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="min-h-screen flex w-full bg-background/80">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-          <Header />
+          <Header toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
           <main className="flex-1 overflow-y-auto pb-20">
             <div className="container mx-auto p-4">
               {children}

@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Index from "./pages/Index";
 import ChatPage from "./pages/ChatPage";
@@ -40,6 +40,34 @@ export const DemoModeContext = createContext({
 });
 
 export const useDemoMode = () => useContext(DemoModeContext);
+
+// Layout wrapper with dark mode state
+const LayoutWithDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    // Get saved preference or use system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    // Update body class when theme changes
+    document.body.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  return (
+    <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
+      <Outlet />
+    </Layout>
+  );
+};
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -95,7 +123,7 @@ const App = () => {
                   {/* Dashboard and other pages inside the Layout - protected */}
                   <Route element={
                     <ProtectedRoute>
-                      <Layout />
+                      <LayoutWithDarkMode />
                     </ProtectedRoute>
                   }>
                     <Route path="/dashboard" element={<Index />} />
