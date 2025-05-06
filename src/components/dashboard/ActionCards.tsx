@@ -5,9 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Apple, Dumbbell, ArrowRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ActionCards: React.FC = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   return (
     <motion.div
@@ -20,7 +22,7 @@ const ActionCards: React.FC = () => {
       {/* Primary CTA Card */}
       <Card className="bg-primary text-primary-foreground mb-4 shadow-md hover:shadow-lg transition-shadow">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className={`flex ${isMobile ? 'flex-col' : 'items-center justify-between'} gap-4`}>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-full">
                 <Apple className="h-8 w-8" />
@@ -36,6 +38,7 @@ const ActionCards: React.FC = () => {
               variant="secondary" 
               className="whitespace-nowrap"
               onClick={() => navigate("/nutrition")}
+              size={isMobile ? "sm" : "default"}
             >
               Create Plan
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -47,7 +50,7 @@ const ActionCards: React.FC = () => {
       {/* Secondary Card */}
       <Card className="border-border/40 bg-card hover:border-primary/30 transition-all duration-300 hover:shadow-md">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className={`flex ${isMobile ? 'flex-col' : 'items-center justify-between'} gap-4`}>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-full">
                 <Dumbbell className="h-8 w-8 text-primary" />
@@ -63,6 +66,7 @@ const ActionCards: React.FC = () => {
               variant="outline" 
               className="whitespace-nowrap border-primary/30 text-primary hover:bg-primary hover:text-white"
               onClick={() => navigate("/fitness")}
+              size={isMobile ? "sm" : "default"}
             >
               Build Routine
               <ArrowRight className="ml-2 h-4 w-4" />

@@ -217,52 +217,84 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <AnimatePresence mode="wait">
-          {currentStep === 'credentials' && (
-            <SignupCredentialsStep 
-              form={form} 
-              isLoading={isLoading} 
-              onNext={proceedToPersonalStep} 
-            />
-          )}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="relative">
+          {/* Step progress indicator */}
+          <div className="flex items-center justify-center mb-8 px-4 py-2">
+            <div className="flex items-center w-full max-w-xs">
+              {['credentials', 'personal', 'health', 'medical', 'terms'].map((step, index) => (
+                <React.Fragment key={step}>
+                  <div 
+                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                      currentStep === step 
+                        ? 'bg-primary text-primary-foreground'
+                        : index < ['credentials', 'personal', 'health', 'medical', 'terms'].indexOf(currentStep) 
+                          ? 'bg-primary/70 text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  {index < 4 && (
+                    <div 
+                      className={`h-1 flex-grow mx-1 rounded-full ${
+                        index < ['credentials', 'personal', 'health', 'medical', 'terms'].indexOf(currentStep)
+                          ? 'bg-primary/70'
+                          : 'bg-muted'
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
           
-          {currentStep === 'personal' && (
-            <SignupPersonalStep 
-              form={form} 
-              isLoading={isLoading} 
-              onNext={proceedToHealthStep} 
-              onBack={backToCredentialsStep} 
-            />
-          )}
-          
-          {currentStep === 'health' && (
-            <SignupHealthStep 
-              form={form} 
-              isLoading={isLoading} 
-              onNext={proceedToMedicalStep} 
-              onBack={backToPersonalStep} 
-            />
-          )}
-          
-          {currentStep === 'medical' && (
-            <SignupMedicalStep 
-              form={form} 
-              isLoading={isLoading} 
-              onNext={proceedToTermsStep} 
-              onBack={backToHealthStep} 
-            />
-          )}
-          
-          {currentStep === 'terms' && (
-            <SignupTermsStep 
-              form={form} 
-              isLoading={isLoading} 
-              onBack={backToMedicalStep}
-              onSubmit={onSubmit}
-            />
-          )}
-        </AnimatePresence>
+          <AnimatePresence mode="wait">
+            {currentStep === 'credentials' && (
+              <SignupCredentialsStep 
+                form={form} 
+                isLoading={isLoading} 
+                onNext={proceedToPersonalStep} 
+              />
+            )}
+            
+            {currentStep === 'personal' && (
+              <SignupPersonalStep 
+                form={form} 
+                isLoading={isLoading} 
+                onNext={proceedToHealthStep} 
+                onBack={backToCredentialsStep} 
+              />
+            )}
+            
+            {currentStep === 'health' && (
+              <SignupHealthStep 
+                form={form} 
+                isLoading={isLoading} 
+                onNext={proceedToMedicalStep} 
+                onBack={backToPersonalStep} 
+              />
+            )}
+            
+            {currentStep === 'medical' && (
+              <SignupMedicalStep 
+                form={form} 
+                isLoading={isLoading} 
+                onNext={proceedToTermsStep} 
+                onBack={backToHealthStep} 
+              />
+            )}
+            
+            {currentStep === 'terms' && (
+              <SignupTermsStep 
+                form={form} 
+                isLoading={isLoading} 
+                onBack={backToMedicalStep}
+                onSubmit={onSubmit}
+              />
+            )}
+          </AnimatePresence>
+        </div>
       </form>
     </Form>
   );

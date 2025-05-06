@@ -12,7 +12,8 @@ import {
   Dumbbell,
   Bell,
   HelpCircle,
-  Award
+  Award,
+  LogOut
 } from "lucide-react";
 
 import {
@@ -30,11 +31,18 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useSidebar } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { signOut } from "@/services/authService";
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppSidebar = () => {
-  const { state } = useSidebar();
+  const { state, close } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const menuItems = [
     {
@@ -97,6 +105,30 @@ const AppSidebar = () => {
     }
   ];
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      close();
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account.",
+      });
+      navigate("/login");
+    } catch (error) {
+      toast({
+        title: "Sign out failed",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Sidebar data-state={state}>
       <SidebarHeader className="py-6">
@@ -106,6 +138,17 @@ const AppSidebar = () => {
           </div>
           <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>
         </div>
+        {profile && (
+          <div className="mt-4 px-4 flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-sm">
+              <p className="font-medium">{profile.first_name} {profile.last_name}</p>
+              <p className="text-xs text-muted-foreground">User since {new Date(profile.created_at).toLocaleDateString()}</p>
+            </div>
+          </div>
+        )}
       </SidebarHeader>
       
       <SidebarContent className="sidebar-scrollbar">
@@ -118,7 +161,7 @@ const AppSidebar = () => {
                   <SidebarMenuButton 
                     tooltip={item.title}
                     isActive={location.pathname === item.path} 
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigation(item.path)}
                     className="transition-all duration-300 hover:bg-primary/10"
                   >
                     <item.icon className="text-primary" />
@@ -141,7 +184,7 @@ const AppSidebar = () => {
                   <SidebarMenuButton 
                     tooltip={item.title}
                     isActive={location.pathname === item.path} 
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigation(item.path)}
                     className="transition-all duration-300 hover:bg-primary/10"
                   >
                     <item.icon className="text-primary" />
@@ -155,9 +198,19 @@ const AppSidebar = () => {
       </SidebarContent>
       
       <SidebarFooter className="py-4">
-        <div className="px-4 text-xs text-muted-foreground">
-          <p>© 2025 Bioma AI</p>
-          <p className="mt-1">Health insights powered by AI</p>
+        <div className="px-4 space-y-4">
+          <button 
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </button>
+          
+          <div className="text-xs text-muted-foreground">
+            <p>© 2025 Bioma AI</p>
+            <p className="mt-1">Health insights powered by AI</p>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger, SidebarRail } from "@/components/ui/sidebar";
 import Header from "./Header";
-import Navigation from "./Navigation";
 import AppSidebar from "./AppSidebar";
 
 const Layout: React.FC = () => {
@@ -58,7 +57,7 @@ const Layout: React.FC = () => {
           <SidebarRail />
           
           {/* Main content */}
-          <main className="flex-1 container mx-auto px-4 pb-20 pt-6 relative z-10 overflow-y-auto">
+          <main className="flex-1 container mx-auto px-4 py-6 relative z-10 overflow-y-auto">
             <div className="max-w-5xl mx-auto">
               {/* Background effects */}
               <div className="fixed inset-0 z-0 pointer-events-none">
@@ -71,8 +70,6 @@ const Layout: React.FC = () => {
             </div>
           </main>
         </div>
-        
-        <Navigation />
         
         {/* Copyright mark - fixed position at bottom right corner */}
         <div className="fixed bottom-4 right-4 z-20">

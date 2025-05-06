@@ -7,12 +7,14 @@ import SignupForm from "./form/SignupForm";
 import RegistrationSuccessAlert from "./form/RegistrationSuccessAlert";
 import { useDemoMode } from "@/App";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AuthForm: React.FC = () => {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
   const { isDemoMode, setIsDemoMode } = useDemoMode();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   // Effect to redirect if in demo mode
   useEffect(() => {
@@ -61,16 +63,16 @@ const AuthForm: React.FC = () => {
       )}
 
       <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
-        <TabsList className="grid grid-cols-2 mb-6">
+        <TabsList className={`grid grid-cols-2 mb-6 ${isMobile ? 'w-full' : 'max-w-sm mx-auto'}`}>
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="login">
+        <TabsContent value="login" className="space-y-4 animate-fade-in">
           <LoginForm />
         </TabsContent>
         
-        <TabsContent value="signup">
+        <TabsContent value="signup" className="animate-fade-in">
           <SignupForm onRegistrationSuccess={handleRegistrationSuccess} />
         </TabsContent>
       </Tabs>

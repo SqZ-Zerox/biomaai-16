@@ -4,11 +4,14 @@ import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
 import { Dna } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const LoginPage: React.FC = () => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      <div className={`w-full ${isMobile ? 'px-2' : 'max-w-md'}`}>
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

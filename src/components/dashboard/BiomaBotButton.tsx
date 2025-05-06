@@ -6,11 +6,13 @@ import { MessageCircle, X } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BiomaBotButton: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const isMobile = useIsMobile();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ const BiomaBotButton: React.FC = () => {
   return (
     <>
       {/* Floating button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-20 right-6 z-50">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -44,15 +46,15 @@ const BiomaBotButton: React.FC = () => {
         >
           <Button 
             onClick={toggleChat}
-            className={`rounded-full w-16 h-16 shadow-lg ${
+            className={`rounded-full ${isMobile ? 'w-12 h-12' : 'w-16 h-16'} shadow-lg ${
               isOpen ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"
             }`}
             aria-label={isOpen ? "Close Bioma Bot" : "Open Bioma Bot"}
           >
             {isOpen ? (
-              <X className="h-6 w-6" />
+              <X className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
             ) : (
-              <MessageCircle className="h-6 w-6" />
+              <MessageCircle className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
             )}
           </Button>
         </motion.div>
@@ -62,7 +64,7 @@ const BiomaBotButton: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            className="fixed bottom-24 right-6 z-50 w-80 sm:w-96"
+            className={`fixed bottom-36 right-6 z-50 ${isMobile ? 'w-[calc(100%-3rem)]' : 'w-96'}`}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}

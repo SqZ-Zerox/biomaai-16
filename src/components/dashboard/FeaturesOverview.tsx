@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Apple, Dumbbell, MessageCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FeaturesOverview: React.FC = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const features = [
     {
@@ -62,15 +64,16 @@ const FeaturesOverview: React.FC = () => {
                   <div className="p-2 bg-primary/10 rounded-md">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'}`}>{feature.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">{feature.description}</p>
+                <p className="text-muted-foreground mb-4 text-sm">{feature.description}</p>
                 <Button 
                   variant="outline" 
                   className="w-full border-primary/30 text-primary hover:bg-primary hover:text-white"
                   onClick={() => navigate(feature.route)}
+                  size={isMobile ? "sm" : "default"}
                 >
                   {feature.buttonText}
                   <ArrowRight className="ml-1 h-4 w-4" />
