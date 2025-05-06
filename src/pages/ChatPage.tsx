@@ -12,7 +12,9 @@ import {
   Plus,
   Trash2,
   PanelLeft,
-  Download
+  Download,
+  User,
+  Bot
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -33,51 +35,51 @@ type ChatSession = {
 };
 
 const SAMPLE_QUESTIONS = [
-  "What are the key elements of negligence?",
-  "Explain the rule against perpetuities",
-  "What is the difference between common law and civil law?",
-  "Explain the concept of stare decisis",
+  "What should I eat to improve my vitamin D levels?",
+  "How can I optimize my sleep schedule?",
+  "What exercises are best for lower back pain?",
+  "How do stress and cortisol affect weight management?",
 ];
 
 // Sample chat history
 const SAMPLE_CHATS: ChatSession[] = [
   {
     id: '1',
-    title: "Law of Contracts discussion",
+    title: "Nutrition Planning",
     createdAt: new Date(),
     messages: [
       {
         role: "assistant",
-        content: "Hello! I'm your legal study assistant. Ask me any questions about contracts.",
+        content: "Hello! I'm your Bioma AI health assistant. Ask me any questions about nutrition and dietary needs.",
         timestamp: new Date(),
       },
       {
         role: "user",
-        content: "What are the essential elements of a valid contract?",
+        content: "What foods should I eat to improve my iron levels?",
         timestamp: new Date(),
       },
     ]
   },
   {
     id: '2',
-    title: "Criminal Law questions",
+    title: "Fitness Routine",
     createdAt: new Date(),
     messages: [
       {
         role: "assistant",
-        content: "Hello! I'm your legal study assistant. Ask me any questions about criminal law.",
+        content: "Hello! I'm your Bioma AI health assistant. Ask me any questions about fitness and exercise.",
         timestamp: new Date(),
       },
     ]
   },
   {
     id: '3',
-    title: "Constitutional principles",
+    title: "Sleep Optimization",
     createdAt: new Date(),
     messages: [
       {
         role: "assistant",
-        content: "Hello! I'm your legal study assistant. Ask me any questions about constitutional law.",
+        content: "Hello! I'm your Bioma AI health assistant. Ask me any questions about sleep patterns and optimization.",
         timestamp: new Date(),
       },
     ]
@@ -86,18 +88,18 @@ const SAMPLE_CHATS: ChatSession[] = [
 
 // Simple mock responses for demo purposes
 const MOCK_RESPONSES: Record<string, string> = {
-  "negligence": "Negligence has four key elements: duty of care, breach of duty, causation, and damages. The plaintiff must prove all four elements to succeed in a negligence claim.",
-  "stare decisis": "Stare decisis is a legal principle that obligates courts to follow historical cases when making a ruling on a similar case. It ensures consistency in judicial decisions and provides predictability in legal interpretation.",
-  "common law": "Common law is a body of law derived from judicial precedent rather than written laws (statutes). Civil law, on the other hand, is codified law that is regularly updated. The United States uses a common law system, while many European countries use civil law.",
-  "rule against perpetuities": "The Rule Against Perpetuities states that no interest in property is valid unless it must vest, if at all, not later than 21 years after the death of some life in being at the creation of the interest. This rule prevents property from being tied up indefinitely.",
-  "default": "That's an interesting legal question. In a full version of this app, I'd provide a detailed answer based on legal resources and educational materials. Can you try asking about negligence, stare decisis, common law, or the rule against perpetuities?",
+  "vitamin": "Based on your lab results, I recommend increasing your intake of vitamin D-rich foods like fatty fish, egg yolks, and fortified dairy. Spending 15-20 minutes in morning sunlight can also help your body naturally produce vitamin D.",
+  "sleep": "To optimize sleep quality, try maintaining a consistent sleep schedule (even on weekends), avoiding screens 1 hour before bed, keeping your bedroom cool (65-68°F), and limiting caffeine after 2pm. Your recent activity data shows your sleep efficiency could improve with these adjustments.",
+  "exercise": "For lower back pain, focus on core-strengthening exercises like planks, gentle yoga poses like cat-cow and child's pose, and low-impact cardio. Your recent fitness metrics indicate that improving core strength could help address your current concerns.",
+  "stress": "Chronic stress increases cortisol, which can lead to weight gain particularly around the abdomen. Based on your recent health metrics, I recommend incorporating daily stress-reduction techniques like deep breathing exercises, meditation, or gentle movement practices like tai chi.",
+  "default": "That's an interesting health question. In a full version of this app, I'd provide personalized recommendations based on your health data, lab results, and current wellness goals. Can you try asking about vitamins, sleep, exercise, or stress management?",
 };
 
 const ChatPage = () => {
   const [messages, setMessages] = useState<MessageType[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your legal study assistant. Ask me any questions about law concepts, cases, or study strategies.",
+      content: "Hello! I'm your Bioma AI health assistant. Ask me any questions about nutrition, fitness, sleep, or stress management based on your personal health data.",
       timestamp: new Date(),
     },
   ]);
@@ -198,7 +200,7 @@ const ChatPage = () => {
             : chat
         ));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
       const { message } = errorHandler(error);
       setIsError(true);
@@ -247,7 +249,7 @@ const ChatPage = () => {
   const startNewChat = () => {
     setMessages([{
       role: "assistant",
-      content: "Hello! I'm your legal study assistant. Ask me any questions about law concepts, cases, or study strategies.",
+      content: "Hello! I'm your Bioma AI health assistant. Ask me any questions about nutrition, fitness, sleep, or stress management based on your personal health data.",
       timestamp: new Date(),
     }]);
     setActiveChatId(null);
@@ -326,10 +328,10 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-15rem)] max-h-[calc(100vh-15rem)]" ref={chatContainerRef}>
+    <div className="flex flex-col h-[calc(100vh-15rem)] max-h-[calc(100vh-15rem)] bg-background/30 p-4 rounded-lg" ref={chatContainerRef}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-bold">Legal Assistant</h1>
+          <h1 className="text-2xl font-bold">Bioma <span className="text-primary">Chat</span></h1>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="ml-2">
@@ -371,7 +373,7 @@ const ChatPage = () => {
           <div className="w-64 flex-shrink-0 overflow-hidden rounded-lg border border-border/40 shadow-sm bg-card/60 backdrop-blur-sm">
             <div className="p-3 font-medium text-sm border-b border-border/40">
               <span className="flex items-center gap-2">
-                <History className="h-4 w-4" /> Chat History
+                <History className="h-4 w-4 text-primary" /> Chat History
               </span>
             </div>
             <div className="p-2">
@@ -391,7 +393,7 @@ const ChatPage = () => {
                     )}
                   >
                     <div className="flex items-start space-x-2">
-                      <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
                       <span className="line-clamp-2">{chat.title}</span>
                     </div>
                     <Button 
@@ -411,7 +413,10 @@ const ChatPage = () => {
 
         <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm border border-border/40 rounded-lg shadow-sm overflow-hidden">
           <div className="p-3 border-b border-border/40 flex items-center justify-between">
-            <h3 className="font-semibold truncate">{chatTitle}</h3>
+            <h3 className="font-semibold truncate flex items-center gap-2">
+              <Bot className="h-4 w-4 text-primary" />
+              {chatTitle}
+            </h3>
           </div>
           
           <ScrollArea className="flex-1 p-4 overflow-y-auto">
@@ -438,6 +443,18 @@ const ChatPage = () => {
                           : "bg-muted"
                     )}
                   >
+                    {message.role !== "user" && message.role !== "system" && (
+                      <div className="flex items-center gap-2 mb-1 pb-1 border-b border-border/40">
+                        <Bot className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-medium">Bioma AI</span>
+                      </div>
+                    )}
+                    {message.role === "user" && (
+                      <div className="flex items-center gap-2 mb-1 pb-1 border-b border-border/40">
+                        <User className="w-4 h-4" />
+                        <span className="text-xs font-medium">You</span>
+                      </div>
+                    )}
                     <p className="whitespace-pre-wrap break-words">{message.content}</p>
                     <p className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString([], {
@@ -494,7 +511,7 @@ const ChatPage = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a legal question..."
+                placeholder="Ask about your health, nutrition, or fitness..."
                 disabled={isLoading}
                 className="flex-1 bg-background shadow-sm"
               />
@@ -515,3 +532,4 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
+

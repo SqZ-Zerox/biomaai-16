@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -23,18 +24,18 @@ interface Message {
   timestamp: Date;
 }
 
-const essayTemplates = [
+const healthTemplates = [
   {
-    title: "Legal Case Analysis",
-    content: "# Legal Case Analysis\n\n## Case Information\n- **Case Name**: [Case Name]\n- **Citation**: [Citation]\n- **Court Name**: [Court Name]\n- **Year**: [Year]\n\n## Facts of the Case\n[Summarize the key facts of the case]\n\n## Legal Issues\n1. [First legal issue]\n2. [Second legal issue]\n\n## Court's Decision\n[Describe the court's holding and reasoning]\n\n## Analysis\n### Legal Principles Applied\n[Discuss the legal principles the court applied]\n\n### Implications\n[Discuss the implications of this decision]\n\n## Conclusion\n[Your concluding thoughts on the case]"
+    title: "Nutrition Plan",
+    content: "# Personalized Nutrition Plan\n\n## Dietary Goals\n- **Primary Goal**: [Weight management/Muscle gain/Energy boost]\n- **Dietary Restrictions**: [Any allergies or restrictions]\n- **Caloric Target**: [Daily calorie goal]\n\n## Meal Structure\n### Breakfast\n- [Protein source]\n- [Complex carbohydrate]\n- [Healthy fat]\n\n### Lunch\n- [Protein source]\n- [Vegetables/Greens]\n- [Complex carbohydrate]\n\n### Dinner\n- [Lean protein]\n- [Vegetables]\n- [Healthy starch]\n\n### Snacks\n- [Healthy snack option 1]\n- [Healthy snack option 2]\n\n## Hydration\n- [Daily water intake goal]\n\n## Supplementation\n- [Any recommended supplements based on lab results]"
   },
   {
-    title: "Legal Memo",
-    content: "# MEMORANDUM\n\n**TO**: [Recipient]\n**FROM**: [Your Name]\n**DATE**: [Date]\n**RE**: [Subject Matter]\n\n## Question Presented\n[Concise statement of the legal question]\n\n## Brief Answer\n[Short answer to the question presented]\n\n## Facts\n[Relevant facts that inform your analysis]\n\n## Discussion\n### Applicable Law\n[Discussion of relevant statutes, cases, and legal principles]\n\n### Analysis\n[Application of law to the facts of this situation]\n\n## Conclusion\n[Final conclusion based on your analysis]"
+    title: "Fitness Routine",
+    content: "# Weekly Fitness Plan\n\n## Training Split\n\n### Monday: [Focus Area]\n- Exercise 1: [Sets] x [Reps]\n- Exercise 2: [Sets] x [Reps]\n- Exercise 3: [Sets] x [Reps]\n\n### Tuesday: [Focus Area]\n- Exercise 1: [Sets] x [Reps]\n- Exercise 2: [Sets] x [Reps]\n- Exercise 3: [Sets] x [Reps]\n\n### Wednesday: [Rest/Active Recovery]\n- [Activity suggestions]\n\n### Thursday: [Focus Area]\n- Exercise 1: [Sets] x [Reps]\n- Exercise 2: [Sets] x [Reps]\n- Exercise 3: [Sets] x [Reps]\n\n### Friday: [Focus Area]\n- Exercise 1: [Sets] x [Reps]\n- Exercise 2: [Sets] x [Reps]\n- Exercise 3: [Sets] x [Reps]\n\n### Saturday/Sunday: [Activity/Rest]\n- [Weekend activity suggestions]\n\n## Cardiovascular Training\n- [Type and frequency of cardio]\n\n## Mobility Work\n- [Stretches and mobility exercises]\n\n## Progress Tracking\n- [Metrics to track]"
   },
   {
-    title: "Legal Research Paper",
-    content: "# Title: [Your Paper Title]\n\n## Abstract\n[Brief summary of your paper - typically 150-250 words]\n\n## Introduction\n[Introduce your topic and why it matters]\n\n## Literature Review\n[Review of existing scholarship on this topic]\n\n## Theoretical Framework\n[The legal theories that inform your analysis]\n\n## Analysis\n### [First Major Section]\n[Your analysis]\n\n### [Second Major Section]\n[Your analysis]\n\n## Implications\n[Legal and policy implications of your findings]\n\n## Conclusion\n[Summary of your arguments and findings]\n\n## References\n[List of sources in appropriate legal citation format]"
+    title: "Sleep Improvement Plan",
+    content: "# Sleep Optimization Plan\n\n## Current Sleep Metrics\n- **Average Duration**: [Hours per night]\n- **Sleep Efficiency**: [Percentage]\n- **Main Challenges**: [Issues identified]\n\n## Evening Routine\n1. [Activity 1] at [Time]\n2. [Activity 2] at [Time]\n3. [Activity 3] at [Time]\n\n## Bedroom Environment\n- **Temperature**: [Recommended temperature]\n- **Light**: [Light management strategies]\n- **Sound**: [Sound management strategies]\n\n## Nutrition & Supplementation\n- [Evening nutrition recommendations]\n- [Supplement recommendations if applicable]\n\n## Screen Management\n- [Digital device recommendations]\n\n## Morning Routine\n1. [Activity 1] at [Time]\n2. [Activity 2] at [Time]\n\n## Progress Tracking\n- [Sleep metrics to monitor]"
   }
 ];
 
@@ -42,13 +43,13 @@ interface EssayChatPanelProps {
   onUpdateEssay: (content: string) => void;
 }
 
-const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
+const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       type: "system",
-      content: "Welcome to the Legal Essay Assistant. You can ask for help with structuring your essay, get tips on legal writing, or request specific sections be drafted. What would you like help with today?",
+      content: "Welcome to the Bioma Health Assistant. You can ask for help with nutrition plans, fitness routines, or sleep optimization strategies based on your health data and goals.",
       timestamp: new Date()
     }
   ]);
@@ -69,13 +70,13 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
   
   useEffect(() => {
     if (messages.length > 1) {
-      localStorage.setItem('legal-essay-chat', JSON.stringify(messages));
+      localStorage.setItem('bioma-health-chat', JSON.stringify(messages));
     }
   }, [messages]);
   
   useEffect(() => {
     try {
-      const savedChat = localStorage.getItem('legal-essay-chat');
+      const savedChat = localStorage.getItem('bioma-health-chat');
       if (savedChat) {
         const parsedChat = JSON.parse(savedChat);
         const processedChat = parsedChat.map((msg: any) => ({
@@ -108,7 +109,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
       const assistantMessage: Message = {
         id: `msg-${Date.now() + 1}`,
         type: "assistant",
-        content: "I'm a simulated assistant. In the full version, I would help you with your essay. Try using the essay templates from the '+' menu to get started.",
+        content: "I'm a simulated health assistant. In the full version, I would analyze your health data and provide personalized recommendations. Try using the health templates from the '+' menu to get started with structured plans.",
         timestamp: new Date()
       };
       
@@ -122,11 +123,11 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
       {
         id: "welcome",
         type: "system",
-        content: "Welcome to the Legal Essay Assistant. You can ask for help with structuring your essay, get tips on legal writing, or request specific sections be drafted. What would you like help with today?",
+        content: "Welcome to the Bioma Health Assistant. You can ask for help with nutrition plans, fitness routines, or sleep optimization strategies based on your health data and goals.",
         timestamp: new Date()
       }
     ]);
-    localStorage.removeItem('legal-essay-chat');
+    localStorage.removeItem('bioma-health-chat');
     toast({
       title: "Chat cleared",
       description: "All messages have been cleared"
@@ -137,7 +138,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     onUpdateEssay(template.content);
     toast({
       title: "Template applied",
-      description: `Applied the ${template.title} template to your essay`
+      description: `Applied the ${template.title} template to your document`
     });
   };
   
@@ -145,7 +146,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     const chatText = messages.map(msg => {
       const timestamp = msg.timestamp.toLocaleTimeString();
       const sender = msg.type === 'user' ? 'You' : 
-                     msg.type === 'assistant' ? 'Assistant' : 'System';
+                     msg.type === 'assistant' ? 'Bioma AI' : 'System';
       return `[${timestamp}] ${sender}: ${msg.content}`;
     }).join('\n\n');
     
@@ -154,7 +155,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `legal-essay-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `bioma-health-chat-${new Date().toISOString().slice(0, 10)}.txt`;
     document.body.appendChild(a);
     a.click();
     
@@ -172,7 +173,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
       <div className="p-3 border-b border-border/40 bg-card/80 flex items-center justify-between">
         <h3 className="font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-primary" />
-          Essay Assistant
+          Health Assistant
         </h3>
         
         <div className="flex items-center">
@@ -231,7 +232,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
                       <PanelRight className="w-4 h-4 text-muted-foreground" />
                     )}
                     <span className="text-xs font-medium">
-                      {message.type === "assistant" ? "Assistant" : "System"}
+                      {message.type === "assistant" ? "Bioma AI" : "System"}
                     </span>
                   </div>
                 )}
@@ -268,9 +269,9 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-60">
-              <DropdownMenuLabel>Essay Templates</DropdownMenuLabel>
+              <DropdownMenuLabel>Health Templates</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {essayTemplates.map((template, index) => (
+              {healthTemplates.map((template, index) => (
                 <DropdownMenuItem 
                   key={index} 
                   onClick={() => applyTemplate(template)}
@@ -292,7 +293,7 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask for help with your essay..."
+              placeholder="Ask for help with your health plan..."
               className="flex-1"
               disabled={isTyping}
             />
@@ -310,4 +311,5 @@ const EssayChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
   );
 };
 
-export default EssayChatPanel;
+export default BiomaChatPanel;
+
