@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck, UserPlus } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDemoMode } from "@/App";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card } from "@/components/ui/card";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -33,6 +32,7 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkSession } = useAuth();
+  const { setIsDemoMode } = useDemoMode();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -92,18 +92,20 @@ const LoginForm: React.FC = () => {
   };
 
   // Demo authentication function
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = () => {
     setIsLoading(true);
-    // Simulate authentication delay
-    setTimeout(() => {
-      // Mock successful authentication
-      toast({
-        title: "Demo Login Success!",
-        description: "You've been logged in with demo account.",
-      });
-      navigate("/dashboard");
-      setIsLoading(false);
-    }, 1500);
+    
+    // Activate demo mode
+    setIsDemoMode(true);
+    
+    toast({
+      title: "Demo Login Success!",
+      description: "You've been logged in with demo account.",
+    });
+    
+    // Redirect to dashboard
+    navigate("/dashboard");
+    setIsLoading(false);
   };
 
   // Animation variants
@@ -115,7 +117,7 @@ const LoginForm: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -233,7 +235,7 @@ const LoginForm: React.FC = () => {
             <span className="w-full border-t border-border"></span>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+            <span className="bg-card px-2 text-muted-foreground">Or</span>
           </div>
         </div>
         
@@ -244,7 +246,7 @@ const LoginForm: React.FC = () => {
         >
           <Button 
             type="button" 
-            variant="outline"
+            variant="secondary"
             className="w-full" 
             onClick={handleDemoLogin}
             disabled={isLoading}
