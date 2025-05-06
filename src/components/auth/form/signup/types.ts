@@ -55,8 +55,8 @@ export const signupSchema = z.object({
   }),
   
   // Terms
-  terms_accepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms and conditions" }),
+  terms_accepted: z.boolean().refine(val => val === true, {
+    message: "You must accept the terms and conditions"
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
