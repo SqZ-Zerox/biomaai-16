@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -37,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppSidebar = () => {
-  const { state, close } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -108,7 +107,7 @@ const AppSidebar = () => {
   const handleNavigation = (path: string) => {
     navigate(path);
     if (isMobile) {
-      close();
+      setOpenMobile(false);
     }
   };
 
