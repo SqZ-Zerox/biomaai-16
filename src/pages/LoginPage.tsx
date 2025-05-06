@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
-import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine, Heart, Weight, Thermometer, Nutrition } from "lucide-react";
+import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine, Heart, Weight, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
               transition={{ duration: 0.3, delay: 0.7 }}
               className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
             >
-              <Nutrition className="h-8 w-8 text-white" />
+              <Apple className="h-8 w-8 text-white" />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}

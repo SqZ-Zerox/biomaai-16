@@ -19,7 +19,8 @@ export interface SignUpData {
   last_name: string;
   birth_date: string | null;
   phone_number: string | null;
-  profession: string;
+  profession?: string;  // Made optional with '?'
+  user_metadata?: any;  // Added to allow additional metadata
 }
 
 export async function signUp({
@@ -29,7 +30,8 @@ export async function signUp({
   last_name,
   birth_date,
   phone_number,
-  profession
+  profession = null,  // Default to null
+  user_metadata = {}  // Default to empty object
 }: SignUpData) {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -41,7 +43,8 @@ export async function signUp({
           last_name,
           birth_date,
           phone_number,
-          profession
+          profession,
+          ...user_metadata  // Spread additional metadata
         }
       }
     });
