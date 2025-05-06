@@ -2,16 +2,16 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
-import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine } from "lucide-react";
+import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine, Heart, Weight, Thermometer, Nutrition } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const features = [
-  "AI-powered lab test analysis",
-  "Personalized nutrition planning",
-  "Custom fitness recommendations",
-  "Health metrics tracking",
-  "Scientific health insights",
+  "Comprehensive blood test analysis",
+  "Personalized nutrition recommendations",
+  "Custom fitness regimens based on biomarkers",
+  "Health metrics tracking and optimization",
+  "Scientific insights for optimal wellness",
 ];
 
 const LoginPage: React.FC = () => {
@@ -40,7 +40,7 @@ const LoginPage: React.FC = () => {
           </div>
           
           <p className="text-lg mb-8 text-white/90">
-            Advanced AI analysis of your lab tests, delivering personalized nutrition plans and fitness advice tailored to your biology.
+            Unlock your body's full potential with AI-powered analysis of your lab tests, delivering personalized health recommendations tailored to your unique biology.
           </p>
           
           <div className="space-y-3 mb-8">
@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
               transition={{ duration: 0.3, delay: 0.7 }}
               className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
             >
-              <Apple className="h-8 w-8 text-white" />
+              <Nutrition className="h-8 w-8 text-white" />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -99,7 +99,7 @@ const LoginPage: React.FC = () => {
               transition={{ duration: 0.3, delay: 0.9 }}
               className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
             >
-              <ChartLine className="h-8 w-8 text-white" />
+              <Heart className="h-8 w-8 text-white" />
             </motion.div>
           </div>
         </div>

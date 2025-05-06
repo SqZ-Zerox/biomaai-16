@@ -102,7 +102,7 @@ const LoginPage: React.FC = () => {
                 >
                   <CardTitle className="text-2xl font-bold text-center">Welcome to BIOMA AI</CardTitle>
                   <CardDescription className="text-center">
-                    Sign in to access your personalized health insights
+                    Sign in or create an account to access your personalized health insights
                   </CardDescription>
                 </motion.div>
               </CardHeader>

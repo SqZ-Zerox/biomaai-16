@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { 
   Eye, EyeOff, Mail, Lock, Loader2, ArrowRight, 
-  UserRound, School, Gavel, BookOpen, Calendar, 
-  Phone, User, UserPlus, UserCheck, BookText,
-  AlertCircle, MailOpen
+  ArrowLeft, Calendar, Phone, User, UserPlus, UserCheck,
+  AlertCircle, MailOpen, Dna, Weight, Activity, Heart,
+  Thermometer, Apple, Dumbbell
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn, signUp } from "@/services/authService";
@@ -22,6 +22,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -29,9 +33,12 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
+  // Account Credentials
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  
+  // Personal Information
   first_name: z.string().min(1, { message: "First name is required" }),
   last_name: z.string().min(1, { message: "Last name is required" }),
   birth_date: z.string()
@@ -55,9 +62,32 @@ const signupSchema = z.object({
       // Check if age is between 13 and 100
       return age >= 13 && age <= 100;
     }, { message: "You must be at least 13 years old and not older than 100 years" }),
-  phone_number: z.string().optional().nullable(),
-  profession: z.enum(["student", "professor", "legal_professional", "researcher"], {
-    required_error: "Please select your profession",
+  phone_number: z.string().optional(),
+  gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"], {
+    required_error: "Please select your gender",
+  }),
+  
+  // Health Profile
+  height: z.string().min(1, { message: "Height is required" }),
+  weight: z.string().min(1, { message: "Weight is required" }),
+  activity_level: z.enum(["sedentary", "light", "moderate", "active", "very_active"], {
+    required_error: "Please select your activity level",
+  }),
+  health_goals: z.array(z.string()).min(1, { message: "Please select at least one health goal" }),
+  dietary_restrictions: z.array(z.string()).optional(),
+  
+  // Medical History
+  existing_conditions: z.array(z.string()).optional(),
+  allergies: z.string().optional(),
+  medications: z.string().optional(),
+  family_history: z.array(z.string()).optional(),
+  recent_lab_work: z.enum(["yes", "no", "not_sure"], {
+    required_error: "Please indicate if you've had recent lab work",
+  }),
+  
+  // Terms
+  terms_accepted: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms and conditions" }),
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -74,7 +104,7 @@ const AuthForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentSignupStep, setCurrentSignupStep] = useState<'credentials' | 'personal' | 'profession'>('credentials');
+  const [currentSignupStep, setCurrentSignupStep] = useState<'credentials' | 'personal' | 'health' | 'medical' | 'terms'>('credentials');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
   
@@ -87,18 +117,38 @@ const AuthForm: React.FC = () => {
     },
   });
 
-  // Signup form
+  // Signup form with expanded health information
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      // Account Credentials
       email: "",
       password: "",
       confirmPassword: "",
+      
+      // Personal Information
       first_name: "",
       last_name: "",
       birth_date: "",
       phone_number: "",
-      profession: "student",
+      gender: "prefer_not_to_say",
+      
+      // Health Profile
+      height: "",
+      weight: "",
+      activity_level: "moderate",
+      health_goals: [],
+      dietary_restrictions: [],
+      
+      // Medical History
+      existing_conditions: [],
+      allergies: "",
+      medications: "",
+      family_history: [],
+      recent_lab_work: "not_sure",
+      
+      // Terms
+      terms_accepted: false,
     },
   });
 
@@ -160,16 +210,40 @@ const AuthForm: React.FC = () => {
     setCurrentSignupStep('personal');
   };
 
-  const proceedToProfessionStep = () => {
-    const { first_name, last_name, birth_date } = signupForm.getValues();
+  const proceedToHealthStep = () => {
+    const { first_name, last_name, birth_date, gender } = signupForm.getValues();
     
     // Validate current fields before proceeding
-    if (!first_name || !last_name || !birth_date) {
-      signupForm.trigger(["first_name", "last_name", "birth_date"]);
+    if (!first_name || !last_name || !birth_date || !gender) {
+      signupForm.trigger(["first_name", "last_name", "birth_date", "gender"]);
       return;
     }
     
-    setCurrentSignupStep('profession');
+    setCurrentSignupStep('health');
+  };
+
+  const proceedToMedicalStep = () => {
+    const { height, weight, activity_level, health_goals } = signupForm.getValues();
+    
+    // Validate current fields before proceeding
+    if (!height || !weight || !activity_level || health_goals.length === 0) {
+      signupForm.trigger(["height", "weight", "activity_level", "health_goals"]);
+      return;
+    }
+    
+    setCurrentSignupStep('medical');
+  };
+
+  const proceedToTermsStep = () => {
+    const { recent_lab_work } = signupForm.getValues();
+    
+    // Validate current fields before proceeding
+    if (!recent_lab_work) {
+      signupForm.trigger(["recent_lab_work"]);
+      return;
+    }
+    
+    setCurrentSignupStep('terms');
   };
 
   const backToCredentialsStep = () => {
@@ -180,18 +254,53 @@ const AuthForm: React.FC = () => {
     setCurrentSignupStep('personal');
   };
 
+  const backToHealthStep = () => {
+    setCurrentSignupStep('health');
+  };
+
+  const backToMedicalStep = () => {
+    setCurrentSignupStep('medical');
+  };
+
   const onSignupSubmit = async (values: SignupFormValues) => {
     setIsLoading(true);
     try {
-      const { data, error } = await signUp({
+      // Ensure terms are accepted
+      if (!values.terms_accepted) {
+        toast({
+          title: "Terms Required",
+          description: "You must accept the terms and conditions to create an account.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Format data for API
+      const signupData = {
         email: values.email,
         password: values.password,
         first_name: values.first_name,
         last_name: values.last_name,
         birth_date: values.birth_date,
-        phone_number: values.phone_number,
-        profession: values.profession
-      });
+        phone_number: values.phone_number || null,
+        user_metadata: {
+          gender: values.gender,
+          height: values.height,
+          weight: values.weight,
+          activity_level: values.activity_level,
+          health_goals: values.health_goals,
+          dietary_restrictions: values.dietary_restrictions,
+          existing_conditions: values.existing_conditions,
+          allergies: values.allergies,
+          medications: values.medications,
+          family_history: values.family_history,
+          recent_lab_work: values.recent_lab_work
+        }
+      };
+
+      // Call signup API
+      const { data, error } = await signUp(signupData);
       
       if (error) {
         let errorMessage = "Failed to create account. Please try again.";
@@ -248,11 +357,58 @@ const AuthForm: React.FC = () => {
     }
   };
 
-  const userTypeOptions = [
-    { value: 'student', label: 'Law Student', icon: School, description: 'Currently enrolled in a law program' },
-    { value: 'professor', label: 'Law Professor', icon: BookText, description: 'Teaching at a law school or university' },
-    { value: 'legal_professional', label: 'Legal Professional', icon: Gavel, description: 'Working in the legal field' },
-    { value: 'researcher', label: 'Legal Researcher', icon: BookOpen, description: 'Conducting legal research' },
+  // Health-related options
+  const healthGoalOptions = [
+    { value: 'weight_loss', label: 'Weight Loss' },
+    { value: 'muscle_gain', label: 'Muscle Gain' },
+    { value: 'improve_endurance', label: 'Improve Endurance' },
+    { value: 'reduce_cholesterol', label: 'Reduce Cholesterol' },
+    { value: 'better_sleep', label: 'Better Sleep' },
+    { value: 'reduce_stress', label: 'Reduce Stress' },
+    { value: 'increase_energy', label: 'Increase Energy' },
+    { value: 'improve_digestion', label: 'Improve Digestion' },
+    { value: 'hormonal_balance', label: 'Hormonal Balance' },
+  ];
+  
+  const dietaryRestrictionOptions = [
+    { value: 'vegetarian', label: 'Vegetarian' },
+    { value: 'vegan', label: 'Vegan' },
+    { value: 'gluten_free', label: 'Gluten-Free' },
+    { value: 'dairy_free', label: 'Dairy-Free' },
+    { value: 'keto', label: 'Keto' },
+    { value: 'paleo', label: 'Paleo' },
+    { value: 'low_carb', label: 'Low-Carb' },
+    { value: 'pescatarian', label: 'Pescatarian' },
+  ];
+  
+  const medicalConditionOptions = [
+    { value: 'diabetes', label: 'Diabetes' },
+    { value: 'hypertension', label: 'Hypertension' },
+    { value: 'high_cholesterol', label: 'High Cholesterol' },
+    { value: 'thyroid_disorder', label: 'Thyroid Disorder' },
+    { value: 'heart_disease', label: 'Heart Disease' },
+    { value: 'autoimmune', label: 'Autoimmune Condition' },
+    { value: 'respiratory', label: 'Respiratory Condition' },
+    { value: 'digestive', label: 'Digestive Condition' },
+    { value: 'hormonal', label: 'Hormonal Imbalance' },
+  ];
+  
+  const familyHistoryOptions = [
+    { value: 'diabetes', label: 'Diabetes' },
+    { value: 'heart_disease', label: 'Heart Disease' },
+    { value: 'cancer', label: 'Cancer' },
+    { value: 'stroke', label: 'Stroke' },
+    { value: 'hypertension', label: 'Hypertension' },
+    { value: 'thyroid_disorder', label: 'Thyroid Disorder' },
+    { value: 'autoimmune', label: 'Autoimmune Condition' },
+  ];
+
+  const activityOptions = [
+    { value: 'sedentary', label: 'Sedentary (little to no exercise)', icon: User },
+    { value: 'light', label: 'Light (light exercise 1-3 days/week)', icon: User },
+    { value: 'moderate', label: 'Moderate (moderate exercise 3-5 days/week)', icon: Activity },
+    { value: 'active', label: 'Active (intense exercise 5-6 days/week)', icon: Dumbbell },
+    { value: 'very_active', label: 'Very Active (intense exercise daily)', icon: Dumbbell },
   ];
 
   // Animation variants
@@ -443,6 +599,7 @@ const AuthForm: React.FC = () => {
           <Form {...signupForm}>
             <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
               <AnimatePresence mode="wait">
+                {/* STEP 1: Account Credentials */}
                 {currentSignupStep === 'credentials' && (
                   <motion.div
                     key="credentials"
@@ -565,6 +722,7 @@ const AuthForm: React.FC = () => {
                   </motion.div>
                 )}
                 
+                {/* STEP 2: Personal Information */}
                 {currentSignupStep === 'personal' && (
                   <motion.div
                     key="personal"
@@ -671,6 +829,42 @@ const AuthForm: React.FC = () => {
                       )}
                     />
                     
+                    <FormField
+                      control={signupForm.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-2 gap-3"
+                              disabled={isLoading}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="male" id="gender-male" />
+                                <Label htmlFor="gender-male">Male</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="female" id="gender-female" />
+                                <Label htmlFor="gender-female">Female</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="non_binary" id="gender-non-binary" />
+                                <Label htmlFor="gender-non-binary">Non-Binary</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="prefer_not_to_say" id="gender-prefer-not" />
+                                <Label htmlFor="gender-prefer-not">Prefer not to say</Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <Button 
                         type="button" 
@@ -679,41 +873,91 @@ const AuthForm: React.FC = () => {
                         onClick={backToCredentialsStep}
                         disabled={isLoading}
                       >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                       </Button>
                       <Button 
                         type="button" 
                         className="w-full" 
-                        onClick={proceedToProfessionStep}
+                        onClick={proceedToHealthStep}
                         disabled={isLoading}
                       >
-                        Next: Professional Details
+                        Next: Health Profile
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
                   </motion.div>
                 )}
                 
-                {currentSignupStep === 'profession' && (
+                {/* STEP 3: Health Profile */}
+                {currentSignupStep === 'health' && (
                   <motion.div
-                    key="profession"
+                    key="health"
                     initial="enterFromRight"
                     animate="center"
-                    exit="exitToRight"
+                    exit="exitToLeft"
                     variants={slideVariants}
                     className="space-y-4"
                   >
                     <div className="flex items-center gap-2 mb-4">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">3</div>
-                      <h3 className="text-lg font-medium">Professional Details</h3>
+                      <h3 className="text-lg font-medium">Health Profile</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={signupForm.control}
+                        name="height"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Height (cm)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Thermometer className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  type="number"
+                                  placeholder="175" 
+                                  className="pl-10" 
+                                  disabled={isLoading}
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={signupForm.control}
+                        name="weight"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Weight (kg)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Weight className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  type="number" 
+                                  placeholder="70" 
+                                  className="pl-10" 
+                                  disabled={isLoading}
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                     
                     <FormField
                       control={signupForm.control}
-                      name="profession"
+                      name="activity_level"
                       render={({ field }) => (
-                        <FormItem className="space-y-3">
-                          <FormLabel>I am a...</FormLabel>
+                        <FormItem>
+                          <FormLabel>Activity Level</FormLabel>
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
@@ -721,27 +965,118 @@ const AuthForm: React.FC = () => {
                               className="grid grid-cols-1 gap-3"
                               disabled={isLoading}
                             >
-                              {userTypeOptions.map((option) => {
+                              {activityOptions.map((option) => {
                                 const Icon = option.icon;
                                 return (
                                   <Label
                                     key={option.value}
-                                    htmlFor={`userType-${option.value}`}
+                                    htmlFor={`activity-${option.value}`}
                                     className={`flex items-center space-x-3 rounded-md border p-4 cursor-pointer transition-all duration-200 hover:bg-accent hover:border-primary ${field.value === option.value ? 'border-primary bg-primary/5' : 'border-input'}`}
                                   >
-                                    <RadioGroupItem value={option.value} id={`userType-${option.value}`} />
+                                    <RadioGroupItem value={option.value} id={`activity-${option.value}`} />
                                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                       <Icon className="h-6 w-6 text-primary" />
                                     </div>
                                     <div className="flex flex-col">
                                       <span className="font-medium">{option.label}</span>
-                                      <span className="text-xs text-muted-foreground">{option.description}</span>
                                     </div>
                                   </Label>
                                 );
                               })}
                             </RadioGroup>
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="health_goals"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Health Goals (Select at least one)</FormLabel>
+                          <div className="grid grid-cols-2 gap-2">
+                            {healthGoalOptions.map((option) => (
+                              <FormField
+                                key={option.value}
+                                control={signupForm.control}
+                                name="health_goals"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={option.value}
+                                      className="flex flex-row items-start space-x-2 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(option.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value, option.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== option.value
+                                                  )
+                                                )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal cursor-pointer">
+                                        {option.label}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="dietary_restrictions"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Dietary Restrictions (Optional)</FormLabel>
+                          <div className="grid grid-cols-2 gap-2">
+                            {dietaryRestrictionOptions.map((option) => (
+                              <FormField
+                                key={option.value}
+                                control={signupForm.control}
+                                name="dietary_restrictions"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={option.value}
+                                      className="flex flex-row items-start space-x-2 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(option.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value || [], option.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== option.value
+                                                  )
+                                                )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal cursor-pointer">
+                                        {option.label}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -755,6 +1090,308 @@ const AuthForm: React.FC = () => {
                         onClick={backToPersonalStep}
                         disabled={isLoading}
                       >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={proceedToMedicalStep}
+                        disabled={isLoading}
+                      >
+                        Next: Medical History
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {/* STEP 4: Medical History */}
+                {currentSignupStep === 'medical' && (
+                  <motion.div
+                    key="medical"
+                    initial="enterFromRight"
+                    animate="center"
+                    exit="exitToLeft"
+                    variants={slideVariants}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">4</div>
+                      <h3 className="text-lg font-medium">Medical History</h3>
+                      <div className="ml-auto text-xs text-muted-foreground">Optional</div>
+                    </div>
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="existing_conditions"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Existing Health Conditions (Optional)</FormLabel>
+                          <div className="grid grid-cols-2 gap-2">
+                            {medicalConditionOptions.map((option) => (
+                              <FormField
+                                key={option.value}
+                                control={signupForm.control}
+                                name="existing_conditions"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={option.value}
+                                      className="flex flex-row items-start space-x-2 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(option.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value || [], option.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== option.value
+                                                  )
+                                                )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal cursor-pointer">
+                                        {option.label}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={signupForm.control}
+                        name="allergies"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Allergies (Optional)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="List any allergies..." 
+                                className="min-h-[80px]" 
+                                disabled={isLoading}
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={signupForm.control}
+                        name="medications"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Medications (Optional)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="List any medications..." 
+                                className="min-h-[80px]" 
+                                disabled={isLoading}
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="family_history"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Family Medical History (Optional)</FormLabel>
+                          <div className="grid grid-cols-2 gap-2">
+                            {familyHistoryOptions.map((option) => (
+                              <FormField
+                                key={option.value}
+                                control={signupForm.control}
+                                name="family_history"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={option.value}
+                                      className="flex flex-row items-start space-x-2 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(option.value)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value || [], option.value])
+                                              : field.onChange(
+                                                  field.value?.filter(
+                                                    (value) => value !== option.value
+                                                  )
+                                                )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal cursor-pointer">
+                                        {option.label}
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="recent_lab_work"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>Have you had lab work done in the last 6 months?</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex flex-row space-x-4"
+                              disabled={isLoading}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="yes" id="lab-yes" />
+                                <Label htmlFor="lab-yes">Yes</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="no" id="lab-no" />
+                                <Label htmlFor="lab-no">No</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="not_sure" id="lab-not-sure" />
+                                <Label htmlFor="lab-not-sure">Not Sure</Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="pt-2">
+                      <Alert className="bg-primary/5 border-primary/20">
+                        <Dna className="h-4 w-4 text-primary" />
+                        <AlertTitle className="text-sm font-medium">Upload Lab Results Later</AlertTitle>
+                        <AlertDescription className="text-xs text-muted-foreground">
+                          You'll be able to securely upload your recent lab results after creating your account for more personalized insights.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={backToHealthStep}
+                        disabled={isLoading}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={proceedToTermsStep}
+                        disabled={isLoading}
+                      >
+                        Next: Finalize
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {/* STEP 5: Terms and Submit */}
+                {currentSignupStep === 'terms' && (
+                  <motion.div
+                    key="terms"
+                    initial="enterFromRight"
+                    animate="center"
+                    exit="exitToRight"
+                    variants={slideVariants}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">5</div>
+                      <h3 className="text-lg font-medium">Terms & Conditions</h3>
+                    </div>
+                    
+                    <div className="rounded-md border p-4 space-y-4">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold flex items-center">
+                          <Dna className="h-4 w-4 mr-2 text-primary" />
+                          Health Data Privacy
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          Your health data is encrypted and stored securely. We only use your data to provide personalized recommendations and insights.
+                        </p>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="space-y-2">
+                        <h4 className="font-semibold flex items-center">
+                          <Heart className="h-4 w-4 mr-2 text-primary" />
+                          Not Medical Advice
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          BIOMA AI provides informational content only and is not a substitute for professional medical advice, diagnosis, or treatment.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <FormField
+                      control={signupForm.control}
+                      name="terms_accepted"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              I agree to the <Button variant="link" className="h-auto p-0">Terms of Service</Button> and <Button variant="link" className="h-auto p-0">Privacy Policy</Button>
+                            </FormLabel>
+                            <FormDescription className="text-xs">
+                              By creating an account, you agree to our Terms of Service and Privacy Policy, and consent to our use of your data to provide personalized health insights.
+                            </FormDescription>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={backToMedicalStep}
+                        disabled={isLoading}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
                         Back
                       </Button>
                       <Button 
