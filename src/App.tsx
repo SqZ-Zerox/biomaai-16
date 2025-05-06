@@ -16,6 +16,8 @@ import CitationToolPage from "./pages/CitationToolPage";
 import FlashcardsPage from "./pages/FlashcardsPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
+import NutritionPage from "./pages/NutritionPage";
+import FitnessPage from "./pages/FitnessPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import NotFound from "./pages/NotFound";
 import React, { useState, useEffect, createContext, useContext } from "react";
@@ -105,6 +107,9 @@ const App = () => {
                     <Route path="/case-brief" element={<CaseBriefPage />} />
                     <Route path="/citation-tool" element={<CitationToolPage />} />
                     <Route path="/flashcards" element={<FlashcardsPage />} />
+                    {/* New routes for nutrition and fitness */}
+                    <Route path="/nutrition" element={<NutritionPage />} />
+                    <Route path="/fitness" element={<FitnessPage />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>

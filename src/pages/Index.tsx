@@ -1,53 +1,63 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import GeneticAnalysisBanner from "@/components/dashboard/GeneticAnalysisBanner";
-import GeneticFeatureSection from "@/components/dashboard/GeneticFeatureSection";
-import { Dna, TestTube } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AlertCircle, FileText, ArrowRight, Brain, Dumbbell, Apple, MessageCircle } from "lucide-react";
+import HealthSnapshot from "@/components/dashboard/HealthSnapshot";
+import ActionCards from "@/components/dashboard/ActionCards";
+import LabReportOverview from "@/components/dashboard/LabReportOverview";
+import FeaturesOverview from "@/components/dashboard/FeaturesOverview";
+import AccuracySystem from "@/components/dashboard/AccuracySystem";
+import SettingsAndGrowth from "@/components/dashboard/SettingsAndGrowth";
+import BiomaBotButton from "@/components/dashboard/BiomaBotButton";
+import GeneticAnalysisBanner from "@/components/dashboard/GeneticAnalysisBanner";
 
-const Index: React.FC = () => {
+const Index = () => {
+  // Mock state for demonstration - in a real app, this would come from your data store
+  const [hasLabReports, setHasLabReports] = useState(false);
+  const [hasCompletedQuestionnaire, setHasCompletedQuestionnaire] = useState(true);
+  
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-full bg-primary/15">
-            <Dna className="h-6 w-6 text-primary" />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col gap-6">
+        {/* Welcome header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">
+            Welcome to BIOMA AI
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            Your personalized health insights platform
+          </p>
+        </motion.div>
+        
+        {/* Genetic Analysis Banner - Kept from previous implementation */}
+        <GeneticAnalysisBanner />
+        
+        {/* Main sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column - Health Snapshot and Accuracy System */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <HealthSnapshot hasLabReports={hasLabReports} hasCompletedQuestionnaire={hasCompletedQuestionnaire} />
+            <AccuracySystem hasLabReports={hasLabReports} hasCompletedQuestionnaire={hasCompletedQuestionnaire} />
           </div>
-          <div>
-            <h1 className="text-3xl font-bold">Welcome to BIOMA<span className="text-primary">AI</span></h1>
-            <p className="text-muted-foreground">The future of genetic insights for personalized health</p>
+          
+          {/* Right column - Action Cards and Features Overview */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <ActionCards />
+            <FeaturesOverview />
+            <SettingsAndGrowth hasLabReports={hasLabReports} />
           </div>
         </div>
         
-        {/* Genetic Analysis Banner */}
-        <GeneticAnalysisBanner />
-        
-        <Card className="mb-8 border-border/40 bg-card/60 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <TestTube className="h-5 w-5 text-primary" />
-              <CardTitle>Lab Test Analysis Showcase</CardTitle>
-              <Badge variant="outline" className="bg-background text-muted-foreground border-muted/40 text-xs">Available Now</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              While our advanced genetic analysis capabilities are in development, explore our lab test analysis 
-              feature today to get a glimpse of what BIOMA AI will offer in the future.
-            </p>
-            <p>Select a feature from the sidebar to get started with your health journey.</p>
-          </CardContent>
-        </Card>
-        
-        {/* Feature section highlighting genetic analysis */}
-        <GeneticFeatureSection />
-      </motion.div>
+        {/* Floating Bioma Bot button */}
+        <BiomaBotButton />
+      </div>
     </div>
   );
 };
