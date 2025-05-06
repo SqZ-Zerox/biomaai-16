@@ -1,3 +1,4 @@
+
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ArrowUpRight, CheckCircle2, Dna, TestTube, Microscope, BookText } from "lucide-react";
@@ -18,7 +19,8 @@ const HeroSection: React.FC = () => {
     },
     {
       icon: <Dna className="h-5 w-5 text-primary" />,
-      text: "Genetic Analysis (Coming Soon)"
+      text: "Genetic Analysis",
+      badge: "Coming Soon"
     },
     {
       icon: <Microscope className="h-5 w-5 text-primary" />,
@@ -211,6 +213,11 @@ const HeroSection: React.FC = () => {
                       >
                         {feature.icon}
                         <span className="text-xs font-medium">{feature.text}</span>
+                        {feature.badge && (
+                          <Badge className="text-[8px] h-4 bg-primary/10 text-primary border-primary/20 ml-1">
+                            {feature.badge}
+                          </Badge>
+                        )}
                       </motion.div>
                     ))}
                   </div>
