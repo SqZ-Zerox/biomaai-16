@@ -44,8 +44,6 @@ const FeaturesOverview: React.FC = () => {
     }
   ];
   
-  const navigate = useNavigate();
-  
   return (
     <div>
       <h2 className="text-xl font-bold mb-3">Core Features</h2>
