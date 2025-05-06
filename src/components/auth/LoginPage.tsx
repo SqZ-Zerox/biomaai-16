@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import AuthForm from "./AuthForm";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Dna } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -54,9 +54,9 @@ const LoginPage: React.FC = () => {
         <div className="container mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 transition-all duration-300">
-              <span className="text-primary font-bold">L</span>
+              <Dna className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-xl font-bold text-foreground">Legal<span className="text-primary">Aid</span></h1>
+            <h1 className="text-xl font-bold text-foreground">BIOMA<span className="text-primary">AI</span></h1>
           </Link>
           <Button variant="ghost" size="sm" asChild className="transition-all duration-300 hover:translate-x-[-5px]">
             <Link to="/">
@@ -100,9 +100,9 @@ const LoginPage: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
                 >
-                  <CardTitle className="text-2xl font-bold text-center">Welcome to LegalAid</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-center">Welcome to BIOMA AI</CardTitle>
                   <CardDescription className="text-center">
-                    Sign in to access your legal study resources
+                    Sign in to access your personalized health insights
                   </CardDescription>
                 </motion.div>
               </CardHeader>
@@ -119,7 +119,7 @@ const LoginPage: React.FC = () => {
         className="py-4 px-6 border-t border-border/40 bg-background/95 backdrop-blur-sm"
       >
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© 2025 LegalAid. All rights reserved.</p>
+          <p>© 2025 BIOMA AI. All rights reserved.</p>
         </div>
       </motion.footer>
     </motion.div>

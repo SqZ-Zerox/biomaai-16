@@ -2,16 +2,16 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const features = [
-  "Advanced legal research tools",
-  "Case brief generator",
-  "Citation manager",
-  "Legal document templates",
-  "Exam preparation materials",
+  "AI-powered lab test analysis",
+  "Personalized nutrition planning",
+  "Custom fitness recommendations",
+  "Health metrics tracking",
+  "Scientific health insights",
 ];
 
 const LoginPage: React.FC = () => {
@@ -32,11 +32,15 @@ const LoginPage: React.FC = () => {
         className="w-full md:w-1/2 bg-gradient-to-br from-primary/90 to-primary-foreground/90 text-white p-8 md:p-12 flex flex-col justify-center"
       >
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Elevate Your Legal Studies
-          </h1>
+          <div className="flex items-center gap-2 mb-4">
+            <Dna className="h-8 w-8 text-white" />
+            <h1 className="text-3xl md:text-4xl font-bold">
+              BIOMA AI
+            </h1>
+          </div>
+          
           <p className="text-lg mb-8 text-white/90">
-            Join thousands of law students and professionals using our platform to optimize their learning and research.
+            Advanced AI analysis of your lab tests, delivering personalized nutrition plans and fitness advice tailored to your biology.
           </p>
           
           <div className="space-y-3 mb-8">
@@ -62,6 +66,42 @@ const LoginPage: React.FC = () => {
             Learn More
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
+          
+          {/* Added illustrations for visual appeal */}
+          <div className="mt-8 grid grid-cols-4 gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.6 }}
+              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
+            >
+              <Dna className="h-8 w-8 text-white" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.7 }}
+              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
+            >
+              <Apple className="h-8 w-8 text-white" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.8 }}
+              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
+            >
+              <Dumbbell className="h-8 w-8 text-white" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.9 }}
+              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
+            >
+              <ChartLine className="h-8 w-8 text-white" />
+            </motion.div>
+          </div>
         </div>
       </motion.div>
     </div>
