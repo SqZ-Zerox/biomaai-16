@@ -1,14 +1,25 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "./form/LoginForm";
 import SignupForm from "./form/SignupForm";
 import RegistrationSuccessAlert from "./form/RegistrationSuccessAlert";
+import { useDemoMode } from "@/App";
+import { useNavigate } from "react-router-dom";
 
 const AuthForm: React.FC = () => {
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const { isDemoMode, setIsDemoMode } = useDemoMode();
+  const navigate = useNavigate();
+  
+  // Effect to redirect if in demo mode
+  useEffect(() => {
+    if (isDemoMode) {
+      navigate("/dashboard");
+    }
+  }, [isDemoMode, navigate]);
   
   // Animation variants
   const formVariants = {

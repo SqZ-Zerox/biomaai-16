@@ -18,7 +18,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import NotFound from "./pages/NotFound";
-import React from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 // Create a client
@@ -31,9 +31,18 @@ const queryClient = new QueryClient({
   },
 });
 
+// Create demo mode context
+export const DemoModeContext = createContext({
+  isDemoMode: false,
+  setIsDemoMode: (value: boolean) => {}
+});
+
+export const useDemoMode = () => useContext(DemoModeContext);
+
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isDemoMode } = useDemoMode();
   
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">
@@ -41,7 +50,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     </div>;
   }
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isDemoMode) {
     return <Navigate to="/login" replace />;
   }
   
@@ -49,43 +58,60 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
+  // Check local storage for demo mode on initial load
+  useEffect(() => {
+    const storedDemoMode = localStorage.getItem("demoMode");
+    if (storedDemoMode === "true") {
+      setIsDemoMode(true);
+    }
+  }, []);
+
+  // Update local storage when demo mode changes
+  useEffect(() => {
+    localStorage.setItem("demoMode", isDemoMode.toString());
+  }, [isDemoMode]);
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                {/* Landing page as the main route */}
-                <Route path="/" element={<LandingPage />} />
-                
-                {/* Auth routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/auth/callback" element={<AuthCallbackPage />} />
-                
-                {/* Dashboard and other pages inside the Layout - protected */}
-                <Route element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }>
-                  <Route path="/dashboard" element={<Index />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                  <Route path="/study" element={<StudyPage />} />
-                  <Route path="/study-plan" element={<ProductivityHubPage />} />
-                  <Route path="/upload" element={<UploadPage />} />
-                  <Route path="/legal-essays" element={<LegalEssaysPage />} />
-                  <Route path="/case-brief" element={<CaseBriefPage />} />
-                  <Route path="/citation-tool" element={<CitationToolPage />} />
-                  <Route path="/flashcards" element={<FlashcardsPage />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </TooltipProvider>
-          </BrowserRouter>
-        </AuthProvider>
+        <DemoModeContext.Provider value={{ isDemoMode, setIsDemoMode }}>
+          <AuthProvider>
+            <BrowserRouter>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  {/* Landing page as the main route */}
+                  <Route path="/" element={<LandingPage />} />
+                  
+                  {/* Auth routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                  
+                  {/* Dashboard and other pages inside the Layout - protected */}
+                  <Route element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route path="/dashboard" element={<Index />} />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/study" element={<StudyPage />} />
+                    <Route path="/study-plan" element={<ProductivityHubPage />} />
+                    <Route path="/upload" element={<UploadPage />} />
+                    <Route path="/legal-essays" element={<LegalEssaysPage />} />
+                    <Route path="/case-brief" element={<CaseBriefPage />} />
+                    <Route path="/citation-tool" element={<CitationToolPage />} />
+                    <Route path="/flashcards" element={<FlashcardsPage />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TooltipProvider>
+            </BrowserRouter>
+          </AuthProvider>
+        </DemoModeContext.Provider>
       </QueryClientProvider>
     </React.StrictMode>
   );

@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
-import { ArrowRight, CheckCircle2, ActivitySquare, Dna, Apple, Dumbbell, ChartLine, Heart, Weight, Thermometer } from "lucide-react";
+import { ArrowRight, CheckCircle2, Dna } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -18,18 +18,18 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Auth Form */}
-      <div className="w-full md:w-1/2 p-8 md:p-12 flex items-center justify-center">
+      <div className="w-full lg:w-1/2 p-4 sm:p-8 lg:p-12 flex items-center justify-center">
         <LoginPageLayout />
       </div>
       
-      {/* Right side - Marketing Content */}
+      {/* Right side - Marketing Content (hidden on small screens) */}
       <motion.div 
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="w-full md:w-1/2 bg-gradient-to-br from-primary/90 to-primary-foreground/90 text-white p-8 md:p-12 flex flex-col justify-center"
+        className="hidden sm:flex w-full lg:w-1/2 bg-gradient-to-br from-primary/90 to-primary-foreground/90 text-white p-6 lg:p-12 flex-col justify-center"
       >
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-2 mb-4">
@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
             Unlock your body's full potential with AI-powered analysis of your lab tests, delivering personalized health recommendations tailored to your unique biology.
           </p>
           
-          <div className="space-y-3 mb-8">
+          <div className="space-y-3 mb-8 hidden md:block">
             {features.map((feature, index) => (
               <motion.div 
                 key={index}
@@ -66,42 +66,6 @@ const LoginPage: React.FC = () => {
             Learn More
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-          
-          {/* Added illustrations for visual appeal */}
-          <div className="mt-8 grid grid-cols-4 gap-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.6 }}
-              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
-            >
-              <Dna className="h-8 w-8 text-white" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.7 }}
-              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
-            >
-              <Apple className="h-8 w-8 text-white" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.8 }}
-              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
-            >
-              <Dumbbell className="h-8 w-8 text-white" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.9 }}
-              className="bg-white/10 rounded-lg p-3 flex items-center justify-center"
-            >
-              <Heart className="h-8 w-8 text-white" />
-            </motion.div>
-          </div>
         </div>
       </motion.div>
     </div>

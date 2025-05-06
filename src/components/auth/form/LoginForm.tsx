@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Card } from "@/components/ui/card";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -88,6 +89,21 @@ const LoginForm: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Demo authentication function
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    // Simulate authentication delay
+    setTimeout(() => {
+      // Mock successful authentication
+      toast({
+        title: "Demo Login Success!",
+        description: "You've been logged in with demo account.",
+      });
+      navigate("/dashboard");
+      setIsLoading(false);
+    }, 1500);
   };
 
   // Animation variants
@@ -209,6 +225,32 @@ const LoginForm: React.FC = () => {
                 Sign In
               </span>
             )}
+          </Button>
+        </motion.div>
+        
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          </div>
+        </div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+        >
+          <Button 
+            type="button" 
+            variant="outline"
+            className="w-full" 
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Demo Sign In
           </Button>
         </motion.div>
       </form>
