@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ArrowUpRight, CheckCircle2, Dna, TestTube, Microscope, BookText } from "lucide-react";
@@ -56,7 +55,7 @@ const HeroSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <Badge className="mb-2 text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20 rounded-full">
-                  Advanced Health Analytics
+                  Future of Health Analytics
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
@@ -73,8 +72,8 @@ const HeroSection: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                BIOMA AI is currently showcasing lab test analysis while we develop our 
-                advanced genetic analysis capabilities—the future of personalized healthcare.
+                BIOMA AI is developing advanced genetic analysis capabilities—the future of personalized healthcare. 
+                While we build this revolutionary technology, experience our lab test analysis showcase today.
               </motion.p>
             </div>
             
@@ -181,7 +180,8 @@ const HeroSection: React.FC = () => {
                             <h4 className="font-medium text-sm">Genetic Analysis</h4>
                             <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/20">Coming Soon</Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">Our advanced DNA analysis capabilities are in development</p>
+                          <p className="text-xs text-muted-foreground mt-1">Our revolutionary DNA analysis capabilities are in development</p>
+                          <p className="text-xs text-primary mt-2 font-medium">Join the waitlist →</p>
                         </div>
                       </div>
                     </div>
@@ -224,7 +224,7 @@ const HeroSection: React.FC = () => {
                     <TestTube className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Lab Analysis Complete</p>
+                    <p className="text-xs font-medium">Lab Analysis Available Now</p>
                     <p className="text-xs text-muted-foreground">While we develop genetic analysis</p>
                   </div>
                 </div>
