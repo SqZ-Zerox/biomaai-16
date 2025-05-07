@@ -1,8 +1,7 @@
-
 import React from "react";
 import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDemoMode } from "@/App";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const UserProfile = () => {
   const { profile } = useAuth();

@@ -1,11 +1,10 @@
-
 import React from "react";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDemoMode } from "@/App";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const SidebarFooter = () => {
   const navigate = useNavigate();

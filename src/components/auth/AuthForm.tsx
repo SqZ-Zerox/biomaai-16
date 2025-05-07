@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "./form/LoginForm";
 import SignupForm from "./form/SignupForm";
 import RegistrationSuccessAlert from "./form/RegistrationSuccessAlert";
-import { useDemoMode } from "@/App";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 

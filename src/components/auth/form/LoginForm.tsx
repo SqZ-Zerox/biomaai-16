@@ -8,7 +8,7 @@ import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck, UserPlus } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDemoMode } from "@/App";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
