@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import "./App.css";
 import { DemoModeProvider } from "./contexts/DemoModeContext";
@@ -23,6 +23,15 @@ import UploadPage from "./pages/UploadPage";
 import FitnessPage from "./pages/FitnessPage";
 import NutritionPage from "./pages/NutritionPage";
 import ChatPage from "./pages/ChatPage";
+
+// Dashboard layout wrapper component
+const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () => void; isDarkMode: boolean }) => {
+  return (
+    <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
+      <Outlet />
+    </Layout>
+  );
+};
 
 // Initialize the app
 function App() {
@@ -54,7 +63,7 @@ function App() {
           {/* Dashboard Routes */}
           <Route 
             path="/dashboard" 
-            element={<Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}
+            element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}
           >
             <Route index element={<Index />} />
             <Route path="study" element={<StudyPage />} />
