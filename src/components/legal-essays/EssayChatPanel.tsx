@@ -201,7 +201,7 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     const chatText = messages.map(msg => {
       const timestamp = msg.timestamp.toLocaleTimeString();
       const sender = msg.type === 'user' ? 'You' : 
-                     msg.type === 'assistant' ? 'Bioma AI' : 'System';
+                    msg.type === 'assistant' ? 'Bioma AI' : 'System';
       return `[${timestamp}] ${sender}: ${msg.content}`;
     }).join('\n\n');
     
