@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -126,11 +127,11 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
           .filter(msg => msg.type !== "system")
           .slice(-5)
           .map(msg => ({ 
-            role: msg.type === "user" ? "user" : "assistant",
+            role: msg.type === "user" ? "user" : "assistant" as "user" | "assistant",
             content: msg.content 
           })),
         // Add the latest user message
-        { role: "user", content: userMessage.content }
+        { role: "user" as const, content: userMessage.content }
       ];
       
       // Send the request to OpenAI
@@ -363,6 +364,56 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
       </div>
     </div>
   );
+};
+
+const clearChat = () => {
+  setMessages([
+    {
+      id: "welcome",
+      type: "system",
+      content: "Welcome to the Bioma Health Assistant. You can ask for help with nutrition plans, fitness routines, or sleep optimization strategies based on your health data and goals.",
+      timestamp: new Date()
+    }
+  ]);
+  localStorage.removeItem('bioma-health-chat');
+  toast({
+    title: "Chat cleared",
+    description: "All messages have been cleared"
+  });
+};
+
+const applyTemplate = (template: {title: string, content: string}) => {
+  onUpdateEssay(template.content);
+  toast({
+    title: "Template applied",
+    description: `Applied the ${template.title} template to your document`
+  });
+};
+
+const exportChatHistory = () => {
+  const chatText = messages.map(msg => {
+    const timestamp = msg.timestamp.toLocaleTimeString();
+    const sender = msg.type === 'user' ? 'You' : 
+                  msg.type === 'assistant' ? 'Bioma AI' : 'System';
+    return `[${timestamp}] ${sender}: ${msg.content}`;
+  }).join('\n\n');
+  
+  const blob = new Blob([chatText], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bioma-health-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  toast({
+    title: "Chat exported",
+    description: "Your chat history has been downloaded as a text file"
+  });
 };
 
 export default BiomaChatPanel;
