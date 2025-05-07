@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { AppError, errorHandler } from "@/lib/error";
+import { sendChatCompletion, OpenAIMessage, hasOpenAIKey } from "@/services/openaiService";
 
 type MessageType = {
   role: "user" | "assistant" | "system";
@@ -86,15 +86,6 @@ const SAMPLE_CHATS: ChatSession[] = [
   },
 ];
 
-// Simple mock responses for demo purposes
-const MOCK_RESPONSES: Record<string, string> = {
-  "vitamin": "Based on your lab results, I recommend increasing your intake of vitamin D-rich foods like fatty fish, egg yolks, and fortified dairy. Spending 15-20 minutes in morning sunlight can also help your body naturally produce vitamin D.",
-  "sleep": "To optimize sleep quality, try maintaining a consistent sleep schedule (even on weekends), avoiding screens 1 hour before bed, keeping your bedroom cool (65-68°F), and limiting caffeine after 2pm. Your recent activity data shows your sleep efficiency could improve with these adjustments.",
-  "exercise": "For lower back pain, focus on core-strengthening exercises like planks, gentle yoga poses like cat-cow and child's pose, and low-impact cardio. Your recent fitness metrics indicate that improving core strength could help address your current concerns.",
-  "stress": "Chronic stress increases cortisol, which can lead to weight gain particularly around the abdomen. Based on your recent health metrics, I recommend incorporating daily stress-reduction techniques like deep breathing exercises, meditation, or gentle movement practices like tai chi.",
-  "default": "That's an interesting health question. In a full version of this app, I'd provide personalized recommendations based on your health data, lab results, and current wellness goals. Can you try asking about vitamins, sleep, exercise, or stress management?",
-};
-
 const ChatPage = () => {
   const [messages, setMessages] = useState<MessageType[]>([
     {
@@ -127,18 +118,6 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
-  const getMockResponse = (question: string): string => {
-    const lowerQuestion = question.toLowerCase();
-    
-    for (const [keyword, response] of Object.entries(MOCK_RESPONSES)) {
-      if (lowerQuestion.includes(keyword)) {
-        return response;
-      }
-    }
-    
-    return MOCK_RESPONSES.default;
-  };
-
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -146,6 +125,16 @@ const ChatPage = () => {
     }
     
     if (!input.trim()) return;
+    
+    // Check if OpenAI API key is configured
+    if (!hasOpenAIKey()) {
+      toast({
+        title: "API Key Missing",
+        description: "Please set your OpenAI API key in settings",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const userMessage = {
       role: "user" as const,
@@ -159,19 +148,33 @@ const ChatPage = () => {
     setIsError(false);
     
     try {
-      // Simulate API call with random chance of error
-      if (Math.random() < 0.05) {
-        throw new AppError("Network error occurred", 500);
-      }
-
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Prepare messages for OpenAI
+      const openAIMessages: OpenAIMessage[] = [
+        {
+          role: "system",
+          content: "You are Bioma AI, a health assistant specialized in nutrition, fitness, sleep optimization, and stress management. Provide personalized advice based on the user's health data and scientific research. Be concise but thorough in your responses."
+        },
+        // Add previous context from last few messages (max 5)
+        ...messages
+          .slice(-5)
+          .map(msg => ({ role: msg.role, content: msg.content })),
+        // Add the latest user message
+        { role: "user", content: userMessage.content }
+      ];
       
-      const response = getMockResponse(input);
+      // Send the request to OpenAI
+      const aiResponse = await sendChatCompletion(openAIMessages, {
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+      
+      if (!aiResponse) {
+        throw new AppError("Failed to get response from AI", 500);
+      }
       
       const assistantMessage = {
         role: "assistant" as const,
-        content: response,
+        content: aiResponse.content,
         timestamp: new Date(),
       };
       
@@ -532,4 +535,3 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
-

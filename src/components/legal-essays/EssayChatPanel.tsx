@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { sendChatCompletion, OpenAIMessage, hasOpenAIKey } from "@/services/openaiService";
 
 type MessageType = 'system' | 'user' | 'assistant';
 
@@ -90,8 +90,18 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     }
   }, []);
   
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
+    
+    // Check if OpenAI API key is configured
+    if (!hasOpenAIKey()) {
+      toast({
+        title: "API Key Missing",
+        description: "Please set your OpenAI API key in settings",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -102,20 +112,64 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
     
     setMessages(prev => [...prev, userMessage]);
     setInput("");
-    
     setIsTyping(true);
     
-    setTimeout(() => {
+    try {
+      // Prepare messages for OpenAI
+      const openAIMessages: OpenAIMessage[] = [
+        {
+          role: "system",
+          content: "You are Bioma AI, a health assistant specialized in creating detailed health plans. You help users with nutrition plans, fitness routines, and sleep optimization strategies. Your responses should be structured, informative, and formatted in Markdown."
+        },
+        // Add previous context from last 5 messages
+        ...messages
+          .filter(msg => msg.type !== "system")
+          .slice(-5)
+          .map(msg => ({ 
+            role: msg.type === "user" ? "user" : "assistant",
+            content: msg.content 
+          })),
+        // Add the latest user message
+        { role: "user", content: userMessage.content }
+      ];
+      
+      // Send the request to OpenAI
+      const aiResponse = await sendChatCompletion(openAIMessages, {
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+      
+      if (!aiResponse) {
+        throw new Error("Failed to get response from AI");
+      }
+      
       const assistantMessage: Message = {
         id: `msg-${Date.now() + 1}`,
         type: "assistant",
-        content: "I'm a simulated health assistant. In the full version, I would analyze your health data and provide personalized recommendations. Try using the health templates from the '+' menu to get started with structured plans.",
+        content: aiResponse.content,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      // Add error message
+      const errorMessage: Message = {
+        id: `msg-${Date.now() + 1}`,
+        type: "system",
+        content: "Sorry, I couldn't process your request at this time. Please try again later.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Chat Error",
+        description: "Failed to get AI response",
+        variant: "destructive",
+      });
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
   
   const clearChat = () => {
@@ -312,4 +366,3 @@ const BiomaChatPanel = ({ onUpdateEssay }: EssayChatPanelProps) => {
 };
 
 export default BiomaChatPanel;
-

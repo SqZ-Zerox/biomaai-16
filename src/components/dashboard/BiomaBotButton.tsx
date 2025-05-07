@@ -7,18 +7,30 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { hasOpenAIKey } from "@/services/openaiService";
 
 const BiomaBotButton: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      // In a real app, you would process the message here
-      console.log("Sending message to Bioma Bot:", message);
+      // Check if OpenAI API key is configured
+      if (!hasOpenAIKey()) {
+        toast({
+          title: "API Key Missing",
+          description: "Please set your OpenAI API key in settings",
+          variant: "destructive",
+        });
+        navigate("/settings");
+        return;
+      }
+      
       // Then redirect to the chat page with the message
       navigate("/chat", { state: { initialMessage: message } });
       setMessage("");
