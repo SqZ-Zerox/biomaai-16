@@ -4,19 +4,31 @@ import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDemoMode } from "@/App";
 
 const SidebarFooter = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkSession } = useAuth();
+  const { setIsDemoMode } = useDemoMode();
   
   const handleSignOut = async () => {
     try {
       await signOut();
+      // Also reset demo mode when signing out
+      setIsDemoMode(false);
+      
+      // Force refresh auth session
+      await checkSession();
+      
       toast({
         title: "Signed out successfully",
         description: "You have been logged out of your account.",
       });
-      navigate("/login");
+      
+      // Redirect to login page
+      navigate("/login", { replace: true });
     } catch (error) {
       toast({
         title: "Sign out failed",
