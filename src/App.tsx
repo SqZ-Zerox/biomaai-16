@@ -45,6 +45,13 @@ function App() {
     initializeAPIKeys();
     // Save dark mode preference to localStorage
     localStorage.setItem("bioma_dark_mode", JSON.stringify(isDarkMode));
+    
+    // Apply dark mode class to document
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [isDarkMode]);
 
   // Toggle dark mode

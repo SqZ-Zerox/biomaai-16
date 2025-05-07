@@ -63,9 +63,9 @@ const AuthForm: React.FC = () => {
       )}
 
       <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
-        <TabsList className={`grid grid-cols-2 mb-6 ${isMobile ? 'w-full' : 'max-w-sm mx-auto'}`}>
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        <TabsList className={`grid grid-cols-2 mb-6 ${isMobile ? 'w-full' : 'w-full max-w-md mx-auto'}`}>
+          <TabsTrigger value="login" className="text-base py-2">Login</TabsTrigger>
+          <TabsTrigger value="signup" className="text-base py-2">Sign Up</TabsTrigger>
         </TabsList>
         
         <TabsContent value="login" className="space-y-4 animate-fade-in">

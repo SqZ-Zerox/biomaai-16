@@ -39,11 +39,11 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
       className="space-y-4"
     >
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">5</div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/90 text-primary-foreground text-sm font-medium">5</div>
         <h3 className="text-lg font-medium">Terms & Conditions</h3>
       </div>
       
-      <div className="bg-background/50 border border-border/40 rounded-md p-4 max-h-48 overflow-y-auto text-sm text-muted-foreground">
+      <div className="bg-muted/30 border border-border/40 rounded-lg p-4 max-h-48 overflow-y-auto text-sm text-muted-foreground shadow-sm">
         <h4 className="font-semibold text-foreground mb-2">BIOMA AI Terms of Service</h4>
         <p className="mb-2">
           By creating an account, you agree to our Terms of Service and Privacy Policy. 
@@ -82,16 +82,17 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
         control={form.control}
         name="terms_accepted"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border/40 p-4">
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-border/40 p-4 bg-card shadow-sm">
             <FormControl>
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
                 disabled={isLoading}
+                className="mt-1"
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel className="cursor-pointer">
+              <FormLabel className="cursor-pointer text-base">
                 I agree to the Terms of Service and Privacy Policy
               </FormLabel>
               <FormMessage />
@@ -100,7 +101,7 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
         )}
       />
       
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row pt-2">
         <Button 
           type="button" 
           variant="outline" 
@@ -118,12 +119,12 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
           disabled={isLoading}
         >
           {isLoading ? (
-            <span className="flex items-center">
+            <span className="flex items-center justify-center">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating Account...
             </span>
           ) : (
-            <span className="flex items-center">
+            <span className="flex items-center justify-center">
               <UserPlus className="mr-2 h-4 w-4" />
               Create Account
             </span>

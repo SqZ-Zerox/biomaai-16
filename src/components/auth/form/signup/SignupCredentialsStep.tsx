@@ -39,7 +39,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
       className="space-y-4"
     >
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">1</div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/90 text-primary-foreground text-sm font-medium">1</div>
         <h3 className="text-lg font-medium">Account Credentials</h3>
       </div>
       
@@ -48,13 +48,13 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email</FormLabel>
+            <FormLabel className="text-base">Email</FormLabel>
             <FormControl>
               <div className="relative">
                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
                   placeholder="you@example.com" 
-                  className="pl-10" 
+                  className="pl-10 bg-background" 
                   disabled={isLoading}
                   {...field} 
                 />
@@ -70,14 +70,14 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         name="password"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Password</FormLabel>
+            <FormLabel className="text-base">Password</FormLabel>
             <FormControl>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••" 
-                  className="pl-10" 
+                  className="pl-10 bg-background" 
                   disabled={isLoading}
                   {...field} 
                 />
@@ -107,14 +107,14 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         name="confirmPassword"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Confirm Password</FormLabel>
+            <FormLabel className="text-base">Confirm Password</FormLabel>
             <FormControl>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••" 
-                  className="pl-10" 
+                  className="pl-10 bg-background" 
                   disabled={isLoading}
                   {...field} 
                 />
@@ -141,7 +141,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
       
       <Button 
         type="button" 
-        className="w-full mt-4" 
+        className="w-full mt-6" 
         onClick={onNext}
         disabled={isLoading}
       >
