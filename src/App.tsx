@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
@@ -77,8 +78,12 @@ function App() {
             <Route path="/settings" element={<Index />} />
           </Route>
           
-          {/* Add the new route for recipe suggestions */}
-          <Route path="/recipes" element={<Layout><RecipeSuggestionsPage /></Layout>} />
+          {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}
+          <Route path="/recipes" element={
+            <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
+              <RecipeSuggestionsPage />
+            </Layout>
+          } />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
