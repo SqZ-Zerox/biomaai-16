@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
@@ -17,6 +16,7 @@ import UploadPage from "./pages/UploadPage";
 import FitnessPage from "./pages/FitnessPage";
 import NutritionPage from "./pages/NutritionPage";
 import ChatPage from "./pages/ChatPage";
+import RecipeSuggestionsPage from "./pages/RecipeSuggestionsPage";
 
 // Dashboard layout wrapper component
 const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () => void; isDarkMode: boolean }) => {
@@ -76,6 +76,9 @@ function App() {
             <Route path="/progress" element={<Index />} />
             <Route path="/settings" element={<Index />} />
           </Route>
+          
+          {/* Add the new route for recipe suggestions */}
+          <Route path="/recipes" element={<Layout><RecipeSuggestionsPage /></Layout>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -103,6 +103,10 @@ const NutritionPage = () => {
     }, 2000);
   };
 
+  const handleViewRecipes = () => {
+    navigate("/recipes");
+  };
+
   if (planGenerated) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -115,10 +119,15 @@ const NutritionPage = () => {
               </h1>
               <p className="text-muted-foreground">Personalized meal plan based on your preferences</p>
             </div>
-            <Button variant="outline" onClick={() => setStep(1)}>
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Edit Plan
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(1)}>
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Edit Plan
+              </Button>
+              <Button onClick={handleViewRecipes}>
+                Find Recipes
+              </Button>
+            </div>
           </div>
           
           <Card className="border-border/40">
@@ -151,8 +160,8 @@ const NutritionPage = () => {
                 <Info className="h-4 w-4 mr-1" />
                 <span>Nutrition facts are approximate and may vary</span>
               </div>
-              <Button onClick={() => navigate("/dashboard")}>
-                Back to Dashboard
+              <Button onClick={handleViewRecipes}>
+                Find Recipe Ideas
               </Button>
             </CardFooter>
           </Card>
@@ -204,6 +213,12 @@ const NutritionPage = () => {
           dietaryOptions={dietaryOptions}
           restrictionOptions={restrictionOptions}
         />
+        
+        <div className="text-center">
+          <Button variant="link" onClick={handleViewRecipes}>
+            Or skip to recipe suggestions
+          </Button>
+        </div>
       </div>
     </div>
   );

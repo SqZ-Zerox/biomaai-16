@@ -41,3 +41,15 @@ export interface Day {
 export interface MealPlan {
   days: Day[];
 }
+
+export interface RecipeSuggestion {
+  id: string;
+  name: string;
+  image: string;
+  calories: number;
+  ingredients: string[];
+  url: string;
+  source: string;
+  dietLabels: string[];
+  healthLabels: string[];
+}
