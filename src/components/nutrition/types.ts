@@ -1,18 +1,17 @@
 
 export interface Goal {
-  id: string;
-  title: string;
+  value: string;
+  label: string;
   description: string;
-  icon: React.ReactNode;
 }
 
 export interface DietaryOption {
-  id: string;
+  value: string;
   label: string;
 }
 
 export interface RestrictionOption {
-  id: string;
+  value: string;
   label: string;
 }
 
@@ -24,22 +23,22 @@ export interface MealPreferences {
 }
 
 export interface Meal {
-  type: "breakfast" | "lunch" | "dinner" | "snack";
+  type: string;
   title: string;
+  description: string;
   calories: number;
   protein: string;
   carbs: string;
   fat: string;
-  description: string;
 }
 
-export interface Day {
+export interface DayMeals {
   id: number;
   meals: Meal[];
 }
 
 export interface MealPlan {
-  days: Day[];
+  days: DayMeals[];
 }
 
 export interface RecipeSuggestion {
@@ -51,5 +50,5 @@ export interface RecipeSuggestion {
   url: string;
   source: string;
   dietLabels: string[];
-  healthLabels: string[];
+  healthLabels?: string[];
 }

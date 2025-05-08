@@ -2,14 +2,16 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Loader2, Search } from "lucide-react";
+import { DietaryOption } from "./types";
 
 interface RecipeSearchProps {
-  dietaryOptions: { id: string; label: string }[];
+  dietaryOptions: DietaryOption[];
   onSearch: (params: {
     query: string;
     dietType: string;
@@ -19,16 +21,16 @@ interface RecipeSearchProps {
   isLoading: boolean;
 }
 
-const RecipeSearch: React.FC<RecipeSearchProps> = ({
+const RecipeSearch: React.FC<RecipeSearchProps> = ({ 
   dietaryOptions,
   onSearch,
   isLoading
 }) => {
-  const [query, setQuery] = useState("");
-  const [dietType, setDietType] = useState("balanced");
-  const [mealType, setMealType] = useState("lunch");
-  const [calories, setCalories] = useState(500);
-
+  const [query, setQuery] = useState<string>("Chicken");
+  const [dietType, setDietType] = useState<string>("balanced");
+  const [mealType, setMealType] = useState<string>("lunch");
+  const [calories, setCalories] = useState<number>(500);
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch({
@@ -38,86 +40,91 @@ const RecipeSearch: React.FC<RecipeSearchProps> = ({
       calories
     });
   };
-
+  
   return (
-    <Card className="border-border/40">
+    <Card className="w-full border-border/40">
       <CardHeader>
-        <CardTitle className="text-xl">Find Recipe Suggestions</CardTitle>
+        <CardTitle className="text-xl">Recipe Search</CardTitle>
       </CardHeader>
+      
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Search Input */}
           <div className="space-y-2">
-            <Label htmlFor="search">Search Keywords (optional)</Label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="query">Search recipes</Label>
+            <div className="flex space-x-2">
               <Input
-                id="search"
-                placeholder="e.g., chicken, pasta, salad"
+                id="query"
+                placeholder="e.g. Chicken, Pasta, etc."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-9"
               />
             </div>
           </div>
           
-          <div className="space-y-3">
-            <Label>Dietary Preference</Label>
-            <RadioGroup value={dietType} onValueChange={setDietType}>
-              <div className="grid grid-cols-2 gap-3">
-                {dietaryOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={option.id} id={`diet-${option.id}`} />
-                    <Label htmlFor={`diet-${option.id}`} className="cursor-pointer">
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
+          {/* Diet Type */}
+          <div className="space-y-2">
+            <Label>Diet Type</Label>
+            <RadioGroup 
+              value={dietType} 
+              onValueChange={setDietType}
+              className="grid grid-cols-2 gap-2"
+            >
+              {dietaryOptions.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`diet-${option.value}`} />
+                  <Label htmlFor={`diet-${option.value}`}>{option.label}</Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
           
-          <div className="space-y-3">
-            <Label>Meal Type</Label>
-            <RadioGroup value={mealType} onValueChange={setMealType}>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="breakfast" id="meal-breakfast" />
-                  <Label htmlFor="meal-breakfast" className="cursor-pointer">Breakfast</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="lunch" id="meal-lunch" />
-                  <Label htmlFor="meal-lunch" className="cursor-pointer">Lunch</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="dinner" id="meal-dinner" />
-                  <Label htmlFor="meal-dinner" className="cursor-pointer">Dinner</Label>
-                </div>
-              </div>
-            </RadioGroup>
+          {/* Meal Type */}
+          <div className="space-y-2">
+            <Label htmlFor="mealType">Meal Type</Label>
+            <Select 
+              value={mealType} 
+              onValueChange={(value) => setMealType(value)}
+            >
+              <SelectTrigger id="mealType">
+                <SelectValue placeholder="Select meal type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="breakfast">Breakfast</SelectItem>
+                <SelectItem value="lunch">Lunch</SelectItem>
+                <SelectItem value="dinner">Dinner</SelectItem>
+                <SelectItem value="snack">Snack</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <Label>Target Calories: {calories}</Label>
+          {/* Calorie Range */}
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <Label>Calories per serving</Label>
+              <span className="text-sm font-medium">{calories} kcal</span>
             </div>
             <Slider
-              min={200}
-              max={1000}
-              step={50}
               value={[calories]}
+              min={200}
+              max={800}
+              step={50}
               onValueChange={(value) => setCalories(value[0])}
             />
-            <p className="text-xs text-muted-foreground">
-              Recipes will be suggested within approximately ±100 calories of this target
-            </p>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>200</span>
+              <span>500</span>
+              <span>800</span>
+            </div>
           </div>
         </form>
       </CardContent>
+      
       <CardFooter>
         <Button 
-          onClick={handleSubmit} 
+          className="w-full" 
+          onClick={handleSubmit}
           disabled={isLoading}
-          className="w-full"
         >
           {isLoading ? (
             <>
@@ -125,7 +132,10 @@ const RecipeSearch: React.FC<RecipeSearchProps> = ({
               Searching...
             </>
           ) : (
-            'Get Recipe Suggestions'
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Get Recipe Suggestions
+            </>
           )}
         </Button>
       </CardFooter>

@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Apple } from "lucide-react";
+import { ArrowLeft, Apple, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import RecipeSearch from "@/components/nutrition/RecipeSearch";
@@ -9,6 +9,7 @@ import RecipeSuggestions from "@/components/nutrition/RecipeSuggestions";
 import { RecipeSuggestion } from "@/components/nutrition/types";
 import { dietaryOptions } from "@/components/nutrition/data";
 import { searchRecipes, EdamamRecipe } from "@/services/edamamService";
+import { Card } from "@/components/ui/card";
 
 const RecipeSuggestionsPage = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const RecipeSuggestionsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [recipes, setRecipes] = useState<RecipeSuggestion[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSearch = async (params: {
     query: string;
@@ -25,6 +27,7 @@ const RecipeSuggestionsPage = () => {
   }) => {
     setIsLoading(true);
     setHasSearched(true);
+    setErrorMessage(null);
     
     try {
       const results = await searchRecipes({
@@ -51,20 +54,68 @@ const RecipeSuggestionsPage = () => {
       }
     } catch (error) {
       console.error("Error in recipe search:", error);
-      toast({
-        title: "Search failed",
-        description: "An error occurred while searching for recipes.",
-        variant: "destructive",
-      });
+      setErrorMessage("We couldn't connect to our recipe database. Using AI-generated suggestions instead.");
+      
+      // Generate fallback recipes with Gemini
+      try {
+        const aiRecipeNames = await generateAIFallbackRecipes(params);
+        const suggestions = aiRecipeNames.map((name, index) => ({
+          id: `ai-${index}`,
+          name: name,
+          image: `https://via.placeholder.com/300x300?text=${encodeURIComponent(name.substring(0, 20))}`,
+          calories: params.calories,
+          ingredients: ["AI generated recipe - ingredients not available"],
+          url: "#",
+          source: "AI Assistant",
+          dietLabels: [params.dietType || "balanced"],
+          healthLabels: []
+        }));
+        
+        setRecipes(suggestions);
+        
+        toast({
+          title: "Using AI recipe suggestions",
+          description: "We've generated some recipe ideas based on your preferences.",
+        });
+      } catch (fallbackError) {
+        toast({
+          title: "Search failed",
+          description: "An error occurred while searching for recipes.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Helper function to generate fallback recipes using Gemini
+  const generateAIFallbackRecipes = async (params: any): Promise<string[]> => {
+    // Import here to avoid circular dependency
+    const { generateRecipeSuggestions } = await import("../services/nutritionPlanService");
+    
+    try {
+      return await generateRecipeSuggestions(
+        params.dietType || "balanced",
+        [],
+        params.calories || 500
+      );
+    } catch (error) {
+      console.error("Failed to generate AI recipes:", error);
+      return [
+        "Healthy Breakfast Bowl",
+        "Protein-Packed Lunch Salad",
+        "Balanced Dinner Plate",
+        "Nutritious Smoothie",
+        "Energy-Boosting Snack"
+      ];
     }
   };
   
   // Helper function to map API response to our format
   const mapRecipeToSuggestion = (recipe: EdamamRecipe): RecipeSuggestion => {
     return {
-      id: recipe.uri.split("#recipe_")[1],
+      id: recipe.uri.split("#recipe_")[1] || `recipe-${Math.random().toString(36).substring(2, 9)}`,
       name: recipe.label,
       image: recipe.image,
       calories: recipe.calories,
@@ -107,17 +158,24 @@ const RecipeSuggestionsPage = () => {
             />
           </div>
           <div className="lg:col-span-2">
+            {errorMessage && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-md p-4 mb-4 text-sm">
+                {errorMessage}
+              </div>
+            )}
             {hasSearched ? (
               <RecipeSuggestions 
                 recipes={recipes}
                 isLoading={isLoading}
               />
             ) : (
-              <div className="flex items-center justify-center h-full p-8 border border-dashed rounded-md">
-                <p className="text-muted-foreground text-center">
-                  Use the search panel on the left to find recipe suggestions
+              <Card className="flex flex-col items-center justify-center h-full p-12 border-dashed text-center">
+                <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-medium mb-2">Find Your Perfect Recipe</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Use the search panel to discover recipes that match your dietary preferences and calorie goals
                 </p>
-              </div>
+              </Card>
             )}
           </div>
         </div>
