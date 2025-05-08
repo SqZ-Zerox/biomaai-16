@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "./form/LoginForm";
 import SignupForm from "./form/SignupForm";
@@ -55,17 +55,19 @@ const AuthForm: React.FC = () => {
       variants={formVariants}
       className="w-full"
     >
-      {registrationSuccess && (
-        <RegistrationSuccessAlert 
-          email={registeredEmail} 
-          onDismiss={() => setRegistrationSuccess(false)} 
-        />
-      )}
+      <AnimatePresence>
+        {registrationSuccess && (
+          <RegistrationSuccessAlert 
+            email={registeredEmail} 
+            onDismiss={() => setRegistrationSuccess(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
-        <TabsList className={`grid grid-cols-2 mb-6 ${isMobile ? 'w-full' : 'w-full max-w-md mx-auto'}`}>
-          <TabsTrigger value="login" className="text-base py-2">Login</TabsTrigger>
-          <TabsTrigger value="signup" className="text-base py-2">Sign Up</TabsTrigger>
+        <TabsList className={`grid grid-cols-2 mb-8 ${isMobile ? 'w-full' : 'w-full max-w-md mx-auto'}`}>
+          <TabsTrigger value="login" className="text-base py-2.5">Login</TabsTrigger>
+          <TabsTrigger value="signup" className="text-base py-2.5">Sign Up</TabsTrigger>
         </TabsList>
         
         <TabsContent value="login" className="space-y-4 animate-fade-in">

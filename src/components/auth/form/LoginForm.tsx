@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -108,16 +109,9 @@ const LoginForm: React.FC = () => {
     setIsLoading(false);
   };
 
-  // Animation variants
-  const formVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -128,19 +122,19 @@ const LoginForm: React.FC = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-foreground">Email</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input 
                       placeholder="you@example.com" 
-                      className="pl-10" 
+                      className="pl-10 h-12" 
                       disabled={isLoading}
                       {...field} 
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-500" />
               </FormItem>
             )}
           />
@@ -156,14 +150,25 @@ const LoginForm: React.FC = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <div className="flex justify-between items-center">
+                  <FormLabel className="text-foreground">Password</FormLabel>
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto font-normal text-xs text-primary"
+                    onClick={() => navigate("/forgot-password")}
+                    type="button"
+                    disabled={isLoading}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                     <Input 
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••" 
-                      className="pl-10" 
+                      className="pl-10 h-12" 
                       disabled={isLoading}
                       {...field} 
                     />
@@ -183,37 +188,21 @@ const LoginForm: React.FC = () => {
                     </Button>
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-500" />
               </FormItem>
             )}
           />
         </motion.div>
         
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-          className="flex justify-end"
-        >
-          <Button 
-            variant="link" 
-            className="px-0 font-normal text-sm text-muted-foreground"
-            onClick={() => navigate("/forgot-password")}
-            type="button"
-            disabled={isLoading}
-          >
-            Forgot password?
-          </Button>
-        </motion.div>
-        
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.3 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+          className="pt-2"
         >
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full h-12 text-base" 
             disabled={isLoading}
           >
             {isLoading ? (
@@ -223,14 +212,14 @@ const LoginForm: React.FC = () => {
               </span>
             ) : (
               <span className="flex items-center">
-                <UserCheck className="mr-2 h-4 w-4" />
+                <UserCheck className="mr-2 h-5 w-5" />
                 Sign In
               </span>
             )}
           </Button>
         </motion.div>
         
-        <div className="relative my-4">
+        <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border"></span>
           </div>
@@ -242,16 +231,16 @@ const LoginForm: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
         >
           <Button 
             type="button" 
             variant="secondary"
-            className="w-full" 
+            className="w-full h-12 text-base" 
             onClick={handleDemoLogin}
             disabled={isLoading}
           >
-            <UserPlus className="mr-2 h-4 w-4" />
+            <UserPlus className="mr-2 h-5 w-5" />
             Demo Sign In
           </Button>
         </motion.div>
