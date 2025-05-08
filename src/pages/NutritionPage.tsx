@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import ProgressStepper from "@/components/nutrition/ProgressStepper";
 import NutritionForm from "@/components/nutrition/NutritionForm";
 import MealPlanDisplay from "@/components/nutrition/MealPlanDisplay";
-import { MealPreferences } from "@/components/nutrition/types";
+import { MealPreferences, MealPlan } from "@/components/nutrition/types";
 import { goals, dietaryOptions, restrictionOptions, sampleMealPlan } from "@/components/nutrition/data";
+import { generateNutritionPlan } from "@/services/nutritionPlanService";
 
 const NutritionPage = () => {
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ const NutritionPage = () => {
   
   // Meal plan data
   const [currentDay, setCurrentDay] = useState<number>(1);
+  const [generatedPlan, setGeneratedPlan] = useState<MealPlan | null>(null);
   
   const handleGoalSelect = (goal: string) => {
     setSelectedGoal(goal);
@@ -89,18 +90,36 @@ const NutritionPage = () => {
     }
   };
   
-  const generatePlan = () => {
+  const generatePlan = async () => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    // Call the Gemini-powered nutrition plan generator
+    const planData = await generateNutritionPlan({
+      goal: selectedGoal,
+      dietType,
+      restrictions,
+      calorieTarget,
+      mealPreferences
+    });
+    
+    if (planData) {
+      setGeneratedPlan(planData);
       setPlanGenerated(true);
       toast({
         title: "Nutrition plan created!",
-        description: "Your personalized nutrition plan is ready",
+        description: "Your AI-generated nutrition plan is ready",
       });
-    }, 2000);
+    } else {
+      // If plan generation fails, use sample data
+      setGeneratedPlan(sampleMealPlan);
+      setPlanGenerated(true);
+      toast({
+        title: "Using sample plan",
+        description: "We've provided a sample plan. You can generate a personalized one later.",
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const handleViewRecipes = () => {
@@ -108,6 +127,8 @@ const NutritionPage = () => {
   };
 
   if (planGenerated) {
+    const displayPlan = generatedPlan || sampleMealPlan;
+    
     return (
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="flex flex-col gap-8">
@@ -149,7 +170,7 @@ const NutritionPage = () => {
             </CardHeader>
             <CardContent>
               <MealPlanDisplay 
-                days={sampleMealPlan.days}
+                days={displayPlan.days}
                 mealPreferences={mealPreferences}
                 currentDay={currentDay}
                 setCurrentDay={setCurrentDay}

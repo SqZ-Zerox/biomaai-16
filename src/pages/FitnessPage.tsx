@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +17,7 @@ import {
   Loader2,
   ArrowRight
 } from "lucide-react";
+import { generateFitnessPlan, FitnessPlan } from "@/services/fitnessPlanService";
 
 // Screen states for the fitness plan flow
 type FitnessScreenState = 
@@ -53,6 +53,7 @@ const FitnessPage: React.FC = () => {
   const [minutesPerDay, setMinutesPerDay] = useState<number>(30);
   const [selectedGoal, setSelectedGoal] = useState<string>("");
   const [analysisProgress, setAnalysisProgress] = useState<number>(0);
+  const [generatedPlan, setGeneratedPlan] = useState<FitnessPlan | null>(null);
 
   // Handle equipment selection
   const toggleEquipment = (value: string) => {
@@ -92,8 +93,39 @@ const FitnessPage: React.FC = () => {
     setScreenState("summary");
   };
 
-  // Generate the final plan
-  const generateFinalPlan = () => {
+  // Generate the final plan using Gemini
+  const generateFinalPlan = async () => {
+    // Show loading screen briefly
+    setScreenState("loading");
+    setAnalysisProgress(0);
+    
+    // Simulate progress while we generate the plan
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+      }
+      setAnalysisProgress(progress);
+    }, 500);
+    
+    // Use our fitness plan service to generate a plan
+    const plan = await generateFitnessPlan({
+      goal: fitnessGoals.find(g => g.value === selectedGoal)?.label || selectedGoal,
+      equipment: selectedEquipment,
+      minutesPerDay,
+      healthData: {
+        bmi: 24.5,
+        heartRate: 68,
+        activityLevel: "Moderately active"
+      }
+    });
+    
+    setGeneratedPlan(plan);
+    
+    // Stop the interval and move to the plan screen
+    clearInterval(interval);
     setScreenState("plan");
   };
 
@@ -505,7 +537,7 @@ const FitnessPage: React.FC = () => {
             </motion.div>
           )}
           
-          {/* Generated Plan Screen - Based on original fitness UI */}
+          {/* Generated Plan Screen - Now using AI-generated data */}
           {screenState === "plan" && (
             <motion.div
               key="plan"
@@ -539,104 +571,61 @@ const FitnessPage: React.FC = () => {
                       </TabsList>
                       
                       <TabsContent value="routines" className="space-y-4">
-                        <div className="bg-muted/30 p-4 rounded-md">
-                          <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-semibold flex items-center">
-                              <Heart className="mr-2 h-4 w-4 text-primary" />
-                              Strength & Conditioning
-                            </h3>
-                            <Badge variant="outline" className="bg-primary/5 text-primary">{minutesPerDay} minutes</Badge>
+                        {generatedPlan && generatedPlan.workouts ? (
+                          // Use AI-generated plan
+                          <>
+                            {generatedPlan.workouts.map((workout, index) => (
+                              <div key={index} className="bg-muted/30 p-4 rounded-md">
+                                <div className="flex justify-between items-center mb-3">
+                                  <h3 className="font-semibold flex items-center">
+                                    {index === 0 ? (
+                                      <Heart className="mr-2 h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Clock className="mr-2 h-4 w-4 text-primary" />
+                                    )}
+                                    {workout.title}
+                                  </h3>
+                                  <Badge variant="outline" className="bg-primary/5 text-primary">
+                                    {workout.duration}
+                                  </Badge>
+                                </div>
+                                
+                                <ul className="space-y-3 text-sm">
+                                  {workout.exercises.map((exercise, eIndex) => (
+                                    <li key={eIndex} className="flex justify-between">
+                                      <div>
+                                        <span className="font-medium">{exercise.name}</span>
+                                        <p className="text-xs text-muted-foreground">{exercise.description}</p>
+                                      </div>
+                                      <span className="text-muted-foreground">
+                                        {exercise.sets && exercise.reps ? 
+                                          `${exercise.sets} sets × ${exercise.reps} reps` : 
+                                          exercise.duration}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                
+                                <div className="mt-3 text-xs text-primary">
+                                  <p className="font-medium">Focus areas:</p>
+                                  <p>{workout.focusAreas.join(', ')}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          // Fallback content
+                          <div className="bg-muted/30 p-4 rounded-md text-center py-8">
+                            <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                            <h3 className="font-medium mb-1">Plan Generation Issue</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              We couldn't generate your custom plan. Please try again.
+                            </p>
+                            <Button variant="outline" onClick={() => setScreenState("questions")}>
+                              Retry
+                            </Button>
                           </div>
-                          
-                          <ul className="space-y-3 text-sm">
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Warm-up</span>
-                                <p className="text-xs text-muted-foreground">Dynamic stretching, light cardio</p>
-                              </div>
-                              <span className="text-muted-foreground">5 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Dumbbell Squats</span>
-                                <p className="text-xs text-muted-foreground">3 sets x 12 reps</p>
-                              </div>
-                              <span className="text-muted-foreground">10 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Push-ups</span>
-                                <p className="text-xs text-muted-foreground">3 sets x 10 reps</p>
-                              </div>
-                              <span className="text-muted-foreground">8 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Dumbbell Rows</span>
-                                <p className="text-xs text-muted-foreground">3 sets x 12 reps each side</p>
-                              </div>
-                              <span className="text-muted-foreground">10 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Cool Down</span>
-                                <p className="text-xs text-muted-foreground">Static stretching</p>
-                              </div>
-                              <span className="text-muted-foreground">7 min</span>
-                            </li>
-                          </ul>
-                          
-                          <div className="mt-3 text-xs text-primary">
-                            <p className="font-medium">Focus areas:</p>
-                            <p>Major muscle groups, core stability, functional strength</p>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-muted/30 p-4 rounded-md">
-                          <div className="flex justify-between items-center mb-3">
-                            <h3 className="font-semibold flex items-center">
-                              <Clock className="mr-2 h-4 w-4 text-primary" />
-                              Cardio Session
-                            </h3>
-                            <Badge variant="outline" className="bg-primary/5 text-primary">30 minutes</Badge>
-                          </div>
-                          
-                          <ul className="space-y-3 text-sm">
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Warm-up</span>
-                                <p className="text-xs text-muted-foreground">Light jog or brisk walk</p>
-                              </div>
-                              <span className="text-muted-foreground">5 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Interval Training</span>
-                                <p className="text-xs text-muted-foreground">30s high intensity, 30s rest x 10</p>
-                              </div>
-                              <span className="text-muted-foreground">10 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Steady State Cardio</span>
-                                <p className="text-xs text-muted-foreground">Moderate intensity</p>
-                              </div>
-                              <span className="text-muted-foreground">10 min</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <div>
-                                <span className="font-medium">Cool Down</span>
-                                <p className="text-xs text-muted-foreground">Light pace, stretching</p>
-                              </div>
-                              <span className="text-muted-foreground">5 min</span>
-                            </li>
-                          </ul>
-                          
-                          <div className="mt-3 text-xs text-primary">
-                            <p className="font-medium">Focus areas:</p>
-                            <p>Cardiovascular endurance, metabolic health, recovery</p>
-                          </div>
-                        </div>
+                        )}
                         
                         <Button className="w-full">
                           Download Plan as PDF
