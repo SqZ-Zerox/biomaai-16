@@ -1,4 +1,6 @@
 
+import React from "react";
+
 export interface Goal {
   value: string;
   label: string;
@@ -49,6 +51,15 @@ export interface DayMeals {
 
 export interface MealPlan {
   days: DayMeals[];
+}
+
+export interface NutritionPlanRequest {
+  goal: string;
+  dietType: string;
+  restrictions: string[];
+  calorieTarget: number;
+  mealPreferences: MealPreferences;
+  location: string;
 }
 
 export interface RecipeSuggestion {

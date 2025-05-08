@@ -1,7 +1,8 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Apple, ArrowLeft, Info } from "lucide-react";
+import { Apple, ArrowLeft, Info, Calendar } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -39,6 +40,9 @@ const NutritionPage = () => {
     snacks: false,
   });
   
+  // Step 4: Location
+  const [location, setLocation] = useState<string>("");
+  
   // Meal plan data
   const [currentDay, setCurrentDay] = useState<number>(1);
   const [generatedPlan, setGeneratedPlan] = useState<MealPlan | null>(null);
@@ -73,7 +77,7 @@ const NutritionPage = () => {
       return;
     }
     
-    if (step === 3) {
+    if (step === 4) {
       // Generate plan
       generatePlan();
       return;
@@ -99,14 +103,15 @@ const NutritionPage = () => {
       dietType,
       restrictions,
       calorieTarget,
-      mealPreferences
+      mealPreferences,
+      location
     });
     
     if (planData) {
       setGeneratedPlan(planData);
       setPlanGenerated(true);
       toast({
-        title: "Nutrition plan created!",
+        title: "30-day nutrition plan created!",
         description: "Your AI-generated nutrition plan is ready",
       });
     } else {
@@ -136,7 +141,7 @@ const NutritionPage = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2 flex items-center">
                 <Apple className="mr-2 h-6 w-6 text-primary" />
-                Your Nutrition Plan
+                Your 30-Day Nutrition Plan
               </h1>
               <p className="text-muted-foreground">Personalized meal plan based on your preferences</p>
             </div>
@@ -155,8 +160,14 @@ const NutritionPage = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Your 7-Day Meal Plan</CardTitle>
-                  <CardDescription>Based on {selectedGoal} goal with {dietType} diet</CardDescription>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    30-Day Meal Plan
+                  </CardTitle>
+                  <CardDescription>
+                    Based on {selectedGoal} goal with {dietType} diet
+                    {location && ` • Optimized for ${location}`}
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/30">
@@ -206,12 +217,12 @@ const NutritionPage = () => {
         <div className="text-center mb-2">
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center">
             <Apple className="mr-2 h-7 w-7 text-primary" />
-            Create Nutrition Plan
+            Create 30-Day Nutrition Plan
           </h1>
-          <p className="text-muted-foreground">Step {step} of 3</p>
+          <p className="text-muted-foreground">Step {step} of 4</p>
         </div>
         
-        <ProgressStepper currentStep={step} totalSteps={3} />
+        <ProgressStepper currentStep={step} totalSteps={4} />
         
         <NutritionForm
           step={step}
@@ -227,6 +238,8 @@ const NutritionPage = () => {
           setCalorieTarget={setCalorieTarget}
           mealPreferences={mealPreferences}
           onMealPreferenceToggle={handleMealPreferenceToggle}
+          location={location}
+          setLocation={setLocation}
           isLoading={isLoading}
           onNext={handleNext}
           onBack={handleBack}

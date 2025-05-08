@@ -1,15 +1,7 @@
 
-import { MealPlan, MealPreferences } from "@/components/nutrition/types";
+import { MealPlan, MealPreferences, NutritionPlanRequest } from "@/components/nutrition/types";
 import { sendGeminiCompletion } from "./geminiService";
 import { toast } from "@/hooks/use-toast";
-
-interface NutritionPlanRequest {
-  goal: string;
-  dietType: string;
-  restrictions: string[];
-  calorieTarget: number;
-  mealPreferences: MealPreferences;
-}
 
 /**
  * Generate a personalized meal plan using Gemini AI
@@ -18,7 +10,7 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
   try {
     // Construct a detailed prompt for Gemini
     const prompt = `
-      Generate a detailed 7-day meal plan with the following requirements:
+      Generate a detailed 30-day meal plan with the following requirements:
       - Primary goal: ${request.goal}
       - Diet type: ${request.dietType}
       - Dietary restrictions: ${request.restrictions.join(', ')}
@@ -27,6 +19,10 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
         .filter(([_, included]) => included)
         .map(([meal]) => meal)
         .join(', ')}
+      - Location: ${request.location || 'Not specified'}
+      
+      Consider seasonal and locally available ingredients based on the user's location (${request.location || 'Unknown'}).
+      If no location is provided, suggest general recipes that work for most regions.
       
       For each day, include the following meals (only if specified in preferences): 
       ${request.mealPreferences.breakfast ? "- Breakfast" : ""}
@@ -58,7 +54,7 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
               ...more meals
             ]
           },
-          ...more days (7 total)
+          ...more days (30 total)
         ]
       }
     `;
@@ -66,7 +62,7 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
     // Send the prompt to Gemini
     const response = await sendGeminiCompletion([
       { role: "user", parts: [{ text: prompt }] }
-    ], { temperature: 0.2 });
+    ], { temperature: 0.2, maxOutputTokens: 30000 });
 
     if (!response) {
       throw new Error("Failed to generate meal plan");
@@ -103,7 +99,8 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
 export async function generateRecipeSuggestions(
   dietType: string, 
   restrictions: string[], 
-  calorieTarget: number
+  calorieTarget: number,
+  location: string
 ): Promise<string[]> {
   try {
     const prompt = `
@@ -111,6 +108,7 @@ export async function generateRecipeSuggestions(
       - Diet type: ${dietType}
       - Dietary restrictions: ${restrictions.join(', ')}
       - Approximate calories: ${calorieTarget} per serving
+      - Location: ${location || 'Not specified'} (consider locally available ingredients)
       
       Format as a simple list of recipe names only.
     `;

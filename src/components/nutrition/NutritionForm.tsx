@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import StepOne from "./StepOne";
 import StepTwo from "./StepTwo";
 import StepThree from "./StepThree";
-import ProgressStepper from "./ProgressStepper";
+import StepFour from "./StepFour";
 import { Goal, DietaryOption, RestrictionOption, MealPreferences } from "./types";
 
 interface NutritionFormProps {
@@ -24,6 +24,8 @@ interface NutritionFormProps {
   setCalorieTarget: (calories: number) => void;
   mealPreferences: MealPreferences;
   onMealPreferenceToggle: (meal: "breakfast" | "lunch" | "dinner" | "snacks") => void;
+  location: string;
+  setLocation: (location: string) => void;
   isLoading: boolean;
   onNext: () => void;
   onBack: () => void;
@@ -46,6 +48,8 @@ const NutritionForm: React.FC<NutritionFormProps> = ({
   setCalorieTarget,
   mealPreferences,
   onMealPreferenceToggle,
+  location,
+  setLocation,
   isLoading,
   onNext,
   onBack,
@@ -83,6 +87,13 @@ const NutritionForm: React.FC<NutritionFormProps> = ({
             setCalorieTarget={setCalorieTarget}
             mealPreferences={mealPreferences}
             onMealPreferenceToggle={onMealPreferenceToggle}
+          />
+        );
+      case 4:
+        return (
+          <StepFour
+            location={location}
+            setLocation={setLocation}
           />
         );
       default:
@@ -124,7 +135,7 @@ const NutritionForm: React.FC<NutritionFormProps> = ({
             </>
           ) : (
             <>
-              {step === 3 ? 'Create Plan' : 'Next'}
+              {step === 4 ? 'Create Plan' : 'Next'}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}
