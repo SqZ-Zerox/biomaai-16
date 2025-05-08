@@ -53,7 +53,7 @@ const AuthForm: React.FC = () => {
       initial="hidden"
       animate="visible"
       variants={formVariants}
-      className="w-full"
+      className="w-full max-w-md mx-auto"
     >
       <AnimatePresence>
         {registrationSuccess && (
@@ -65,17 +65,11 @@ const AuthForm: React.FC = () => {
       </AnimatePresence>
 
       <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2 rounded-lg mb-8 overflow-hidden border border-border/30 shadow-sm">
-          <TabsTrigger 
-            value="login" 
-            className="text-base py-3 rounded-none data-[state=active]:bg-card data-[state=active]:shadow-none"
-          >
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="login">
             Login
           </TabsTrigger>
-          <TabsTrigger 
-            value="signup" 
-            className="text-base py-3 rounded-none data-[state=active]:bg-card data-[state=active]:shadow-none"
-          >
+          <TabsTrigger value="signup">
             Sign Up
           </TabsTrigger>
         </TabsList>

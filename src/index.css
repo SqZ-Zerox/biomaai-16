@@ -154,3 +154,15 @@
   padding-left: 1rem;
   margin-bottom: 1.5rem;
 }
+
+/* Auth form styling */
+.auth-tab {
+  transition: all 0.3s ease;
+}
+
+.auth-tab[data-state="active"] {
+  color: hsl(var(--primary));
+  font-weight: 600;
+  border-bottom: 2px solid hsl(var(--primary));
+}
+

@@ -10,21 +10,21 @@ const LoginPage: React.FC = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-gradient-to-br from-background via-background to-primary/5">
-      <div className={`w-full ${isMobile ? 'px-2' : 'max-w-lg'}`}>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 bg-gradient-to-br from-background via-background to-primary/5">
+      <div className={`w-full ${isMobile ? 'px-2' : 'max-w-md'}`}>
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-8 text-center"
         >
-          <Link to="/" className="inline-flex items-center gap-2.5 group">
+          <Link to="/" className="inline-flex items-center gap-2.5 group mb-6">
             <div className="rounded-full p-2 w-10 h-10 flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 transition-all duration-300 shadow-md">
               <Dna className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">BIOMA<span className="text-primary">AI</span></h1>
           </Link>
-          <h2 className="mt-5 text-3xl font-bold text-foreground">Welcome Back</h2>
+          <h2 className="mt-6 text-3xl font-bold text-foreground">Welcome Back</h2>
           <p className="text-muted-foreground mt-2 text-lg">Sign in to your account or try our demo</p>
         </motion.div>
         
@@ -32,7 +32,7 @@ const LoginPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-card border border-border/30 shadow-xl rounded-xl overflow-hidden"
+          className="bg-card border border-border/30 shadow-xl rounded-xl overflow-hidden p-6"
         >
           <LoginPageLayout />
         </motion.div>
