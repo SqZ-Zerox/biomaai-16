@@ -18,6 +18,7 @@ import FitnessPage from "./pages/FitnessPage";
 import NutritionPage from "./pages/NutritionPage";
 import ChatPage from "./pages/ChatPage";
 import RecipeSuggestionsPage from "./pages/RecipeSuggestionsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // Dashboard layout wrapper component
 const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () => void; isDarkMode: boolean }) => {
@@ -75,7 +76,7 @@ function App() {
             <Route path="/nutrition" element={<NutritionPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/progress" element={<Index />} />
-            <Route path="/settings" element={<Index />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
           
           {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}
