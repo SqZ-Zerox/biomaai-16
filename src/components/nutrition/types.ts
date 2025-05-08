@@ -3,16 +3,21 @@ export interface Goal {
   value: string;
   label: string;
   description: string;
+  id: string;
+  title: string;
+  icon: React.ReactNode;
 }
 
 export interface DietaryOption {
   value: string;
   label: string;
+  id: string;
 }
 
 export interface RestrictionOption {
   value: string;
   label: string;
+  id: string;
 }
 
 export interface MealPreferences {
@@ -30,6 +35,11 @@ export interface Meal {
   protein: string;
   carbs: string;
   fat: string;
+}
+
+export interface Day {
+  id: number;
+  meals: Meal[];
 }
 
 export interface DayMeals {

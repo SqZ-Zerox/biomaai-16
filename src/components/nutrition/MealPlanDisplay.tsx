@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Flame, Clock } from "lucide-react";
-import { Day, MealPreferences } from "./types";
+import { DayMeals, MealPreferences } from "./types";
 
 interface MealPlanDisplayProps {
-  days: Day[];
+  days: DayMeals[];
   mealPreferences: MealPreferences;
   currentDay: number;
   setCurrentDay: (day: number) => void;

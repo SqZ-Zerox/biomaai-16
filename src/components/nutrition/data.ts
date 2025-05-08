@@ -7,40 +7,46 @@ import React from "react";
 export const goals: Goal[] = [
   {
     id: "weight_loss",
+    value: "weight_loss",
     title: "Weight Loss",
+    label: "Weight Loss",
     description: "Calorie-controlled plan to help you lose weight gradually",
     icon: React.createElement(Flame, { className: "h-6 w-6" }),
   },
   {
     id: "muscle_gain",
+    value: "muscle_gain",
     title: "Muscle Building",
+    label: "Muscle Building",
     description: "Higher protein plan to support muscle growth",
     icon: React.createElement(Utensils, { className: "h-6 w-6" }),
   },
   {
     id: "health_optimization",
+    value: "health_optimization",
     title: "Health Optimization",
+    label: "Health Optimization",
     description: "Balanced nutrition based on your lab results",
     icon: React.createElement(Leaf, { className: "h-6 w-6" }),
   }
 ];
 
 export const dietaryOptions: DietaryOption[] = [
-  { id: "balanced", label: "Balanced" },
-  { id: "high_protein", label: "High Protein" },
-  { id: "low_carb", label: "Low Carb" },
-  { id: "keto", label: "Ketogenic" },
-  { id: "vegetarian", label: "Vegetarian" },
-  { id: "vegan", label: "Vegan" },
+  { id: "balanced", value: "balanced", label: "Balanced" },
+  { id: "high_protein", value: "high_protein", label: "High Protein" },
+  { id: "low_carb", value: "low_carb", label: "Low Carb" },
+  { id: "keto", value: "keto", label: "Ketogenic" },
+  { id: "vegetarian", value: "vegetarian", label: "Vegetarian" },
+  { id: "vegan", value: "vegan", label: "Vegan" },
 ];
 
 export const restrictionOptions: RestrictionOption[] = [
-  { id: "gluten_free", label: "Gluten Free" },
-  { id: "dairy_free", label: "Dairy Free" },
-  { id: "nut_free", label: "Nut Free" },
-  { id: "egg_free", label: "Egg Free" },
-  { id: "shellfish_free", label: "Shellfish Free" },
-  { id: "soy_free", label: "Soy Free" },
+  { id: "gluten_free", value: "gluten_free", label: "Gluten Free" },
+  { id: "dairy_free", value: "dairy_free", label: "Dairy Free" },
+  { id: "nut_free", value: "nut_free", label: "Nut Free" },
+  { id: "egg_free", value: "egg_free", label: "Egg Free" },
+  { id: "shellfish_free", value: "shellfish_free", label: "Shellfish Free" },
+  { id: "soy_free", value: "soy_free", label: "Soy Free" },
 ];
 
 // Sample meal plan data
