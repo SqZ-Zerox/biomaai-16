@@ -1,406 +1,552 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertCircle, FileText, Loader2, Upload, Video, X, AlertTriangle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { dataService, StudyMaterial } from "@/services/dataService";
-import { errorHandler } from "@/lib/error";
+import { 
+  FileText, UploadCloud, ArrowRight, Check, Clock, 
+  ArrowLeft, FileUp, Loader2, AlertCircle, CheckCircle 
+} from "lucide-react";
 
-const UploadPage = () => {
-  const [activeTab, setActiveTab] = useState("pdf");
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [materials, setMaterials] = useState<StudyMaterial[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+const UploadPage: React.FC = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  React.useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        setIsLoading(true);
-        const result = await dataService.getStudyMaterials();
-        setMaterials(result);
-        setIsError(false);
-      } catch (error) {
-        console.error("Error fetching materials:", error);
-        const { message } = errorHandler(error);
-        setIsError(true);
-        setErrorMessage(message || "Failed to load your uploaded materials.");
-        toast({
-          title: "Error",
-          description: "Failed to load your uploaded materials.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [step, setStep] = useState<number>(1); // 1: Test Selection, 2: File Upload, 3: Processing, 4: Results
+  const [selectedTests, setSelectedTests] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [processingProgress, setProcessingProgress] = useState<number>(0);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{name: string, status: string}[]>([]);
+  
+  // List of tests available for analysis
+  const availableTests = [
+    {
+      id: "complete_blood_count",
+      name: "Complete Blood Count (CBC)",
+      description: "Evaluates overall health and can detect a wide range of disorders",
+      common: true
+    },
+    {
+      id: "metabolic_panel",
+      name: "Comprehensive Metabolic Panel (CMP)",
+      description: "Checks kidney function, liver function, electrolyte levels, and more",
+      common: true
+    },
+    {
+      id: "lipid_panel",
+      name: "Lipid Panel",
+      description: "Measures cholesterol levels to assess risk of heart disease",
+      common: true
+    },
+    {
+      id: "thyroid_panel",
+      name: "Thyroid Panel",
+      description: "Evaluates thyroid function and can help diagnose thyroid disorders",
+      common: true
+    },
+    {
+      id: "hemoglobin_a1c",
+      name: "Hemoglobin A1C",
+      description: "Measures blood sugar control over the past 3 months",
+      common: true
+    },
+    {
+      id: "vitamin_d",
+      name: "Vitamin D",
+      description: "Checks for vitamin D deficiency",
+      common: true
+    },
+    {
+      id: "iron_panel",
+      name: "Iron Panel",
+      description: "Evaluates iron levels and can help diagnose anemia",
+      common: false
+    },
+    {
+      id: "hormone_panel",
+      name: "Hormone Panel",
+      description: "Checks levels of various hormones in the blood",
+      common: false
+    },
+    {
+      id: "micronutrient_panel",
+      name: "Micronutrient Panel",
+      description: "Evaluates levels of vitamins and minerals",
+      common: false
+    },
+    {
+      id: "inflammation_markers",
+      name: "Inflammation Markers",
+      description: "Checks for markers of inflammation like CRP and ESR",
+      common: false
+    }
+  ];
+
+  const handleTestToggle = (testId: string) => {
+    if (selectedTests.includes(testId)) {
+      setSelectedTests(selectedTests.filter(id => id !== testId));
+    } else {
+      setSelectedTests([...selectedTests, testId]);
+    }
+  };
+  
+  const handleSelectAllCommonTests = () => {
+    const commonTestIds = availableTests
+      .filter(test => test.common)
+      .map(test => test.id);
     
-    fetchMaterials();
-  }, [toast]);
+    setSelectedTests(commonTestIds);
+  };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      validateAndSetFile(files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles(filesArray);
     }
   };
-
-  const validateAndSetFile = (file: File) => {
-    // Validate file type based on active tab
-    let isValidFileType = false;
-    
-    if (activeTab === "pdf") {
-      isValidFileType = file.name.endsWith(".pdf") || 
-                        file.name.endsWith(".doc") || 
-                        file.name.endsWith(".docx") || 
-                        file.name.endsWith(".txt");
-    } else if (activeTab === "video") {
-      isValidFileType = file.name.endsWith(".mp4") || 
-                        file.name.endsWith(".mov") || 
-                        file.name.endsWith(".avi");
-    }
-    
-    if (!isValidFileType) {
+  
+  const handleUpload = () => {
+    if (selectedFiles.length === 0) {
       toast({
-        title: "Invalid File Type",
-        description: `Please upload a ${activeTab === "pdf" ? "PDF, DOC, DOCX, or TXT" : "MP4, MOV, or AVI"} file.`,
-        variant: "destructive"
+        title: "No files selected",
+        description: "Please select at least one lab report to upload",
+        variant: "destructive",
       });
       return;
     }
-    
-    // Validate file size
-    const maxSize = activeTab === "pdf" ? 50 * 1024 * 1024 : 500 * 1024 * 1024; // 50MB for PDF, 500MB for video
-    if (file.size > maxSize) {
-      toast({
-        title: "File Too Large",
-        description: `Maximum file size is ${activeTab === "pdf" ? "50MB" : "500MB"}.`,
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setSelectedFile(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      validateAndSetFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
     
     setIsUploading(true);
-    setUploadProgress(0);
     
-    try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const newProgress = prev + 10;
-          return newProgress < 90 ? newProgress : prev;
+    // Simulate file upload progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      setUploadProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        setUploadedFiles(selectedFiles.map(file => ({
+          name: file.name,
+          status: "success"
+        })));
+        setIsUploading(false);
+        
+        // Move to processing step
+        setStep(3);
+        startProcessing();
+      }
+    }, 200);
+  };
+  
+  const startProcessing = () => {
+    setIsProcessing(true);
+    
+    // Simulate processing progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 2;
+      setProcessingProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        setIsProcessing(false);
+        
+        // Show success message
+        toast({
+          title: "Analysis complete",
+          description: "Your lab reports have been successfully analyzed",
         });
-      }, 500);
+        
+        // Move to results step
+        setStep(4);
+      }
+    }, 300);
+  };
+  
+  const handleContinue = () => {
+    if (step === 1) {
+      if (selectedTests.length === 0) {
+        toast({
+          title: "No tests selected",
+          description: "Please select at least one test type to continue",
+          variant: "destructive",
+        });
+        return;
+      }
       
-      // Call API to upload the file
-      const result = await dataService.uploadMaterial(selectedFile);
-      
-      // Complete the progress and clear interval
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      // Update materials list with the new entry
-      setMaterials(prev => [...prev, result]);
-      
-      // Show success toast
-      toast({
-        title: "Upload Complete",
-        description: `${selectedFile.name} has been uploaded successfully.`,
-      });
-      
-      // Clear selected file after successful upload
-      setSelectedFile(null);
-    } catch (error) {
-      console.error("Upload error:", error);
-      const { message } = errorHandler(error);
-      
-      toast({
-        title: "Upload Failed",
-        description: message || "There was a problem uploading your file.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
+      setStep(2);
+    } else if (step === 2) {
+      handleUpload();
+    } else if (step === 4) {
+      navigate("/dashboard");
     }
   };
-
-  const cancelUpload = () => {
-    if (isUploading) {
-      // In a real app, we'd abort the fetch/axios request
-      toast({
-        title: "Upload Cancelled",
-        description: "Your upload has been cancelled.",
-      });
+  
+  const handleBack = () => {
+    if (step > 1 && !isUploading && !isProcessing) {
+      setStep(step - 1);
+    } else if (step === 1) {
+      navigate("/dashboard");
     }
-    setSelectedFile(null);
-    setIsUploading(false);
-    setUploadProgress(0);
   };
-
-  const renderFileUpload = () => (
-    <div 
-      className={`border-2 ${dragOver ? 'border-primary' : 'border-dashed'} rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer`}
-      onClick={() => document.getElementById(`${activeTab}-upload`)?.click()}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <input 
-        type="file" 
-        id={`${activeTab}-upload`} 
-        className="hidden" 
-        accept={activeTab === "pdf" ? ".pdf,.doc,.docx,.txt" : ".mp4,.mov,.avi"}
-        onChange={handleFileChange}
-      />
-      <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-      <p className="text-lg font-medium">Click to upload or drag & drop</p>
-      <p className="text-sm text-muted-foreground mt-1">
-        Support for {activeTab === "pdf" ? "PDF, DOC, DOCX, and TXT" : "MP4, MOV, and AVI"} files
-      </p>
-      
-      {selectedFile && (
-        <div className="mt-4 text-left bg-muted/50 p-3 rounded-md flex justify-between items-center">
-          <div className="flex items-center">
-            {activeTab === "pdf" ? (
-              <FileText className="h-5 w-5 text-primary mr-2" />
-            ) : (
-              <Video className="h-5 w-5 text-primary mr-2" />
-            )}
-            <div>
-              <p className="font-medium text-sm truncate max-w-[200px]">{selectedFile.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-              </p>
-            </div>
-          </div>
-          {isUploading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  cancelUpload();
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              size="sm" 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleUpload();
-              }}
-            >
-              Upload
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
+  
+  const handleBrowseFiles = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Upload Study Materials</h1>
-        <p className="text-muted-foreground">
-          Upload your materials to generate practice questions
-        </p>
-      </div>
-
-      <Tabs defaultValue="pdf" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="pdf">
-            <FileText className="h-4 w-4 mr-2" /> PDFs & Notes
-          </TabsTrigger>
-          <TabsTrigger value="video">
-            <Video className="h-4 w-4 mr-2" /> Videos
-          </TabsTrigger>
-          <TabsTrigger value="history">Uploads History</TabsTrigger>
-        </TabsList>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex flex-col gap-6">
+        <Button 
+          variant="ghost" 
+          className="w-fit text-muted-foreground" 
+          onClick={handleBack}
+          disabled={isUploading || isProcessing}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {step === 1 ? 'Back to Dashboard' : 'Previous Step'}
+        </Button>
         
-        <TabsContent value="pdf" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Document</CardTitle>
-              <CardDescription>
-                Upload your PDF documents, lecture notes, or case studies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderFileUpload()}
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <p className="text-sm text-muted-foreground">
-                Maximum file size: 50MB
-              </p>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    Help
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Upload Tips</DialogTitle>
-                    <DialogDescription>
-                      <ul className="list-disc pl-6 space-y-2 mt-2">
-                        <li>For best results, upload clear and well-formatted documents</li>
-                        <li>Highlight key sections in your PDFs before uploading</li>
-                        <li>Tables of contents and headings help the AI understand your document structure</li>
-                        <li>If uploading lecture notes, make sure they're organized by topic</li>
-                      </ul>
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+        <div className="text-center mb-2">
+          <h1 className="text-3xl font-bold mb-2 flex items-center justify-center">
+            <FileText className="mr-2 h-7 w-7 text-primary" />
+            Lab Report Analysis
+          </h1>
+          <p className="text-muted-foreground">Step {step} of 4</p>
+        </div>
         
-        <TabsContent value="video" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Video</CardTitle>
-              <CardDescription>
-                Upload lecture videos or recorded study sessions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderFileUpload()}
-              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium">Note about video uploads:</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  In the full version of this application, we would process videos by extracting audio, transcribing it, and then generating questions from the content.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <p className="text-sm text-muted-foreground">
-                Maximum file size: 500MB
-              </p>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="history" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Uploads</CardTitle>
-              <CardDescription>
-                Access your previously uploaded materials
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center w-full max-w-md">
+            {[1, 2, 3, 4].map((stepNum) => (
+              <React.Fragment key={stepNum}>
+                <div 
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    stepNum === step 
+                      ? 'bg-primary text-primary-foreground'
+                      : stepNum < step 
+                        ? 'bg-primary/70 text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {stepNum < step ? <Check className="h-4 w-4" /> : stepNum}
                 </div>
-              ) : isError ? (
-                <div className="text-center py-8 flex flex-col items-center">
-                  <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-                  <p className="text-muted-foreground">{errorMessage}</p>
-                  <Button 
-                    className="mt-4" 
-                    onClick={() => window.location.reload()}
-                    variant="outline"
-                  >
-                    Retry
-                  </Button>
-                </div>
-              ) : materials.length > 0 ? (
-                <div className="space-y-2">
-                  {materials.map((material, index) => (
-                    <div 
-                      key={index}
-                      className="flex justify-between items-center p-3 bg-muted/50 rounded-md hover:bg-muted/80 transition-colors cursor-pointer"
+                {stepNum < 4 && (
+                  <div 
+                    className={`h-1 flex-grow mx-1 rounded-full ${
+                      stepNum < step
+                        ? 'bg-primary/70'
+                        : 'bg-muted'
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+        
+        <Card className="border-border/40">
+          <CardHeader className="pb-4">
+            <CardTitle>
+              {step === 1 && "Select Test Types"}
+              {step === 2 && "Upload Lab Reports"}
+              {step === 3 && "Processing Documents"}
+              {step === 4 && "Analysis Complete"}
+            </CardTitle>
+            <CardDescription>
+              {step === 1 && "Choose which tests you'd like to analyze"}
+              {step === 2 && "Upload your lab report documents"}
+              {step === 3 && "We're analyzing your lab reports"}
+              {step === 4 && "Here's what we found in your reports"}
+            </CardDescription>
+          </CardHeader>
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {step === 1 && (
+                <CardContent className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Available Tests</h3>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleSelectAllCommonTests}
                     >
-                      <div className="flex items-center">
-                        {material.type === "pdf" ? (
-                          <FileText className="h-5 w-5 text-primary mr-2" />
-                        ) : material.type === "video" ? (
-                          <Video className="h-5 w-5 text-primary mr-2" />
-                        ) : (
-                          <FileText className="h-5 w-5 text-primary mr-2" />
-                        )}
-                        <div>
-                          <span className="block">{material.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {material.fileSize} • {material.uploadDate.toLocaleString()}
-                          </span>
+                      Select Common Tests
+                    </Button>
+                  </div>
+                  
+                  <Alert className="bg-muted/50 border-primary/20">
+                    <AlertCircle className="h-4 w-4 text-primary" />
+                    <AlertTitle>Select relevant tests</AlertTitle>
+                    <AlertDescription className="text-sm text-muted-foreground">
+                      Selecting the specific tests in your lab reports helps our AI provide more accurate analysis.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-4">
+                      {availableTests.map((test) => (
+                        <Card 
+                          key={test.id}
+                          className={`cursor-pointer border transition-all duration-200 ${
+                            selectedTests.includes(test.id) 
+                              ? "border-primary bg-primary/5" 
+                              : "border-border/40 hover:border-primary/30"
+                          }`}
+                          onClick={() => handleTestToggle(test.id)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="pt-1">
+                                <Checkbox
+                                  checked={selectedTests.includes(test.id)}
+                                  onCheckedChange={() => handleTestToggle(test.id)}
+                                  id={test.id}
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Label 
+                                    htmlFor={test.id} 
+                                    className="font-medium cursor-pointer"
+                                  >
+                                    {test.name}
+                                  </Label>
+                                  {test.common && (
+                                    <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                                      Common
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {test.description}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              )}
+              
+              {step === 2 && (
+                <CardContent className="space-y-6">
+                  <div className="border-2 border-dashed border-border/40 rounded-lg p-8 text-center">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      disabled={isUploading}
+                    />
+                    
+                    {selectedFiles.length === 0 ? (
+                      <div>
+                        <div className="flex justify-center mb-4">
+                          <div className="p-4 bg-muted/50 rounded-full">
+                            <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-medium mb-2">Drag & Drop or Browse</h3>
+                        <p className="text-muted-foreground text-sm mb-6">
+                          Upload your lab reports as PDF, JPG or PNG files
+                        </p>
+                        <div className="flex justify-center">
+                          <Button onClick={handleBrowseFiles}>
+                            <FileUp className="mr-2 h-4 w-4" />
+                            Select Files
+                          </Button>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Generate Questions
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No uploads yet</p>
-                </div>
+                    ) : (
+                      <div>
+                        <div className="flex justify-center mb-4">
+                          <div className="p-4 bg-primary/10 rounded-full">
+                            <CheckCircle className="h-8 w-8 text-primary" />
+                          </div>
+                        </div>
+                        <h3 className="text-lg font-medium mb-2">Files Selected</h3>
+                        <ul className="mb-4 text-left space-y-2">
+                          {selectedFiles.map((file, index) => (
+                            <li 
+                              key={index} 
+                              className="flex items-center justify-between p-2 bg-background rounded-md"
+                            >
+                              <span className="truncate max-w-[200px] text-sm">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="flex justify-center">
+                          <Button variant="outline" onClick={handleBrowseFiles} disabled={isUploading} className="mr-2">
+                            Change Files
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {isUploading && (
+                      <div className="mt-4">
+                        <Progress value={uploadProgress} className="h-2" />
+                        <p className="text-sm text-muted-foreground mt-2">Uploading... {uploadProgress}%</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Alert className="bg-muted/50 border-primary/20">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <AlertTitle>Selected Test Types</AlertTitle>
+                    <AlertDescription>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedTests.map((testId) => (
+                          <div 
+                            key={testId} 
+                            className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md"
+                          >
+                            {availableTests.find(test => test.id === testId)?.name}
+                          </div>
+                        ))}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {(activeTab === "pdf" || activeTab === "video") && (
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <p className="text-sm font-medium flex items-center">
-            <AlertCircle className="h-4 w-4 mr-2 text-primary" />
-            What happens after upload?
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            After uploading, our AI will analyze your content and generate tailored practice questions. 
-            This may take a few minutes depending on the file size. 
-            You'll receive a notification when your questions are ready.
-          </p>
-        </div>
-      )}
+              
+              {step === 3 && (
+                <CardContent className="py-12">
+                  <div className="flex flex-col items-center justify-center space-y-6">
+                    <div className="relative">
+                      <div className="p-4 bg-primary/10 rounded-full">
+                        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-xl font-medium mb-2">Analyzing Your Reports</h3>
+                      <p className="text-muted-foreground mb-6">This may take a few moments</p>
+                    </div>
+                    
+                    <div className="w-full max-w-md mx-auto">
+                      <Progress value={processingProgress} className="h-2" />
+                      <div className="flex justify-between mt-2 text-sm">
+                        <span>Analyzing</span>
+                        <span>{processingProgress}%</span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full max-w-md mt-4 pt-4 border-t border-border/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-sm">Current step:</span>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {processingProgress < 30 ? "Extracting Text" : 
+                           processingProgress < 60 ? "Identifying Lab Values" : 
+                           processingProgress < 90 ? "Comparing to Reference Ranges" : 
+                           "Generating Insights"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+              
+              {step === 4 && (
+                <CardContent className="py-8">
+                  <div className="mb-6 text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-full">
+                        <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-500" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">Analysis Complete!</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      We've analyzed your lab reports and generated personalized insights and recommendations.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
+                      <CardContent className="p-4">
+                        <h4 className="font-medium mb-2">Report Summary</h4>
+                        <ul className="space-y-2">
+                          <li className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Tests Analyzed:</span>
+                            <span className="font-medium">{selectedTests.length} tests</span>
+                          </li>
+                          <li className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Documents Processed:</span>
+                            <span className="font-medium">{selectedFiles.length} files</span>
+                          </li>
+                          <li className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Values Outside Reference:</span>
+                            <span className="font-medium">3 markers</span>
+                          </li>
+                          <li className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Generated Insights:</span>
+                            <span className="font-medium">5 recommendations</span>
+                          </li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                    
+                    <Alert className="bg-primary/5 border-primary/30">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <AlertTitle>Next Steps</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        Go to your dashboard to view your complete health analysis and personalized recommendations based on your lab results.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                </CardContent>
+              )}
+            </motion.div>
+          </AnimatePresence>
+          
+          <CardFooter className="flex justify-between pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={isUploading || isProcessing || step === 3}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              onClick={handleContinue}
+              disabled={isUploading || isProcessing || step === 3}
+            >
+              {step === 4 ? 'View Dashboard' : 'Continue'}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
