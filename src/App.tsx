@@ -43,6 +43,7 @@ function App() {
   useEffect(() => {
     // Initialize API keys on app load
     initializeAPIKeys();
+    
     // Save dark mode preference to localStorage
     localStorage.setItem("bioma_dark_mode", JSON.stringify(isDarkMode));
     
@@ -68,10 +69,7 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           
           {/* Dashboard Routes */}
-          <Route 
-            path="/dashboard" 
-            element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}
-          >
+          <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
             <Route index element={<Index />} />
             <Route path="study" element={<StudyPage />} />
             <Route path="study-plan" element={<StudyPlanPage />} />
@@ -79,10 +77,16 @@ function App() {
             <Route path="legal-essays" element={<LegalEssaysPage />} />
             <Route path="citation-tool" element={<CitationToolPage />} />
             <Route path="case-brief" element={<CaseBriefPage />} />
-            <Route path="upload" element={<UploadPage />} />
-            <Route path="fitness" element={<FitnessPage />} />
-            <Route path="nutrition" element={<NutritionPage />} />
-            <Route path="chat" element={<ChatPage />} />
+          </Route>
+          
+          {/* Top level routes that use layout */}
+          <Route element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
+            <Route path="/upload" element={<UploadPage />} />
+            <Route path="/fitness" element={<FitnessPage />} />
+            <Route path="/nutrition" element={<NutritionPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/progress" element={<Index />} />
+            <Route path="/settings" element={<Index />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />

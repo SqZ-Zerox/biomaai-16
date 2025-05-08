@@ -5,6 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "./AppSidebar";
 import BiomaBotButton from "../dashboard/BiomaBotButton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Navigation from "./Navigation";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children, toggleDarkMode, isDarkMode })
             </div>
           </main>
           <BiomaBotButton />
+          <Navigation />
         </div>
       </div>
     </SidebarProvider>
