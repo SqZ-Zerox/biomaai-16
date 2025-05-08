@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Apple, Search } from "lucide-react";
@@ -98,7 +97,8 @@ const RecipeSuggestionsPage = () => {
       return await generateRecipeSuggestions(
         params.dietType || "balanced",
         [],
-        params.calories || 500
+        params.calories || 500,
+        "" // Empty string for location since we don't have it in recipe search
       );
     } catch (error) {
       console.error("Failed to generate AI recipes:", error);

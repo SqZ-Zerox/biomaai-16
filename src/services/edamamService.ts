@@ -93,7 +93,8 @@ async function generateRecipeSuggestionsWithGemini(params: EdamamRecipeSearchPar
     const recipeNames = await generateRecipeSuggestions(
       dietType || "balanced", 
       [], // No restrictions for fallback
-      calories || 500
+      calories || 500,
+      "" // Empty string for location since it's not critical for fallback
     );
     
     // Create simple recipe objects from the names
