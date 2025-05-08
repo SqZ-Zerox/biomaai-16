@@ -11,12 +11,6 @@ import { initializeAPIKeys } from "./services/apiKeyInitializer";
 import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import StudyPage from "./pages/StudyPage";
-import StudyPlanPage from "./pages/StudyPlanPage";
-import FlashcardsPage from "./pages/FlashcardsPage";
-import LegalEssaysPage from "./pages/LegalEssaysPage";
-import CitationToolPage from "./pages/CitationToolPage";
-import CaseBriefPage from "./pages/CaseBriefPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import NotFound from "./pages/NotFound";
 import UploadPage from "./pages/UploadPage";
@@ -71,12 +65,6 @@ function App() {
           {/* Dashboard Routes */}
           <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
             <Route index element={<Index />} />
-            <Route path="study" element={<StudyPage />} />
-            <Route path="study-plan" element={<StudyPlanPage />} />
-            <Route path="flashcards" element={<FlashcardsPage />} />
-            <Route path="legal-essays" element={<LegalEssaysPage />} />
-            <Route path="citation-tool" element={<CitationToolPage />} />
-            <Route path="case-brief" element={<CaseBriefPage />} />
           </Route>
           
           {/* Top level routes that use layout */}
