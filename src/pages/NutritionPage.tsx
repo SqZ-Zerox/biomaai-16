@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +21,7 @@ const NutritionPage = () => {
   const [step, setStep] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [planGenerated, setPlanGenerated] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
   
   // Step 1: Goal selection
   const [selectedGoal, setSelectedGoal] = useState<string>("");
@@ -96,9 +96,9 @@ const NutritionPage = () => {
   
   const generatePlan = async () => {
     setIsLoading(true);
+    setError(false);
     
-    // Call the Gemini-powered nutrition plan generator
-    const planData = await generateNutritionPlan({
+    console.log("Generating nutrition plan with params:", {
       goal: selectedGoal,
       dietType,
       restrictions,
@@ -107,28 +107,53 @@ const NutritionPage = () => {
       location
     });
     
-    if (planData) {
-      setGeneratedPlan(planData);
-      setPlanGenerated(true);
-      toast({
-        title: "30-day nutrition plan created!",
-        description: "Your AI-generated nutrition plan is ready",
+    try {
+      // Call the Gemini-powered nutrition plan generator
+      const planData = await generateNutritionPlan({
+        goal: selectedGoal,
+        dietType,
+        restrictions,
+        calorieTarget,
+        mealPreferences,
+        location
       });
-    } else {
-      // If plan generation fails, use sample data
+      
+      if (planData && planData.days && planData.days.length > 0) {
+        setGeneratedPlan(planData);
+        setPlanGenerated(true);
+        toast({
+          title: `${planData.days.length}-day nutrition plan created!`,
+          description: "Your AI-generated nutrition plan is ready",
+        });
+      } else {
+        throw new Error("Failed to generate a complete meal plan");
+      }
+    } catch (error) {
+      console.error("Error generating plan:", error);
+      setError(true);
+      
+      // Use sample data as fallback
       setGeneratedPlan(sampleMealPlan);
       setPlanGenerated(true);
+      
       toast({
         title: "Using sample plan",
-        description: "We've provided a sample plan. You can generate a personalized one later.",
+        description: "We couldn't generate your personalized plan. Using a sample plan instead.",
+        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleViewRecipes = () => {
     navigate("/recipes");
+  };
+
+  const handleTryAgain = () => {
+    setPlanGenerated(false);
+    setError(false);
+    setStep(1);
   };
 
   if (planGenerated) {
@@ -146,15 +171,28 @@ const NutritionPage = () => {
               <p className="text-muted-foreground">Personalized meal plan based on your preferences</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(1)}>
+              <Button variant="outline" onClick={handleTryAgain}>
                 <ArrowLeft className="mr-1 h-4 w-4" />
-                Edit Plan
+                Create New Plan
               </Button>
               <Button onClick={handleViewRecipes}>
                 Find Recipes
               </Button>
             </div>
           </div>
+          
+          {error && (
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500 rounded-lg mb-2">
+              <h3 className="font-medium flex items-center">
+                <Info className="h-4 w-4 mr-2" />
+                Using Sample Plan
+              </h3>
+              <p className="text-sm mt-1">
+                We couldn't generate your personalized plan due to an API issue. 
+                You're viewing a sample plan. Try again later or add your own Gemini API key in Settings.
+              </p>
+            </div>
+          )}
           
           <Card className="border-border/40">
             <CardHeader>

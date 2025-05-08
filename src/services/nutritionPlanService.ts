@@ -21,6 +21,7 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
         .join(', ')}
       - Location: ${request.location || 'Not specified'}
       
+      Structure the meal plan into 30 days, organized over 4-5 weeks.
       Consider seasonal and locally available ingredients based on the user's location (${request.location || 'Unknown'}).
       If no location is provided, suggest general recipes that work for most regions.
       
@@ -32,8 +33,8 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
       
       For each meal, provide:
       - Name
-      - Brief description
-      - Calories
+      - Brief description (3-4 sentences max)
+      - Calories (should approximately add up to daily target)
       - Macros (protein, carbs, fat in grams)
       
       Format the response as a JSON object with this structure:
@@ -57,8 +58,13 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
           ...more days (30 total)
         ]
       }
+      
+      Important: Make sure to include ALL 30 days in the response. Each day should have the specified meals based on preferences.
+      The total calories for all meals in a day should approximately match the daily calorie target of ${request.calorieTarget}.
     `;
 
+    console.log("Sending prompt to Gemini for meal plan generation");
+    
     // Send the prompt to Gemini
     const response = await sendGeminiCompletion([
       { role: "user", parts: [{ text: prompt }] }
@@ -80,6 +86,8 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
     if (!mealPlanData.days || !Array.isArray(mealPlanData.days) || mealPlanData.days.length === 0) {
       throw new Error("Invalid meal plan structure");
     }
+    
+    console.log(`Successfully generated meal plan with ${mealPlanData.days.length} days`);
     
     return mealPlanData;
   } catch (error) {

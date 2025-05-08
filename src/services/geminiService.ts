@@ -101,7 +101,7 @@ export async function sendGeminiCompletion(
         contents: messages,
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxOutputTokens || 1000,
+          maxOutputTokens: options.maxOutputTokens || 8000, // Increased from 1000 to 8000
           topP: 0.95,
         },
       }),
@@ -109,7 +109,18 @@ export async function sendGeminiCompletion(
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || "Failed to get response from Gemini");
+      const errorMessage = errorData.error?.message || `Failed to get response from Gemini (Status: ${response.status})`;
+      
+      // Handle quota errors specifically
+      if (errorMessage.includes("quota") || response.status === 429) {
+        toast({
+          title: "Gemini API Rate Limit Reached",
+          description: "You've reached the API rate limit. Please try again later or use your own API key in Settings.",
+          variant: "destructive",
+        });
+      }
+      
+      throw new Error(errorMessage);
     }
     
     const data: GeminiCompletionResponse = await response.json();

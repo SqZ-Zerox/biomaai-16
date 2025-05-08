@@ -22,13 +22,15 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
   setCurrentDay 
 }) => {
   const [currentWeek, setCurrentWeek] = useState(1);
-  const maxWeeks = Math.ceil(days.length / 7);
+  const totalDays = days.length;
+  const maxWeeks = Math.ceil(totalDays / 7);
   
+  // Handle week navigation
   const handleNextWeek = () => {
     const nextWeek = Math.min(currentWeek + 1, maxWeeks);
     setCurrentWeek(nextWeek);
     const firstDayOfWeek = (nextWeek - 1) * 7 + 1;
-    setCurrentDay(Math.min(firstDayOfWeek, days.length));
+    setCurrentDay(Math.min(firstDayOfWeek, totalDays));
   };
   
   const handlePrevWeek = () => {
@@ -39,12 +41,15 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
   };
   
   // Calculate the days to display for the current week
-  const daysInWeek = (7 * currentWeek) > days.length 
-    ? days.length - ((currentWeek - 1) * 7)
-    : 7;
+  const weekStartIdx = (currentWeek - 1) * 7;
+  const weekEndIdx = Math.min(weekStartIdx + 6, totalDays - 1);
+  const daysInCurrentWeek = weekEndIdx - weekStartIdx + 1;
   
-  const weekStartDay = (currentWeek - 1) * 7 + 1;
-  const weekEndDay = Math.min(weekStartDay + 6, days.length);
+  const weekStartDay = weekStartIdx + 1;
+  const weekEndDay = weekEndIdx + 1;
+  
+  // Get the days for the current week
+  const currentWeekDays = days.slice(weekStartIdx, weekEndIdx + 1);
 
   return (
     <div>
@@ -81,18 +86,22 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
         onValueChange={(value) => setCurrentDay(parseInt(value))}
       >
         <TabsList className="grid grid-cols-7 mb-6">
-          {Array.from({ length: daysInWeek }, (_, i) => {
-            const dayNumber = weekStartDay + i;
-            return (
-              <TabsTrigger key={dayNumber} value={dayNumber.toString()}>
-                Day {dayNumber}
-              </TabsTrigger>
-            );
-          })}
+          {currentWeekDays.map((day) => (
+            <TabsTrigger key={day.id} value={day.id.toString()}>
+              Day {day.id}
+            </TabsTrigger>
+          ))}
         </TabsList>
         
         {days.map((day) => (
           <TabsContent key={day.id} value={day.id.toString()} className="space-y-4">
+            <div className="mb-4 p-2 bg-primary/5 rounded-md">
+              <h3 className="font-medium text-sm text-center">
+                <Calendar className="h-4 w-4 inline mr-1" />
+                Day {day.id} | Week {Math.ceil(day.id / 7)}
+              </h3>
+            </div>
+            
             {day.meals
               .filter(meal => 
                 (meal.type !== "snack" || mealPreferences.snacks) && 
@@ -151,18 +160,6 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                   </Card>
                 </motion.div>
               ))}
-          </TabsContent>
-        ))}
-        
-        {Array.from({ length: 30 - days.length }, (_, i) => i + days.length + 1).map((day) => (
-          <TabsContent key={day} value={day.toString()} className="text-center py-8">
-            <div className="flex flex-col items-center justify-center">
-              <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Coming Soon</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Your full 30-day plan is being optimized. Check back later for your complete meal plan!
-              </p>
-            </div>
           </TabsContent>
         ))}
       </Tabs>
