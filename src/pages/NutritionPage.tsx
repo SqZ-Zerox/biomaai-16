@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -627,7 +626,7 @@ interface StepThreeProps {
     dinner: boolean;
     snacks: boolean;
   };
-  onMealPreferenceToggle: (meal: keyof typeof mealPreferences) => void;
+  onMealPreferenceToggle: (meal: "breakfast" | "lunch" | "dinner" | "snacks") => void;
 }
 
 const StepThree: React.FC<StepThreeProps> = ({
