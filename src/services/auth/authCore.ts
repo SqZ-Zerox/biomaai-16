@@ -42,30 +42,22 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals
-              .filter(goal => goal !== null && goal !== undefined) // First filter out null values
+              .filter(Boolean) // Filter out null, undefined, and falsy values
               .map(goalItem => {
-                // Type guard for objects with value property
                 if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
-                  const value = goalItem.value;
-                  return value !== null && value !== undefined ? String(value) : '';
+                  return String(goalItem.value || ''); 
                 }
-                
-                // Handle primitive values after ensuring they're not null (via filter above)
-                return String(goalItem);
+                return String(goalItem || '');
               })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions
-              .filter(restriction => restriction !== null && restriction !== undefined) // First filter out null values
+              .filter(Boolean) // Filter out null, undefined, and falsy values
               .map(restrictionItem => {
-                // Type guard for objects with value property
                 if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
-                  const value = restrictionItem.value;
-                  return value !== null && value !== undefined ? String(value) : '';
+                  return String(restrictionItem.value || '');
                 }
-                
-                // Handle primitive values after ensuring they're not null (via filter above)
-                return String(restrictionItem);
+                return String(restrictionItem || '');
               })
           : [],
         ...user_metadata
