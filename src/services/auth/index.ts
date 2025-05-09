@@ -1,5 +1,12 @@
 
+// Re-export types
 export * from './types';
-export * from './authOperations';
-// Import specific exports from profileService, excluding ensureUserProfile which comes from authOperations
+
+// Re-export core authentication functions
+export * from './authCore';
+
+// Re-export profile management functions
+export * from './profileManager';
+
+// Re-export specific exports from profileService
 export { getUserProfile } from './profileService';
