@@ -19,6 +19,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
     form,
     isLoading,
     currentStep,
+    captchaRef,
+    handleCaptchaVerify,
+    captchaToken,
     proceedToPersonalStep,
     proceedToHealthStep,
     proceedToMedicalStep,
@@ -79,6 +82,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
                 isLoading={isLoading} 
                 onBack={backToMedicalStep}
                 onSubmit={onSubmit}
+                captchaRef={captchaRef}
+                handleCaptchaVerify={handleCaptchaVerify}
+                captchaToken={captchaToken}
               />
             )}
           </AnimatePresence>

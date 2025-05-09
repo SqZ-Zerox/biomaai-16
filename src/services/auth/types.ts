@@ -1,18 +1,12 @@
 
-import { User, Session } from "@supabase/supabase-js";
+export interface AuthResult<T> {
+  data: T | null;
+  error: Error | null;
+}
 
-export interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  birth_date: string | null;
-  phone_number: string | null;
-  profession: string | null;
-  gender: string | null;
-  height: string | null;
-  weight: string | null;
-  activity_level: string | null;
-  created_at: string;
+export interface SessionResult {
+  session: any | null;
+  error: Error | null;
 }
 
 export interface SignUpData {
@@ -20,29 +14,15 @@ export interface SignUpData {
   password: string;
   first_name: string;
   last_name: string;
-  birth_date: string | null;
-  phone_number: string | null;
-  profession?: string;
-  gender?: string;
-  height?: string;
-  weight?: string;
-  activity_level?: string;
-  health_goals?: string[];
-  dietary_restrictions?: string[];
-  user_metadata?: any;
-}
-
-export interface AuthResult<T> {
-  data: T | null;
-  error: any;
-}
-
-export interface SessionResult {
-  session: Session | null;
-  error: any;
-}
-
-export interface ProfileResult {
-  profile: UserProfile | null;
-  error: any;
+  birth_date: string;
+  phone_number?: string | null;
+  profession?: string | null;
+  gender?: string | null;
+  height?: string | null;
+  weight?: string | null;
+  activity_level?: string | null;
+  health_goals?: any[];
+  dietary_restrictions?: any[];
+  user_metadata?: Record<string, any>;
+  captchaToken?: string | null;
 }

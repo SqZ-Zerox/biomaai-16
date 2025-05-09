@@ -17,7 +17,8 @@ export async function signUp({
   activity_level = null,
   health_goals = [],
   dietary_restrictions = [],
-  user_metadata = {}
+  user_metadata = {},
+  captchaToken = null
 }: SignUpData): Promise<AuthResult<any>> {
   try {
     // Format user metadata for Supabase - but only include basic identification info
@@ -71,13 +72,20 @@ export async function signUp({
 
     console.log("Signing up with minimal metadata:", formattedMetadata);
     
+    const options: any = {
+      data: formattedMetadata,
+      emailRedirectTo: window.location.origin + '/auth/callback'
+    };
+    
+    // Add captcha token if provided
+    if (captchaToken) {
+      options.captchaToken = captchaToken;
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: formattedMetadata,
-        emailRedirectTo: window.location.origin + '/auth/callback'
-      }
+      options
     });
 
     if (error) {
@@ -100,6 +108,8 @@ export async function signUp({
         errorMessage = "Password error: " + error.message;
       } else if (error.message.includes("email")) {
         errorMessage = "Email error: " + error.message;
+      } else if (error.message.includes("captcha")) {
+        errorMessage = "Captcha verification failed. Please try again.";
       }
     }
     
@@ -113,13 +123,29 @@ export async function signUp({
   }
 }
 
-export async function signIn({ email, password }: { email: string; password: string }): Promise<AuthResult<any>> {
+export async function signIn({ 
+  email, 
+  password, 
+  captchaToken = null 
+}: { 
+  email: string; 
+  password: string; 
+  captchaToken?: string | null;
+}): Promise<AuthResult<any>> {
   try {
     console.log("Attempting signin with email:", email);
     
+    const options: any = {};
+    
+    // Add captcha token if provided
+    if (captchaToken) {
+      options.captchaToken = captchaToken;
+    }
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
+      options
     });
 
     if (error) {
@@ -140,6 +166,8 @@ export async function signIn({ email, password }: { email: string; password: str
         errorMessage = "Invalid email or password. Please try again.";
       } else if (error.message.includes("Email not confirmed")) {
         errorMessage = "Please confirm your email before logging in.";
+      } else if (error.message.includes("captcha")) {
+        errorMessage = "Captcha verification failed. Please try again.";
       }
     }
     

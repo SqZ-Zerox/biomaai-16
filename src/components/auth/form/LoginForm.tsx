@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleSignInButton from "./GoogleSignInButton";
 import { Separator } from "@/components/ui/separator";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import {
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  captchaToken: z.string().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -36,6 +38,8 @@ const LoginForm: React.FC = () => {
   const { checkSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   // Login form
   const form = useForm<LoginFormValues>({
@@ -43,17 +47,33 @@ const LoginForm: React.FC = () => {
     defaultValues: {
       email: "",
       password: "",
+      captchaToken: "",
     },
   });
 
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    form.setValue("captchaToken", token);
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
+    if (!captchaToken) {
+      toast({
+        title: "Captcha Required",
+        description: "Please complete the captcha verification",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log("Attempting login with:", values.email);
       
       const { data, error } = await signIn({
         email: values.email,
-        password: values.password
+        password: values.password,
+        captchaToken
       });
       
       if (error) {
@@ -69,6 +89,10 @@ const LoginForm: React.FC = () => {
           description: errorMessage,
           variant: "destructive",
         });
+        
+        // Reset captcha on failure
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
       
@@ -91,6 +115,10 @@ const LoginForm: React.FC = () => {
         description: error.message || "Failed to login. Please try again.",
         variant: "destructive",
       });
+      
+      // Reset captcha on error
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -180,6 +208,19 @@ const LoginForm: React.FC = () => {
             )}
           />
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.3 }}
+          className="flex justify-center my-4"
+        >
+          <HCaptcha
+            sitekey={process.env.VITE_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"} 
+            onVerify={handleCaptchaVerify}
+            ref={captchaRef}
+          />
+        </motion.div>
         
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -190,7 +231,7 @@ const LoginForm: React.FC = () => {
           <Button 
             type="submit" 
             className="w-full h-12 text-base" 
-            disabled={isLoading}
+            disabled={isLoading || !captchaToken}
           >
             {isLoading ? (
               <span className="flex items-center">
