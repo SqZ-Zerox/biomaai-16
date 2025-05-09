@@ -43,7 +43,7 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals.map(goalItem => {
-              // Ensure goalItem is not null or undefined before accessing it
+              // Ensure goalItem is not null or undefined
               if (goalItem === null || goalItem === undefined) {
                 return '';
               }
@@ -53,16 +53,19 @@ export async function signUp({
               
               // Safely extract the value
               if (isObjectWithValue) {
-                const value = goalItem.value;
+                // Explicitly access value in a type-safe way
+                const goal = goalItem as { value: any };
+                const value = goal.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
+              // Handle primitive values
               return String(goalItem);
             })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions.map(restrictionItem => {
-              // Ensure restrictionItem is not null or undefined before accessing it
+              // Ensure restrictionItem is not null or undefined
               if (restrictionItem === null || restrictionItem === undefined) {
                 return '';
               }
@@ -72,10 +75,13 @@ export async function signUp({
               
               // Safely extract the value
               if (isObjectWithValue) {
-                const value = restrictionItem.value;
+                // Explicitly access value in a type-safe way
+                const restriction = restrictionItem as { value: any };
+                const value = restriction.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
+              // Handle primitive values
               return String(restrictionItem);
             })
           : [],

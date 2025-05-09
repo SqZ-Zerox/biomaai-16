@@ -1,4 +1,5 @@
 
+
 import { toast } from "@/hooks/use-toast";
 
 /**
@@ -79,9 +80,11 @@ export const CaptchaVerificationService = {
    * Get the appropriate sitekey based on environment
    */
   getSiteKey: (): string => {
-    const configuredKey = process.env.VITE_HCAPTCHA_SITE_KEY;
+    // Using import.meta.env instead of process.env for Vite
+    const configuredKey = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
     
     // Return configured key or fallback to test key
     return configuredKey || "10000000-ffff-ffff-ffff-000000000001";
   }
 };
+
