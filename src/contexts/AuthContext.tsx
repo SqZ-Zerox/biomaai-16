@@ -8,7 +8,7 @@ import {
   UserProfile, 
   ensureUserProfile,
   updateUserVerificationStatus
-} from "@/services/authService";
+} from "@/services/auth";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {

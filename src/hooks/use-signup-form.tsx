@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { signUp } from "@/services/authService";
+import { signUp } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, SignupFormValues } from "@/components/auth/form/signup/types";
 
