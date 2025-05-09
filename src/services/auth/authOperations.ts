@@ -36,25 +36,37 @@ export async function signUp({
         weight,
         activity_level,
         health_goals: Array.isArray(health_goals) 
-          ? health_goals.map(goal => {
-              // Ensure goal is not null/undefined before accessing properties
-              if (!goal) return '';
+          ? health_goals.map(goalItem => {
+              // Handle null/undefined cases
+              if (goalItem === null || goalItem === undefined) {
+                return '';
+              }
               
               // Safely access properties with proper type checking
-              return typeof goal === 'object' && goal !== null && 'value' in goal ? 
-                    String(goal.value || '') : 
-                    String(goal || '');
+              if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
+                const value = goalItem.value;
+                return value !== null && value !== undefined ? String(value) : '';
+              }
+              
+              // Handle primitive values
+              return String(goalItem);
             })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
-          ? dietary_restrictions.map(restriction => {
-              // Ensure restriction is not null/undefined before accessing properties
-              if (!restriction) return '';
+          ? dietary_restrictions.map(restrictionItem => {
+              // Handle null/undefined cases
+              if (restrictionItem === null || restrictionItem === undefined) {
+                return '';
+              }
               
               // Safely access properties with proper type checking
-              return typeof restriction === 'object' && restriction !== null && 'value' in restriction ? 
-                    String(restriction.value || '') : 
-                    String(restriction || '');
+              if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
+                const value = restrictionItem.value;
+                return value !== null && value !== undefined ? String(value) : '';
+              }
+              
+              // Handle primitive values
+              return String(restrictionItem);
             })
           : [],
         ...user_metadata
