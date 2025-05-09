@@ -38,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [hasShownWelcome, setHasShownWelcome] = useState(false); // Add state to track welcome message
   const { toast } = useToast();
 
   const checkSession = async () => {
@@ -129,11 +130,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setProfile(profile);
               
               // Don't show welcome toast for social auth callback as it will be handled there
-              if (!window.location.pathname.includes('/auth/callback')) {
+              // Only show welcome message once per session
+              if (!window.location.pathname.includes('/auth/callback') && !hasShownWelcome) {
                 toast({
                   title: "Signed in successfully",
                   description: `Welcome${profile?.first_name ? ` ${profile.first_name}` : ""}!`,
                 });
+                setHasShownWelcome(true); // Mark welcome message as shown
               }
             }, 0);
           } else {
@@ -143,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (event === "SIGNED_OUT") {
           setProfile(null);
           setIsEmailVerified(false);
+          setHasShownWelcome(false); // Reset welcome message flag on sign out
           toast({
             title: "Signed out",
             description: "You have been signed out successfully",
