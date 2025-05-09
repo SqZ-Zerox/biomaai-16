@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -55,6 +54,7 @@ export async function signUp({
                 // Type assertion after verification
                 const goal = goalItem as { value: any };
                 const value = goal.value;
+                // Explicit null check before converting to string
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
@@ -76,6 +76,7 @@ export async function signUp({
                 // Type assertion after verification
                 const restriction = restrictionItem as { value: any };
                 const value = restriction.value;
+                // Explicit null check before converting to string
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
