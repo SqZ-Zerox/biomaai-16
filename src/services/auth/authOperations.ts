@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -49,7 +48,11 @@ export async function signUp({
                 return '';
               }
               
-              if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
+              // Check if goalItem is an object with 'value' property
+              const isObjectWithValue = typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem;
+              
+              // Safely extract the value
+              if (isObjectWithValue) {
                 const value = goalItem.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
@@ -64,7 +67,11 @@ export async function signUp({
                 return '';
               }
               
-              if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
+              // Check if restrictionItem is an object with 'value' property
+              const isObjectWithValue = typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem;
+              
+              // Safely extract the value
+              if (isObjectWithValue) {
                 const value = restrictionItem.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
