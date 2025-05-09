@@ -49,16 +49,19 @@ export async function generateFitnessPlan(request: FitnessPlanRequest): Promise<
       - Activity level: ${request.healthData.activityLevel || 'Not provided'}
       ` : ''}
       
-      Please create 2 different workout routines (e.g., strength & conditioning and cardio).
+      Create a comprehensive fitness plan that includes different workout routines targeting various aspects of fitness related to their goal of ${request.goal}.
+      Design workouts that can be completed within their time constraint of ${request.minutesPerDay} minutes.
+      
+      Please create 3 different workout routines that complement each other and can be rotated throughout the week.
       
       For each workout, include:
       - Workout title
       - Total duration
-      - List of exercises with:
+      - Detailed list of exercises with:
         - Name
-        - Brief description
+        - Brief description explaining technique and benefits
         - Duration/sets/reps
-      - Focus areas
+      - Focus areas (which muscle groups or fitness aspects it targets)
       
       Format the response as a JSON object with this structure:
       {
@@ -83,10 +86,12 @@ export async function generateFitnessPlan(request: FitnessPlanRequest): Promise<
       }
     `;
 
+    console.log("Generating fitness plan with Gemini...");
+
     // Send the prompt to Gemini
     const response = await sendGeminiCompletion([
       { role: "user", parts: [{ text: prompt }] }
-    ], { temperature: 0.2 });
+    ], { temperature: 0.2, maxOutputTokens: 15000 });
 
     if (!response) {
       throw new Error("Failed to generate fitness plan");
@@ -104,6 +109,8 @@ export async function generateFitnessPlan(request: FitnessPlanRequest): Promise<
     if (!fitnessPlanData.workouts || !Array.isArray(fitnessPlanData.workouts) || fitnessPlanData.workouts.length === 0) {
       throw new Error("Invalid fitness plan structure");
     }
+    
+    console.log(`Successfully generated fitness plan with ${fitnessPlanData.workouts.length} workouts`);
     
     return fitnessPlanData;
   } catch (error) {

@@ -48,7 +48,7 @@ const GeneratedMealPlanView: React.FC<GeneratedMealPlanViewProps> = ({
               <Apple className="mr-2 h-6 w-6 text-primary" />
               Your 30-Day Nutrition Plan
             </h1>
-            <p className="text-muted-foreground">Personalized meal plan based on your preferences</p>
+            <p className="text-muted-foreground">Personalized meal plan based on your health goals and preferences</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleTryAgain}>
@@ -76,14 +76,14 @@ const GeneratedMealPlanView: React.FC<GeneratedMealPlanViewProps> = ({
         
         <Card className="border-border/40">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-col sm:flex-row gap-4">
               <div>
                 <CardTitle className="flex items-center">
                   <Calendar className="mr-2 h-5 w-5" />
-                  30-Day Meal Plan
+                  30-Day Nutrition Plan for {selectedGoal}
                 </CardTitle>
                 <CardDescription>
-                  Based on {selectedGoal} goal with {dietType} diet
+                  Following a {dietType} diet with {calorieTarget} calories per day
                   {location && ` • Optimized for ${location}`}
                 </CardDescription>
               </div>
@@ -92,12 +92,17 @@ const GeneratedMealPlanView: React.FC<GeneratedMealPlanViewProps> = ({
                   {calorieTarget} calories/day
                 </Badge>
                 <Button variant="outline" size="sm">
-                  Download PDF
+                  Download Plan
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-6 p-4 bg-primary/10 rounded-lg">
+              <h3 className="font-medium mb-2">Plan Overview</h3>
+              <p className="text-sm">This nutrition plan is specifically designed to support your goal of <strong>{selectedGoal}</strong>. It provides balanced meals that meet your daily calorie target of <strong>{calorieTarget} calories</strong> following a <strong>{dietType}</strong> diet approach.</p>
+            </div>
+            
             <MealPlanDisplay 
               days={generatedPlan.days}
               mealPreferences={mealPreferences}
@@ -105,10 +110,10 @@ const GeneratedMealPlanView: React.FC<GeneratedMealPlanViewProps> = ({
               setCurrentDay={setCurrentDay}
             />
           </CardContent>
-          <CardFooter className="flex justify-between">
+          <CardFooter className="flex justify-between flex-col sm:flex-row gap-4">
             <div className="flex items-center text-sm text-muted-foreground">
               <Info className="h-4 w-4 mr-1" />
-              <span>Nutrition facts are approximate and may vary</span>
+              <span>Nutrition facts are approximate and may vary based on exact ingredients used</span>
             </div>
             <Button onClick={handleViewRecipes}>
               Find Recipe Ideas

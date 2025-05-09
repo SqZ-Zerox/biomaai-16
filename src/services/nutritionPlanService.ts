@@ -21,9 +21,9 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
         .join(', ')}
       - Location: ${request.location || 'Not specified'}
       
-      Structure the meal plan into 30 days, organized over 4-5 weeks.
-      Consider seasonal and locally available ingredients based on the user's location (${request.location || 'Unknown'}).
-      If no location is provided, suggest general recipes that work for most regions.
+      Create a structured 30-day nutrition plan that supports the user's goal of ${request.goal}.
+      Each day should include meal recommendations that match their preferences and dietary needs.
+      Focus on creating a cohesive nutrition strategy rather than just individual recipes.
       
       For each day, include the following meals (only if specified in preferences): 
       ${request.mealPreferences.breakfast ? "- Breakfast" : ""}
@@ -32,10 +32,10 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
       ${request.mealPreferences.snacks ? "- Snacks" : ""}
       
       For each meal, provide:
-      - Name
-      - Brief description (3-4 sentences max)
-      - Calories (should approximately add up to daily target)
-      - Macros (protein, carbs, fat in grams)
+      - Name (brief and descriptive)
+      - Brief description (what it contains and why it supports their goal)
+      - Estimated calories
+      - Approximate macros (protein, carbs, fat in grams)
       
       Format the response as a JSON object with this structure:
       {
@@ -46,7 +46,7 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
               {
                 "type": "breakfast",
                 "title": "Meal name",
-                "description": "Brief description",
+                "description": "Brief description of ingredients and benefits",
                 "calories": 500,
                 "protein": "30g", 
                 "carbs": "50g",
@@ -59,11 +59,14 @@ export async function generateNutritionPlan(request: NutritionPlanRequest): Prom
         ]
       }
       
-      Important: Make sure to include ALL 30 days in the response. Each day should have the specified meals based on preferences.
-      The total calories for all meals in a day should approximately match the daily calorie target of ${request.calorieTarget}.
+      Important: 
+      - Create a COHESIVE NUTRITION PLAN, not just random recipes
+      - Build progression throughout the 30 days
+      - Ensure variety while maintaining consistency with the user's goal
+      - The total calories for all meals in a day should approximately match the daily target of ${request.calorieTarget}
     `;
 
-    console.log("Sending prompt to Gemini for meal plan generation");
+    console.log("Generating nutrition plan with Gemini...");
     
     // Send the prompt to Gemini
     const response = await sendGeminiCompletion([

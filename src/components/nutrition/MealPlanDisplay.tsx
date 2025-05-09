@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Flame, Clock, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { Flame, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 import { DayMeals, MealPreferences } from "./types";
 
 interface MealPlanDisplayProps {
@@ -102,25 +102,25 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
               </h3>
             </div>
             
-            {day.meals
-              .filter(meal => 
-                (meal.type !== "snack" || mealPreferences.snacks) && 
-                (meal.type !== "breakfast" || mealPreferences.breakfast) &&
-                (meal.type !== "lunch" || mealPreferences.lunch) &&
-                (meal.type !== "dinner" || mealPreferences.dinner)
-              )
-              .map((meal, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Card className="border border-border/40 hover:shadow-sm transition-all duration-200">
-                    <CardContent className="p-5">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+            <div className="grid grid-cols-1 gap-4">
+              {day.meals
+                .filter(meal => 
+                  (meal.type !== "snack" || mealPreferences.snacks) && 
+                  (meal.type !== "breakfast" || mealPreferences.breakfast) &&
+                  (meal.type !== "lunch" || mealPreferences.lunch) &&
+                  (meal.type !== "dinner" || mealPreferences.dinner)
+                )
+                .map((meal, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <Card className="border-border/40 hover:shadow-sm transition-all duration-200">
+                      <CardContent className="p-5">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2">
                             {meal.type === "breakfast" && (
                               <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/20">
                                 Breakfast
@@ -146,20 +146,28 @@ const MealPlanDisplay: React.FC<MealPlanDisplayProps> = ({
                             </Badge>
                           </div>
                           
-                          <h3 className="text-lg font-medium mb-2">{meal.title}</h3>
-                          <p className="text-sm text-muted-foreground mb-3">{meal.description}</p>
+                          <div>
+                            <h3 className="text-lg font-medium">{meal.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">{meal.description}</p>
+                          </div>
                           
-                          <div className="flex gap-3 text-xs">
-                            <span className="font-medium">Protein: {meal.protein}</span>
-                            <span className="font-medium">Carbs: {meal.carbs}</span>
-                            <span className="font-medium">Fat: {meal.fat}</span>
+                          <div className="flex flex-wrap gap-3 text-xs bg-muted/30 p-2 rounded-md">
+                            <div className="flex items-center">
+                              <span className="font-medium text-primary mr-1">Protein:</span> {meal.protein}
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium text-primary mr-1">Carbs:</span> {meal.carbs}
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium text-primary mr-1">Fat:</span> {meal.fat}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+            </div>
           </TabsContent>
         ))}
       </Tabs>
