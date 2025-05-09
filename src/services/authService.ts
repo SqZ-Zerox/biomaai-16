@@ -23,12 +23,14 @@ export interface SignUpData {
   last_name: string;
   birth_date: string | null;
   phone_number: string | null;
-  profession?: string;  // Made optional with '?'
+  profession?: string;
   gender?: string;
   height?: string;
   weight?: string;
   activity_level?: string;
-  user_metadata?: any;  // Added to allow additional metadata
+  health_goals?: string[];
+  dietary_restrictions?: string[];
+  user_metadata?: any;
 }
 
 export async function signUp({
@@ -38,12 +40,14 @@ export async function signUp({
   last_name,
   birth_date,
   phone_number,
-  profession = null,  // Default to null
+  profession = null,
   gender = null,
   height = null,
   weight = null,
   activity_level = null,
-  user_metadata = {}  // Default to empty object
+  health_goals = [],
+  dietary_restrictions = [],
+  user_metadata = {}
 }: SignUpData) {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -60,7 +64,9 @@ export async function signUp({
           height,
           weight,
           activity_level,
-          ...user_metadata  // Spread additional metadata
+          health_goals: health_goals.map(goal => ({ value: goal })),
+          dietary_restrictions: dietary_restrictions.map(restriction => ({ value: restriction })),
+          ...user_metadata
         }
       }
     });
