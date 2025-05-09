@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Helper function to process health goals
 export async function processHealthGoals(userId: string, healthGoals: any[]): Promise<void> {
-  if (healthGoals.length > 0) {
+  if (healthGoals && healthGoals.length > 0) {
     const formattedGoals = healthGoals.map(goal => {
       // Ensure goal is not null/undefined
       if (goal === null || goal === undefined) return { user_id: userId, goal: '' };
@@ -29,7 +29,7 @@ export async function processHealthGoals(userId: string, healthGoals: any[]): Pr
 
 // Helper function to process dietary restrictions
 export async function processDietaryRestrictions(userId: string, dietaryRestrictions: any[]): Promise<void> {
-  if (dietaryRestrictions.length > 0) {
+  if (dietaryRestrictions && dietaryRestrictions.length > 0) {
     const formattedRestrictions = dietaryRestrictions.map(restriction => {
       // Ensure restriction is not null/undefined
       if (restriction === null || restriction === undefined) return { user_id: userId, restriction: '' };
