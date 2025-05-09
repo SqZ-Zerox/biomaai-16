@@ -283,7 +283,7 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     if (Array.isArray(healthGoals) && healthGoals.length > 0) {
       const formattedGoals = healthGoals.map(goal => ({
         user_id: userId,
-        goal: typeof goal === 'object' ? goal.value : goal
+        goal: typeof goal === 'object' ? (goal?.value || '') : (goal || '')  // Add null check and default empty string
       }));
       
       const { error: goalsError } = await supabase
@@ -299,7 +299,7 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     if (Array.isArray(dietaryRestrictions) && dietaryRestrictions.length > 0) {
       const formattedRestrictions = dietaryRestrictions.map(restriction => ({
         user_id: userId,
-        restriction: typeof restriction === 'object' ? restriction.value : restriction
+        restriction: typeof restriction === 'object' ? (restriction?.value || '') : (restriction || '') // Add null check and default empty string
       }));
       
       const { error: restrictionsError } = await supabase
