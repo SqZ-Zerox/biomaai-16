@@ -32,8 +32,17 @@ export async function getUserProfile(): Promise<ProfileResult> {
       throw error;
     }
     
-    console.log("Profile retrieved:", data);
-    return { profile: data as UserProfile, error: null };
+    // Get user email from auth session
+    const userEmail = session.user.email || '';
+    
+    // Combine profile data with email from session to create complete UserProfile
+    const userProfile: UserProfile = {
+      ...data,
+      email: userEmail
+    };
+    
+    console.log("Profile retrieved:", userProfile);
+    return { profile: userProfile, error: null };
   } catch (error: any) {
     console.error("Error in getUserProfile:", error.message);
     return { profile: null, error };

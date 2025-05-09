@@ -32,6 +32,9 @@ export interface SignupData {
   };
 }
 
+// Alias for backward compatibility with existing code
+export type SignUpData = SignupData;
+
 export interface LoginData {
   email: string;
   password: string;
@@ -45,6 +48,12 @@ export interface ResetPasswordData {
 
 export interface RequestPasswordResetData {
   email: string;
+}
+
+// Session result interface
+export interface SessionResult {
+  session: Session | null;
+  error: Error | null;
 }
 
 // User profile interfaces
@@ -62,10 +71,11 @@ export interface UserProfile {
   activity_level?: string;
   created_at?: string;
   updated_at?: string;
+  profession?: string;
 }
 
 export interface ProfileResult {
-  data: UserProfile | null;
+  profile: UserProfile | null;
   error: Error | null;
 }
 

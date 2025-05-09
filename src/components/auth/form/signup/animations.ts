@@ -64,3 +64,34 @@ export const formItemAnimation: Variants = {
     }
   })
 };
+
+// Animation for slide transitions
+export const slideVariants: Variants = {
+  enterFromLeft: { 
+    x: -20, 
+    opacity: 0 
+  },
+  enterFromRight: { 
+    x: 20, 
+    opacity: 0 
+  },
+  center: { 
+    x: 0, 
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  },
+  exitToLeft: { 
+    x: -20, 
+    opacity: 0,
+    transition: { ease: "easeInOut" }
+  },
+  exitToRight: { 
+    x: 20, 
+    opacity: 0,
+    transition: { ease: "easeInOut" }
+  }
+};

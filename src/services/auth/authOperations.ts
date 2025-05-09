@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AuthResult, SessionResult, SignUpData } from "./types";
+import { AuthResult, SessionResult, SignupData } from "./types";
 
 export async function signUp({
   email,
@@ -19,7 +18,7 @@ export async function signUp({
   dietary_restrictions = [],
   user_metadata = {},
   captchaToken = null
-}: SignUpData): Promise<AuthResult<any>> {
+}: SignupData): Promise<AuthResult> {
   try {
     // Format user metadata for Supabase - but only include basic identification info
     // We'll save the full profile only after verification
@@ -131,7 +130,7 @@ export async function signIn({
   email: string; 
   password: string; 
   captchaToken?: string | null;
-}): Promise<AuthResult<any>> {
+}): Promise<AuthResult> {
   try {
     console.log("Attempting signin with email:", email);
     
@@ -233,7 +232,7 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
 }
 
 // Add Google authentication function
-export async function signInWithGoogle(): Promise<AuthResult<any>> {
+export async function signInWithGoogle(): Promise<AuthResult> {
   try {
     console.log("Initiating Google sign in");
     
@@ -398,7 +397,7 @@ async function processDietaryRestrictions(userId: string, dietaryRestrictions: a
 }
 
 // Handle social auth profile completion
-export async function completeUserProfile(userData: Partial<SignUpData>): Promise<boolean> {
+export async function completeUserProfile(userData: Partial<SignupData>): Promise<boolean> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
