@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -42,48 +41,32 @@ export async function signUp({
         weight,
         activity_level,
         health_goals: Array.isArray(health_goals) 
-          ? health_goals.map(goalItem => {
-              // Return empty string if goalItem is null/undefined
-              if (goalItem === null || goalItem === undefined) {
-                return '';
-              }
-              
-              // Type guard for objects with value property
-              const isObjectWithValue = typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem;
-              
-              if (isObjectWithValue) {
-                // Type assertion after verification
-                const goal = goalItem as { value: any };
-                const value = goal.value;
-                // Explicit null check before converting to string
-                return value !== null && value !== undefined ? String(value) : '';
-              }
-              
-              // Handle primitive values - already checked for null/undefined above
-              return String(goalItem);
-            })
+          ? health_goals
+              .filter(goal => goal !== null && goal !== undefined) // First filter out null values
+              .map(goalItem => {
+                // Type guard for objects with value property
+                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
+                  const value = goalItem.value;
+                  return value !== null && value !== undefined ? String(value) : '';
+                }
+                
+                // Handle primitive values after ensuring they're not null (via filter above)
+                return String(goalItem);
+              })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
-          ? dietary_restrictions.map(restrictionItem => {
-              // Return empty string if restrictionItem is null/undefined
-              if (restrictionItem === null || restrictionItem === undefined) {
-                return '';
-              }
-              
-              // Type guard for objects with value property
-              const isObjectWithValue = typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem;
-              
-              if (isObjectWithValue) {
-                // Type assertion after verification
-                const restriction = restrictionItem as { value: any };
-                const value = restriction.value;
-                // Explicit null check before converting to string
-                return value !== null && value !== undefined ? String(value) : '';
-              }
-              
-              // Handle primitive values - already checked for null/undefined above
-              return String(restrictionItem);
-            })
+          ? dietary_restrictions
+              .filter(restriction => restriction !== null && restriction !== undefined) // First filter out null values
+              .map(restrictionItem => {
+                // Type guard for objects with value property
+                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
+                  const value = restrictionItem.value;
+                  return value !== null && value !== undefined ? String(value) : '';
+                }
+                
+                // Handle primitive values after ensuring they're not null (via filter above)
+                return String(restrictionItem);
+              })
           : [],
         ...user_metadata
       }

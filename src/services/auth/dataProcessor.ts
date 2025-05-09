@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 // Helper function to process health goals
 export async function processHealthGoals(userId: string, healthGoals: any[]): Promise<void> {
   if (healthGoals && healthGoals.length > 0) {
-    const formattedGoals = healthGoals.map(goal => {
-      // Ensure goal is not null/undefined
-      if (goal === null || goal === undefined) return { user_id: userId, goal: '' };
-      
+    // First filter out null/undefined values
+    const validGoals = healthGoals.filter(goal => goal !== null && goal !== undefined);
+    
+    const formattedGoals = validGoals.map(goal => {
       // Process goal object or primitive
       return {
         user_id: userId,
@@ -17,12 +17,14 @@ export async function processHealthGoals(userId: string, healthGoals: any[]): Pr
       };
     });
     
-    const { error } = await supabase
-      .from('user_health_goals')
-      .insert(formattedGoals);
-    
-    if (error) {
-      console.error("Error inserting health goals:", error);
+    if (formattedGoals.length > 0) {
+      const { error } = await supabase
+        .from('user_health_goals')
+        .insert(formattedGoals);
+      
+      if (error) {
+        console.error("Error inserting health goals:", error);
+      }
     }
   }
 }
@@ -30,10 +32,12 @@ export async function processHealthGoals(userId: string, healthGoals: any[]): Pr
 // Helper function to process dietary restrictions
 export async function processDietaryRestrictions(userId: string, dietaryRestrictions: any[]): Promise<void> {
   if (dietaryRestrictions && dietaryRestrictions.length > 0) {
-    const formattedRestrictions = dietaryRestrictions.map(restriction => {
-      // Ensure restriction is not null/undefined
-      if (restriction === null || restriction === undefined) return { user_id: userId, restriction: '' };
-      
+    // First filter out null/undefined values
+    const validRestrictions = dietaryRestrictions.filter(
+      restriction => restriction !== null && restriction !== undefined
+    );
+    
+    const formattedRestrictions = validRestrictions.map(restriction => {
       // Process restriction object or primitive
       return {
         user_id: userId,
@@ -43,12 +47,14 @@ export async function processDietaryRestrictions(userId: string, dietaryRestrict
       };
     });
     
-    const { error } = await supabase
-      .from('user_dietary_restrictions')
-      .insert(formattedRestrictions);
-    
-    if (error) {
-      console.error("Error inserting dietary restrictions:", error);
+    if (formattedRestrictions.length > 0) {
+      const { error } = await supabase
+        .from('user_dietary_restrictions')
+        .insert(formattedRestrictions);
+      
+      if (error) {
+        console.error("Error inserting dietary restrictions:", error);
+      }
     }
   }
 }
