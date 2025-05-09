@@ -22,8 +22,7 @@ export async function signUp({
     medications: '',
     family_history: [],
     recent_lab_work: ''
-  },
-  captchaToken = null
+  }
 }: SignupData): Promise<AuthResult> {
   try {
     // Format user metadata for Supabase - but only include basic identification info
@@ -89,15 +88,10 @@ export async function signUp({
 
     console.log("Signing up with minimal metadata:", formattedMetadata);
     
-    const options: any = {
+    const options = {
       data: formattedMetadata,
       emailRedirectTo: window.location.origin + '/auth/callback'
     };
-    
-    // Add captcha token if provided
-    if (captchaToken) {
-      options.captchaToken = captchaToken;
-    }
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -125,8 +119,6 @@ export async function signUp({
         errorMessage = "Password error: " + error.message;
       } else if (error.message.includes("email")) {
         errorMessage = "Email error: " + error.message;
-      } else if (error.message.includes("captcha")) {
-        errorMessage = "Captcha verification failed. Please try again.";
       }
     }
     
@@ -142,8 +134,7 @@ export async function signUp({
 
 export async function signIn({ 
   email, 
-  password, 
-  captchaToken = null 
+  password
 }: { 
   email: string; 
   password: string; 
@@ -152,17 +143,9 @@ export async function signIn({
   try {
     console.log("Attempting signin with email:", email);
     
-    const options: any = {};
-    
-    // Add captcha token if provided
-    if (captchaToken) {
-      options.captchaToken = captchaToken;
-    }
-    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
-      options
+      password
     });
 
     if (error) {
@@ -183,8 +166,6 @@ export async function signIn({
         errorMessage = "Invalid email or password. Please try again.";
       } else if (error.message.includes("Email not confirmed")) {
         errorMessage = "Please confirm your email before logging in.";
-      } else if (error.message.includes("captcha")) {
-        errorMessage = "Captcha verification failed. Please try again.";
       }
     }
     
@@ -246,54 +227,6 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
   } catch (error) {
     console.error("Error in updateUserVerificationStatus:", error);
     return false;
-  }
-}
-
-// Add Google authentication function
-export async function signInWithGoogle(): Promise<AuthResult> {
-  try {
-    console.log("Initiating Google sign in");
-    
-    // Get the current URL to use as base for the redirect
-    const currentOrigin = window.location.origin;
-    console.log("Current origin:", currentOrigin);
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${currentOrigin}/auth/callback?provider=google`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
-      }
-    });
-
-    if (error) {
-      console.error("Google signin error:", error);
-      throw error;
-    }
-    
-    console.log("Google signin initiated:", data);
-    // For OAuth, data contains provider and url, not session and user yet
-    // This is expected as the user will be redirected to the provider's site
-    return { 
-      data: {
-        session: null,
-        user: null
-      }, 
-      error: null 
-    };
-  } catch (error: any) {
-    console.error("Error signing in with Google:", error);
-    
-    toast({
-      title: "Google Login Failed",
-      description: error.message || "Failed to login with Google. Please try again.",
-      variant: "destructive",
-    });
-    
-    return { data: null, error };
   }
 }
 

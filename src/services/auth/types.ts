@@ -22,7 +22,6 @@ export interface SignupData {
   activity_level: string;
   health_goals: string[];
   dietary_restrictions: string[];
-  captchaToken: string | null;
   profession?: string; // Add profession as optional property
   user_metadata: {
     existing_conditions: string[];
@@ -39,7 +38,6 @@ export type SignUpData = SignupData;
 export interface LoginData {
   email: string;
   password: string;
-  captchaToken: string | null;
 }
 
 export interface ResetPasswordData {

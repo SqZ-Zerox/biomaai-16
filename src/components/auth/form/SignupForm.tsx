@@ -1,6 +1,6 @@
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Form } from "@/components/ui/form";
 import SignupCredentialsStep from "./signup/SignupCredentialsStep";
 import SignupPersonalStep from "./signup/SignupPersonalStep";
@@ -19,9 +19,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
     form,
     isLoading,
     currentStep,
-    captchaRef,
-    handleCaptchaVerify,
-    captchaToken,
     proceedToPersonalStep,
     proceedToHealthStep,
     proceedToMedicalStep,
@@ -82,9 +79,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
                 isLoading={isLoading} 
                 onBack={backToMedicalStep}
                 onSubmit={onSubmit}
-                captchaRef={captchaRef}
-                handleCaptchaVerify={handleCaptchaVerify}
-                captchaToken={captchaToken}
               />
             )}
           </AnimatePresence>

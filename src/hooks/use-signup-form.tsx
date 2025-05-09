@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,8 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { signUp } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, SignupFormValues } from "@/components/auth/form/signup/types";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { CaptchaVerificationService } from "@/services/securityService";
 
 export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const navigate = useNavigate();
@@ -15,9 +14,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const { checkSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<'credentials' | 'personal' | 'health' | 'medical' | 'terms'>('credentials');
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaError, setCaptchaError] = useState<string | null>(null);
-  const captchaRef = useRef<HCaptcha | null>(null);
   
   // Signup form with expanded health information
   const form = useForm<SignupFormValues>({
@@ -53,23 +49,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       terms_accepted: false,
     },
   });
-
-  // Handle captcha verification
-  const handleCaptchaVerify = (token: string) => {
-    setCaptchaError(null);
-    if (!CaptchaVerificationService.validateToken(token)) {
-      setCaptchaError("Invalid captcha verification. Please try again.");
-      captchaRef.current?.resetCaptcha();
-      return;
-    }
-    setCaptchaToken(token);
-  };
-
-  // Reset captcha
-  const resetCaptcha = () => {
-    captchaRef.current?.resetCaptcha();
-    setCaptchaToken(null);
-  };
 
   // Step navigation functions
   const proceedToPersonalStep = () => {
@@ -150,12 +129,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         return;
       }
       
-      // Ensure captcha is completed
-      if (!captchaToken) {
-        setCaptchaError("Please complete the captcha verification");
-        return;
-      }
-      
       setIsLoading(true);
       
       // Format health goals properly
@@ -180,7 +153,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         activity_level: values.activity_level,
         health_goals: healthGoals,
         dietary_restrictions: dietaryRestrictions,
-        captchaToken: captchaToken,
         user_metadata: {
           existing_conditions: values.existing_conditions,
           allergies: values.allergies,
@@ -208,9 +180,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
           description: errorMessage,
           variant: "destructive",
         });
-        
-        // Reset captcha on error
-        resetCaptcha();
         return;
       }
       
@@ -242,9 +211,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         description: error.message || "Failed to create account. Please try again.",
         variant: "destructive",
       });
-      
-      // Reset captcha on error
-      resetCaptcha();
     } finally {
       setIsLoading(false);
     }
@@ -254,11 +220,6 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
     form,
     isLoading,
     currentStep,
-    captchaRef,
-    handleCaptchaVerify,
-    captchaToken,
-    captchaError,
-    setCaptchaError,
     proceedToPersonalStep,
     proceedToHealthStep,
     proceedToMedicalStep,
