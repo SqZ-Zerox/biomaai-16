@@ -281,10 +281,15 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     
     // Insert health goals if provided
     if (Array.isArray(healthGoals) && healthGoals.length > 0) {
-      const formattedGoals = healthGoals.map(goal => ({
-        user_id: userId,
-        goal: typeof goal === 'object' ? (goal?.value || '') : (goal || '')  // Add null check and default empty string
-      }));
+      const formattedGoals = healthGoals.map(goal => {
+        // Ensure goal is not null/undefined before accessing properties
+        if (!goal) return { user_id: userId, goal: '' };
+        
+        return {
+          user_id: userId,
+          goal: typeof goal === 'object' ? (goal.value || '') : (goal || '')
+        };
+      });
       
       const { error: goalsError } = await supabase
         .from('user_health_goals')
@@ -297,10 +302,15 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     
     // Insert dietary restrictions if provided
     if (Array.isArray(dietaryRestrictions) && dietaryRestrictions.length > 0) {
-      const formattedRestrictions = dietaryRestrictions.map(restriction => ({
-        user_id: userId,
-        restriction: typeof restriction === 'object' ? (restriction?.value || '') : (restriction || '') // Add null check and default empty string
-      }));
+      const formattedRestrictions = dietaryRestrictions.map(restriction => {
+        // Ensure restriction is not null/undefined before accessing properties
+        if (!restriction) return { user_id: userId, restriction: '' };
+        
+        return {
+          user_id: userId,
+          restriction: typeof restriction === 'object' ? (restriction.value || '') : (restriction || '')
+        };
+      });
       
       const { error: restrictionsError } = await supabase
         .from('user_dietary_restrictions')
