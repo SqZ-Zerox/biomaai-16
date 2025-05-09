@@ -1,5 +1,4 @@
 
-
 import { toast } from "@/hooks/use-toast";
 
 /**
@@ -83,8 +82,7 @@ export const CaptchaVerificationService = {
     // Using import.meta.env instead of process.env for Vite
     const configuredKey = import.meta.env.VITE_HCAPTCHA_SITE_KEY;
     
-    // Return configured key or fallback to test key
-    return configuredKey || "10000000-ffff-ffff-ffff-000000000001";
+    // Return your custom hCaptcha site key or fallback to test key
+    return "ES_b5eccca9f5fa4b7aa19bd6f914bed5e9";
   }
 };
-

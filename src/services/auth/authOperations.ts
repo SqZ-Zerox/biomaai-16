@@ -43,45 +43,43 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals.map(goalItem => {
-              // Ensure goalItem is not null or undefined
+              // Return empty string if goalItem is null/undefined
               if (goalItem === null || goalItem === undefined) {
                 return '';
               }
               
-              // Check if goalItem is an object with 'value' property
+              // Type guard for objects with value property
               const isObjectWithValue = typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem;
               
-              // Safely extract the value
               if (isObjectWithValue) {
-                // Explicitly access value in a type-safe way
+                // Type assertion after verification
                 const goal = goalItem as { value: any };
                 const value = goal.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
-              // Handle primitive values
+              // Handle primitive values - already checked for null/undefined above
               return String(goalItem);
             })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions.map(restrictionItem => {
-              // Ensure restrictionItem is not null or undefined
+              // Return empty string if restrictionItem is null/undefined
               if (restrictionItem === null || restrictionItem === undefined) {
                 return '';
               }
               
-              // Check if restrictionItem is an object with 'value' property
+              // Type guard for objects with value property
               const isObjectWithValue = typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem;
               
-              // Safely extract the value
               if (isObjectWithValue) {
-                // Explicitly access value in a type-safe way
+                // Type assertion after verification
                 const restriction = restrictionItem as { value: any };
                 const value = restriction.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
-              // Handle primitive values
+              // Handle primitive values - already checked for null/undefined above
               return String(restrictionItem);
             })
           : [],
