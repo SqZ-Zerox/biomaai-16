@@ -9,7 +9,188 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          activity_level: string | null
+          birth_date: string | null
+          created_at: string
+          first_name: string | null
+          gender: string | null
+          height: string | null
+          id: string
+          last_name: string | null
+          phone_number: string | null
+          profession: string | null
+          weight: string | null
+        }
+        Insert: {
+          activity_level?: string | null
+          birth_date?: string | null
+          created_at?: string
+          first_name?: string | null
+          gender?: string | null
+          height?: string | null
+          id: string
+          last_name?: string | null
+          phone_number?: string | null
+          profession?: string | null
+          weight?: string | null
+        }
+        Update: {
+          activity_level?: string | null
+          birth_date?: string | null
+          created_at?: string
+          first_name?: string | null
+          gender?: string | null
+          height?: string | null
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          profession?: string | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
+      user_dietary_restrictions: {
+        Row: {
+          created_at: string
+          id: string
+          restriction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          restriction: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          restriction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_dietary_restrictions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_health_goals: {
+        Row: {
+          created_at: string
+          goal: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_health_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_medical_history: {
+        Row: {
+          condition_type: string
+          created_at: string
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          condition_type: string
+          created_at?: string
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          condition_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_medical_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_nutrition_preferences: {
+        Row: {
+          breakfast: boolean | null
+          calorie_target: number | null
+          created_at: string
+          dinner: boolean | null
+          id: string
+          lunch: boolean | null
+          meal_count: number | null
+          preferred_diet: string | null
+          snacks: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          breakfast?: boolean | null
+          calorie_target?: number | null
+          created_at?: string
+          dinner?: boolean | null
+          id?: string
+          lunch?: boolean | null
+          meal_count?: number | null
+          preferred_diet?: string | null
+          snacks?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          breakfast?: boolean | null
+          calorie_target?: number | null
+          created_at?: string
+          dinner?: boolean | null
+          id?: string
+          lunch?: boolean | null
+          meal_count?: number | null
+          preferred_diet?: string | null
+          snacks?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_nutrition_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

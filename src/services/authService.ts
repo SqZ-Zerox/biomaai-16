@@ -9,6 +9,10 @@ export interface UserProfile {
   birth_date: string | null;
   phone_number: string | null;
   profession: string | null;
+  gender: string | null;
+  height: string | null;
+  weight: string | null;
+  activity_level: string | null;
   created_at: string;
 }
 
@@ -20,6 +24,10 @@ export interface SignUpData {
   birth_date: string | null;
   phone_number: string | null;
   profession?: string;  // Made optional with '?'
+  gender?: string;
+  height?: string;
+  weight?: string;
+  activity_level?: string;
   user_metadata?: any;  // Added to allow additional metadata
 }
 
@@ -31,6 +39,10 @@ export async function signUp({
   birth_date,
   phone_number,
   profession = null,  // Default to null
+  gender = null,
+  height = null,
+  weight = null,
+  activity_level = null,
   user_metadata = {}  // Default to empty object
 }: SignUpData) {
   try {
@@ -44,6 +56,10 @@ export async function signUp({
           birth_date,
           phone_number,
           profession,
+          gender,
+          height,
+          weight,
+          activity_level,
           ...user_metadata  // Spread additional metadata
         }
       }
