@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -137,8 +138,7 @@ export async function signIn({
   password
 }: { 
   email: string; 
-  password: string; 
-  captchaToken?: string | null;
+  password: string;
 }): Promise<AuthResult> {
   try {
     console.log("Attempting signin with email:", email);

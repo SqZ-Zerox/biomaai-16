@@ -51,8 +51,7 @@ const LoginForm: React.FC = () => {
       
       const { data, error } = await signIn({
         email: values.email,
-        password: values.password,
-        captchaToken: null // We're keeping this parameter but always passing null
+        password: values.password
       });
       
       if (error) {
