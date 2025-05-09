@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -143,6 +142,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
       
       setIsLoading(true);
       
+      // Format health goals properly
+      const healthGoals = values.health_goals.map(goal => goal);
+      
+      // Format dietary restrictions properly
+      const dietaryRestrictions = values.dietary_restrictions ? 
+        values.dietary_restrictions.map(restriction => restriction) : 
+        [];
+      
       // Format data for API
       const signupData = {
         email: values.email,
@@ -151,14 +158,13 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
         last_name: values.last_name,
         birth_date: values.birth_date,
         phone_number: values.phone_number || null,
-        profession: null,
+        gender: values.gender,
+        height: values.height,
+        weight: values.weight,
+        activity_level: values.activity_level,
+        health_goals: healthGoals,
+        dietary_restrictions: dietaryRestrictions,
         user_metadata: {
-          gender: values.gender,
-          height: values.height,
-          weight: values.weight,
-          activity_level: values.activity_level,
-          health_goals: values.health_goals,
-          dietary_restrictions: values.dietary_restrictions,
           existing_conditions: values.existing_conditions,
           allergies: values.allergies,
           medications: values.medications,
@@ -167,13 +173,17 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
         }
       };
 
+      console.log("Submitting signup data:", signupData);
+
       // Call signup API
       const { data, error } = await signUp(signupData);
       
       if (error) {
+        console.error("Signup error:", error);
+        
         let errorMessage = "Failed to create account. Please try again.";
-        if (error.message.includes("already registered")) {
-          errorMessage = "This email is already registered. Please login or use a different email.";
+        if (error.message) {
+          errorMessage = error.message;
         }
         
         toast({
@@ -205,6 +215,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onRegistrationSuccess }) => {
           : "Please check your email to verify your account.",
       });
     } catch (error: any) {
+      console.error("Signup submission error:", error);
+      
       toast({
         title: "Sign up failed",
         description: error.message || "Failed to create account. Please try again.",

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from "react-
 import Layout from "./components/layout/Layout";
 import "./App.css";
 import { DemoModeProvider } from "./contexts/DemoModeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "./components/ui/toaster";
 import { initializeAPIKeys } from "./services/apiKeyInitializer";
 
@@ -57,41 +58,43 @@ function App() {
   };
 
   return (
-    <DemoModeProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+    <AuthProvider>
+      <DemoModeProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
+              <Route index element={<Index />} />
+            </Route>
+            
+            {/* Top level routes that use layout */}
+            <Route element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
+              <Route path="/upload" element={<UploadPage />} />
+              <Route path="/fitness" element={<FitnessPage />} />
+              <Route path="/nutrition" element={<NutritionPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/progress" element={<Index />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+            
+            {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}
+            <Route path="/recipes" element={
+              <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
+                <RecipeSuggestionsPage />
+              </Layout>
+            } />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
           
-          {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
-            <Route index element={<Index />} />
-          </Route>
-          
-          {/* Top level routes that use layout */}
-          <Route element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
-            <Route path="/upload" element={<UploadPage />} />
-            <Route path="/fitness" element={<FitnessPage />} />
-            <Route path="/nutrition" element={<NutritionPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/progress" element={<Index />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
-          
-          {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}
-          <Route path="/recipes" element={
-            <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
-              <RecipeSuggestionsPage />
-            </Layout>
-          } />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        
-        <Toaster />
-      </Router>
-    </DemoModeProvider>
+          <Toaster />
+        </Router>
+      </DemoModeProvider>
+    </AuthProvider>
   );
 }
 

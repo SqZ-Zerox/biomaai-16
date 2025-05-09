@@ -5,11 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDemoMode } from "@/contexts/DemoModeContext";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,6 @@ const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkSession } = useAuth();
-  const { setIsDemoMode } = useDemoMode();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -49,17 +47,19 @@ const LoginForm: React.FC = () => {
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
+      console.log("Attempting login with:", values.email);
+      
       const { data, error } = await signIn({
         email: values.email,
         password: values.password
       });
       
       if (error) {
+        console.error("Login error:", error);
+        
         let errorMessage = "Failed to login. Please try again.";
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Invalid email or password. Please try again.";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please confirm your email before logging in.";
+        if (error.message) {
+          errorMessage = error.message;
         }
         
         toast({
@@ -82,6 +82,8 @@ const LoginForm: React.FC = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error("Login submission error:", error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to login. Please try again.",
@@ -90,23 +92,6 @@ const LoginForm: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Demo authentication function
-  const handleDemoLogin = () => {
-    setIsLoading(true);
-    
-    // Activate demo mode
-    setIsDemoMode(true);
-    
-    toast({
-      title: "Demo Login Success!",
-      description: "You've been logged in with demo account.",
-    });
-    
-    // Redirect to dashboard
-    navigate("/dashboard");
-    setIsLoading(false);
   };
 
   return (
@@ -216,32 +201,6 @@ const LoginForm: React.FC = () => {
                 Sign In
               </span>
             )}
-          </Button>
-        </motion.div>
-        
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border"></span>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or</span>
-          </div>
-        </div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.3 }}
-        >
-          <Button 
-            type="button" 
-            variant="secondary"
-            className="w-full h-12 text-base" 
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-          >
-            <UserPlus className="mr-2 h-5 w-5" />
-            Demo Sign In
           </Button>
         </motion.div>
       </form>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ArrowUpRight, CheckCircle2, Dna, TestTube, Microscope, BookText } from "lucide-react";
@@ -90,16 +89,16 @@ const HeroSection: React.FC = () => {
                 onClick={() => navigate("/login")}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 font-medium rounded-full"
               >
-                Get Started Free
+                Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate("/chat")}
+                onClick={() => navigate("/login")}
                 className="h-12 px-6 rounded-full"
               >
-                Try Health Assistant
+                Create Account
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
             </motion.div>

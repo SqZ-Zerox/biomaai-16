@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -50,47 +49,103 @@ export async function signUp({
   user_metadata = {}
 }: SignUpData) {
   try {
+    // Format user metadata for Supabase
+    const formattedMetadata = {
+      first_name,
+      last_name,
+      birth_date,
+      phone_number,
+      profession,
+      gender,
+      height,
+      weight,
+      activity_level,
+      // Format health goals and restrictions to match the expected format
+      health_goals: Array.isArray(health_goals) ? health_goals : [],
+      dietary_restrictions: Array.isArray(dietary_restrictions) ? dietary_restrictions : [],
+      ...user_metadata
+    };
+
+    console.log("Signing up with metadata:", formattedMetadata);
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          first_name,
-          last_name,
-          birth_date,
-          phone_number,
-          profession,
-          gender,
-          height,
-          weight,
-          activity_level,
-          health_goals: health_goals.map(goal => ({ value: goal })),
-          dietary_restrictions: dietary_restrictions.map(restriction => ({ value: restriction })),
-          ...user_metadata
-        }
+        data: formattedMetadata
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase signup error:", error);
+      throw error;
+    }
+    
+    console.log("Signup response:", data);
     return { data, error: null };
   } catch (error: any) {
-    console.error("Error signing up:", error.message);
-    return { data: null, error };
+    console.error("Error signing up:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to create account. Please try again.";
+    
+    if (error.message) {
+      if (error.message.includes("already registered")) {
+        errorMessage = "This email is already registered. Please login or use a different email.";
+      } else if (error.message.includes("password")) {
+        errorMessage = "Password error: " + error.message;
+      } else if (error.message.includes("email")) {
+        errorMessage = "Email error: " + error.message;
+      }
+    }
+    
+    toast({
+      title: "Signup Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+    
+    return { data: null, error: { ...error, message: errorMessage } };
   }
 }
 
 export async function signIn({ email, password }: { email: string; password: string }) {
   try {
+    console.log("Attempting signin with email:", email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Signin error:", error);
+      throw error;
+    }
+    
+    console.log("Signin successful:", data.session?.user?.id);
     return { data, error: null };
   } catch (error: any) {
-    console.error("Error signing in:", error.message);
-    return { data: null, error };
+    console.error("Error signing in:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to sign in. Please try again.";
+    
+    if (error.message) {
+      if (error.message.includes("Invalid login")) {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please confirm your email before logging in.";
+      }
+    }
+    
+    toast({
+      title: "Login Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+    
+    return { data: null, error: { ...error, message: errorMessage } };
   }
 }
 
@@ -119,19 +174,120 @@ export async function getCurrentSession() {
 export async function getUserProfile(): Promise<{ profile: UserProfile | null; error: any }> {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) return { profile: null, error: new Error("No user logged in") };
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      throw sessionError;
+    }
+    
+    if (!session?.user) {
+      console.warn("No user logged in");
+      return { profile: null, error: new Error("No user logged in") };
+    }
 
+    console.log("Fetching profile for user:", session.user.id);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.error("Profile not found for user:", session.user.id);
+      } else {
+        console.error("Error fetching profile:", error);
+      }
+      throw error;
+    }
+    
+    console.log("Profile retrieved:", data);
     return { profile: data as UserProfile, error: null };
   } catch (error: any) {
-    console.error("Error fetching user profile:", error.message);
+    console.error("Error in getUserProfile:", error.message);
     return { profile: null, error };
+  }
+}
+
+// New function to create user profile if it doesn't exist
+export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
+  try {
+    // Check if profile exists
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error("Error checking profile:", checkError);
+      return false;
+    }
+    
+    // If profile exists, we're done
+    if (existingProfile) {
+      console.log("Profile already exists for user:", userId);
+      return true;
+    }
+    
+    // If profile doesn't exist, create it
+    console.log("Creating profile for user:", userId);
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert([{
+        id: userId,
+        first_name: userData.first_name || null,
+        last_name: userData.last_name || null,
+        birth_date: userData.birth_date || null,
+        phone_number: userData.phone_number || null,
+        profession: userData.profession || null,
+        gender: userData.gender || null,
+        height: userData.height || null,
+        weight: userData.weight || null,
+        activity_level: userData.activity_level || null
+      }]);
+    
+    if (insertError) {
+      console.error("Error creating profile:", insertError);
+      return false;
+    }
+    
+    // Insert health goals if provided
+    if (userData.health_goals && Array.isArray(userData.health_goals) && userData.health_goals.length > 0) {
+      const healthGoals = userData.health_goals.map((goal: string) => ({
+        user_id: userId,
+        goal
+      }));
+      
+      const { error: goalsError } = await supabase
+        .from('user_health_goals')
+        .insert(healthGoals);
+      
+      if (goalsError) {
+        console.error("Error inserting health goals:", goalsError);
+      }
+    }
+    
+    // Insert dietary restrictions if provided
+    if (userData.dietary_restrictions && Array.isArray(userData.dietary_restrictions) && userData.dietary_restrictions.length > 0) {
+      const dietaryRestrictions = userData.dietary_restrictions.map((restriction: string) => ({
+        user_id: userId,
+        restriction
+      }));
+      
+      const { error: restrictionsError } = await supabase
+        .from('user_dietary_restrictions')
+        .insert(dietaryRestrictions);
+      
+      if (restrictionsError) {
+        console.error("Error inserting dietary restrictions:", restrictionsError);
+      }
+    }
+    
+    console.log("Profile created successfully for user:", userId);
+    return true;
+  } catch (error) {
+    console.error("Error in ensureUserProfile:", error);
+    return false;
   }
 }
