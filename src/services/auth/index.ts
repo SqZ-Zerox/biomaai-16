@@ -1,4 +1,5 @@
 
 export * from './types';
 export * from './authOperations';
-export * from './profileService';
+// Import everything except the conflicting ensureUserProfile from profileService
+export { getUserProfile, type ProfileResult, type UserProfile } from './profileService';

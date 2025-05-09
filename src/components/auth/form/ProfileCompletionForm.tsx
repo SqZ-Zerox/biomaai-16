@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -97,7 +96,7 @@ const ProfileCompletionForm: React.FC<ProfileCompletionFormProps> = ({ provider 
         height: values.height,
         weight: values.weight,
         activity_level: values.activity_level,
-        health_goals: values.health_goals.map(goal => ({ value: goal })),
+        health_goals: values.health_goals, // Fixed: No longer using value objects
       });
       
       if (success) {
@@ -372,7 +371,14 @@ const ProfileCompletionForm: React.FC<ProfileCompletionFormProps> = ({ provider 
                       <FormLabel>Health Goals (Select at least one)</FormLabel>
                       <FormControl>
                         <div className="grid grid-cols-2 gap-2 mt-2">
-                          {healthGoalsList.map((goal) => (
+                          {[
+                            { id: "lose_weight", label: "Lose Weight" },
+                            { id: "gain_muscle", label: "Gain Muscle" },
+                            { id: "improve_fitness", label: "Improve Fitness" },
+                            { id: "reduce_stress", label: "Reduce Stress" },
+                            { id: "better_sleep", label: "Better Sleep" },
+                            { id: "healthy_eating", label: "Healthy Eating" },
+                          ].map((goal) => (
                             <Label
                               key={goal.id}
                               className={`flex items-center p-3 rounded-md border ${

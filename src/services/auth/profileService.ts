@@ -40,117 +40,41 @@ export async function getUserProfile(): Promise<ProfileResult> {
   }
 }
 
-export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
+// Extract health goals and dietary restrictions functions for clarity
+export async function extractHealthGoals(userId: string): Promise<string[]> {
   try {
-    // Check if profile exists
-    const { data: existingProfile, error: checkError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-    
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error("Error checking profile:", checkError);
-      return false;
-    }
-    
-    // If profile exists, we're done
-    if (existingProfile) {
-      console.log("Profile already exists for user:", userId);
-      return true;
-    }
-    
-    // Check if user has been email verified
-    // Only create profile if verified or if we're in a local development environment
-    const isVerified = userData.email_verified === true || 
-                       window.location.hostname === "localhost";
-    
-    if (!isVerified) {
-      console.log("User not verified yet, skipping profile creation");
-      return false;
-    }
-    
-    // Get registration data from user metadata
-    const registrationData = userData.registration_data || {};
-    
-    // If profile doesn't exist AND user is verified, create it
-    console.log("Creating verified profile for user:", userId);
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .insert([{
-        id: userId,
-        first_name: userData.first_name || registrationData.first_name || null,
-        last_name: userData.last_name || registrationData.last_name || null,
-        birth_date: registrationData.birth_date || null,
-        phone_number: registrationData.phone_number || null,
-        profession: registrationData.profession || null,
-        gender: registrationData.gender || null,
-        height: registrationData.height || null,
-        weight: registrationData.weight || null,
-        activity_level: registrationData.activity_level || null
-      }]);
-    
-    if (insertError) {
-      console.error("Error creating profile:", insertError);
-      return false;
-    }
-    
-    // Extract health goals and dietary restrictions from registration data
-    const healthGoals = registrationData.health_goals || [];
-    const dietaryRestrictions = registrationData.dietary_restrictions || [];
-    
-    // Insert health goals if provided
-    if (Array.isArray(healthGoals) && healthGoals.length > 0) {
-      const formattedGoals = healthGoals.map(goal => {
-        // Ensure goal is not null/undefined before accessing properties
-        if (!goal) return { user_id: userId, goal: '' };
-        
-        // Safely access properties with proper type checking
-        return {
-          user_id: userId,
-          goal: typeof goal === 'object' && goal !== null && 'value' in goal ? 
-                String(goal.value || '') : 
-                String(goal || '')
-        };
-      });
+    const { data, error } = await supabase
+      .from('user_health_goals')
+      .select('goal')
+      .eq('user_id', userId);
       
-      const { error: goalsError } = await supabase
-        .from('user_health_goals')
-        .insert(formattedGoals);
-      
-      if (goalsError) {
-        console.error("Error inserting health goals:", goalsError);
-      }
+    if (error) {
+      console.error("Error fetching health goals:", error);
+      return [];
     }
     
-    // Insert dietary restrictions if provided
-    if (Array.isArray(dietaryRestrictions) && dietaryRestrictions.length > 0) {
-      const formattedRestrictions = dietaryRestrictions.map(restriction => {
-        // Ensure restriction is not null/undefined before accessing properties
-        if (!restriction) return { user_id: userId, restriction: '' };
-        
-        // Safely access properties with proper type checking
-        return {
-          user_id: userId,
-          restriction: typeof restriction === 'object' && restriction !== null && 'value' in restriction ? 
-                      String(restriction.value || '') : 
-                      String(restriction || '')
-        };
-      });
-      
-      const { error: restrictionsError } = await supabase
-        .from('user_dietary_restrictions')
-        .insert(formattedRestrictions);
-      
-      if (restrictionsError) {
-        console.error("Error inserting dietary restrictions:", restrictionsError);
-      }
-    }
-    
-    console.log("Profile created successfully for user:", userId);
-    return true;
+    return data.map(item => item.goal);
   } catch (error) {
-    console.error("Error in ensureUserProfile:", error);
-    return false;
+    console.error("Error in extractHealthGoals:", error);
+    return [];
+  }
+}
+
+export async function extractDietaryRestrictions(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('user_dietary_restrictions')
+      .select('restriction')
+      .eq('user_id', userId);
+      
+    if (error) {
+      console.error("Error fetching dietary restrictions:", error);
+      return [];
+    }
+    
+    return data.map(item => item.restriction);
+  } catch (error) {
+    console.error("Error in extractDietaryRestrictions:", error);
+    return [];
   }
 }

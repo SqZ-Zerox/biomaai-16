@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignUpData } from "./types";
@@ -37,35 +36,29 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals.map(goalItem => {
-              // Handle null/undefined cases
               if (goalItem === null || goalItem === undefined) {
                 return '';
               }
               
-              // Safely access properties with proper type checking
               if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
                 const value = goalItem.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
-              // Handle primitive values
               return String(goalItem);
             })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions.map(restrictionItem => {
-              // Handle null/undefined cases
               if (restrictionItem === null || restrictionItem === undefined) {
                 return '';
               }
               
-              // Safely access properties with proper type checking
               if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
                 const value = restrictionItem.value;
                 return value !== null && value !== undefined ? String(value) : '';
               }
               
-              // Handle primitive values
               return String(restrictionItem);
             })
           : [],
@@ -208,38 +201,6 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
   }
 }
 
-// Add Google authentication function
-export async function signInWithGoogle(): Promise<AuthResult<any>> {
-  try {
-    console.log("Initiating Google sign in");
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/auth/callback?provider=google'
-      }
-    });
-
-    if (error) {
-      console.error("Google signin error:", error);
-      throw error;
-    }
-    
-    console.log("Google signin initiated:", data);
-    return { data, error: null };
-  } catch (error: any) {
-    console.error("Error signing in with Google:", error);
-    
-    toast({
-      title: "Google Login Failed",
-      description: error.message || "Failed to login with Google. Please try again.",
-      variant: "destructive",
-    });
-    
-    return { data: null, error };
-  }
-}
-
 // Handle social auth profile completion
 export async function completeUserProfile(userData: Partial<SignUpData>): Promise<boolean> {
   try {
@@ -303,6 +264,7 @@ export async function completeUserProfile(userData: Partial<SignUpData>): Promis
   }
 }
 
+// Re-export ensureUserProfile function here and remove it from profileService.ts
 export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
   try {
     // Check if profile exists
@@ -380,7 +342,7 @@ async function processHealthGoals(userId: string, healthGoals: any[]): Promise<v
   if (healthGoals.length > 0) {
     const formattedGoals = healthGoals.map(goal => {
       // Ensure goal is not null/undefined
-      if (!goal) return { user_id: userId, goal: '' };
+      if (goal === null || goal === undefined) return { user_id: userId, goal: '' };
       
       // Process goal object or primitive
       return {
@@ -406,7 +368,7 @@ async function processDietaryRestrictions(userId: string, dietaryRestrictions: a
   if (dietaryRestrictions.length > 0) {
     const formattedRestrictions = dietaryRestrictions.map(restriction => {
       // Ensure restriction is not null/undefined
-      if (!restriction) return { user_id: userId, restriction: '' };
+      if (restriction === null || restriction === undefined) return { user_id: userId, restriction: '' };
       
       // Process restriction object or primitive
       return {
@@ -424,5 +386,37 @@ async function processDietaryRestrictions(userId: string, dietaryRestrictions: a
     if (error) {
       console.error("Error inserting dietary restrictions:", error);
     }
+  }
+}
+
+// Add Google authentication function
+export async function signInWithGoogle(): Promise<AuthResult<any>> {
+  try {
+    console.log("Initiating Google sign in");
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback?provider=google'
+      }
+    });
+
+    if (error) {
+      console.error("Google signin error:", error);
+      throw error;
+    }
+    
+    console.log("Google signin initiated:", data);
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error signing in with Google:", error);
+    
+    toast({
+      title: "Google Login Failed",
+      description: error.message || "Failed to login with Google. Please try again.",
+      variant: "destructive",
+    });
+    
+    return { data: null, error };
   }
 }
