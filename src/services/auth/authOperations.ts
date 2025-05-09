@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignUpData } from "./types";
@@ -204,66 +203,43 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
   }
 }
 
-// Handle social auth profile completion
-export async function completeUserProfile(userData: Partial<SignUpData>): Promise<boolean> {
+// Add Google authentication function
+export async function signInWithGoogle(): Promise<AuthResult<any>> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Initiating Google sign in");
     
-    if (!session?.user) {
-      console.warn("No active session to update profile");
-      return false;
-    }
+    // Get the current URL to use as base for the redirect
+    const currentOrigin = window.location.origin;
+    console.log("Current origin:", currentOrigin);
     
-    // Update the user's metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { 
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        email_verified: true,
-        registration_data: {
-          birth_date: userData.birth_date,
-          phone_number: userData.phone_number,
-          profession: userData.profession,
-          gender: userData.gender,
-          height: userData.height,
-          weight: userData.weight,
-          activity_level: userData.activity_level,
-          health_goals: userData.health_goals,
-          dietary_restrictions: userData.dietary_restrictions,
-          ...userData.user_metadata
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${currentOrigin}/auth/callback?provider=google`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
         }
       }
     });
-    
+
     if (error) {
-      console.error("Error updating user profile:", error);
-      return false;
+      console.error("Google signin error:", error);
+      throw error;
     }
     
-    // Ensure user profile exists in the profiles table
-    await ensureUserProfile(session.user.id, {
-      first_name: userData.first_name,
-      last_name: userData.last_name,
-      email_verified: true,
-      registration_data: {
-        birth_date: userData.birth_date,
-        phone_number: userData.phone_number,
-        profession: userData.profession,
-        gender: userData.gender,
-        height: userData.height,
-        weight: userData.weight,
-        activity_level: userData.activity_level,
-        health_goals: userData.health_goals,
-        dietary_restrictions: userData.dietary_restrictions,
-        ...userData.user_metadata
-      }
+    console.log("Google signin initiated:", data);
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error signing in with Google:", error);
+    
+    toast({
+      title: "Google Login Failed",
+      description: error.message || "Failed to login with Google. Please try again.",
+      variant: "destructive",
     });
     
-    console.log("User profile completed successfully");
-    return true;
-  } catch (error) {
-    console.error("Error in completeUserProfile:", error);
-    return false;
+    return { data: null, error };
   }
 }
 
@@ -392,34 +368,65 @@ async function processDietaryRestrictions(userId: string, dietaryRestrictions: a
   }
 }
 
-// Add Google authentication function
-export async function signInWithGoogle(): Promise<AuthResult<any>> {
+// Handle social auth profile completion
+export async function completeUserProfile(userData: Partial<SignUpData>): Promise<boolean> {
   try {
-    console.log("Initiating Google sign in");
+    const { data: { session } } = await supabase.auth.getSession();
     
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/auth/callback?provider=google'
-      }
-    });
-
-    if (error) {
-      console.error("Google signin error:", error);
-      throw error;
+    if (!session?.user) {
+      console.warn("No active session to update profile");
+      return false;
     }
     
-    console.log("Google signin initiated:", data);
-    return { data, error: null };
-  } catch (error: any) {
-    console.error("Error signing in with Google:", error);
-    
-    toast({
-      title: "Google Login Failed",
-      description: error.message || "Failed to login with Google. Please try again.",
-      variant: "destructive",
+    // Update the user's metadata
+    const { error } = await supabase.auth.updateUser({
+      data: { 
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email_verified: true,
+        registration_data: {
+          birth_date: userData.birth_date,
+          phone_number: userData.phone_number,
+          profession: userData.profession,
+          gender: userData.gender,
+          height: userData.height,
+          weight: userData.weight,
+          activity_level: userData.activity_level,
+          health_goals: userData.health_goals,
+          dietary_restrictions: userData.dietary_restrictions,
+          ...userData.user_metadata
+        }
+      }
     });
     
-    return { data: null, error };
+    if (error) {
+      console.error("Error updating user profile:", error);
+      return false;
+    }
+    
+    // Ensure user profile exists in the profiles table
+    await ensureUserProfile(session.user.id, {
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email_verified: true,
+      registration_data: {
+        birth_date: userData.birth_date,
+        phone_number: userData.phone_number,
+        profession: userData.profession,
+        gender: userData.gender,
+        height: userData.height,
+        weight: userData.weight,
+        activity_level: userData.activity_level,
+        health_goals: userData.health_goals,
+        dietary_restrictions: userData.dietary_restrictions,
+        ...userData.user_metadata
+      }
+    });
+    
+    console.log("User profile completed successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in completeUserProfile:", error);
+    return false;
   }
 }

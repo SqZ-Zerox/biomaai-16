@@ -23,9 +23,12 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     try {
       if (setIsLoading) setIsLoading(true);
       
+      console.log("Starting Google sign-in process...");
+      
       const { data, error } = await signInWithGoogle();
       
       if (error) {
+        console.error("Google login error:", error);
         toast({
           title: "Google Login Failed",
           description: error.message || "Failed to login with Google. Please try again.",
@@ -34,8 +37,8 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         return;
       }
       
-      // Google login initiated - redirecting to Google auth page
-      // No need to navigate as OAuth will handle redirects
+      // Success case - the page will redirect to Google
+      console.log("Google auth initiated successfully", data);
     } catch (error: any) {
       console.error("Error in Google sign in:", error);
       toast({

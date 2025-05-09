@@ -88,7 +88,7 @@ const ProfileCompletionForm: React.FC<ProfileCompletionFormProps> = ({ provider 
   const onSubmit = async (values: ProfileCompletionValues) => {
     setIsLoading(true);
     try {
-      // Fix: Pass the string array directly, not objects with value properties
+      // Convert the health_goals from the form (string[]) to the expected format
       const success = await completeUserProfile({
         first_name: values.first_name,
         last_name: values.last_name,
