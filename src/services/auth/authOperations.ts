@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -9,14 +10,20 @@ export async function signUp({
   last_name,
   birth_date,
   phone_number,
-  profession = null,
   gender = null,
   height = null,
   weight = null,
   activity_level = null,
+  profession = null,
   health_goals = [],
   dietary_restrictions = [],
-  user_metadata = {},
+  user_metadata = {
+    existing_conditions: [],
+    allergies: '',
+    medications: '',
+    family_history: [],
+    recent_lab_work: ''
+  },
   captchaToken = null
 }: SignupData): Promise<AuthResult> {
   try {
@@ -257,7 +264,15 @@ export async function signInWithGoogle(): Promise<AuthResult> {
     }
     
     console.log("Google signin initiated:", data);
-    return { data, error: null };
+    // For OAuth, data contains provider and url, not session and user yet
+    // This is expected as the user will be redirected to the provider's site
+    return { 
+      data: {
+        session: null,
+        user: null
+      }, 
+      error: null 
+    };
   } catch (error: any) {
     console.error("Error signing in with Google:", error);
     

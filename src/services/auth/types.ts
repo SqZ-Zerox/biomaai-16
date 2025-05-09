@@ -23,6 +23,7 @@ export interface SignupData {
   health_goals: string[];
   dietary_restrictions: string[];
   captchaToken: string | null;
+  profession?: string; // Add profession as optional property
   user_metadata: {
     existing_conditions: string[];
     allergies: string;
