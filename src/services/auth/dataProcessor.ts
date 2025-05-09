@@ -16,10 +16,10 @@ export async function processHealthGoals(userId: string, healthGoals: any[]): Pr
   }
   
   const formattedGoals = validGoals.map(goal => {
-    // Process goal object or primitive
+    // Process goal object or primitive with explicit null checks
     return {
       user_id: userId,
-      goal: typeof goal === 'object' && goal !== null && 'value' in goal 
+      goal: goal && typeof goal === 'object' && 'value' in goal 
         ? String(goal.value || '') 
         : String(goal || '')
     };
@@ -49,10 +49,10 @@ export async function processDietaryRestrictions(userId: string, dietaryRestrict
   }
   
   const formattedRestrictions = validRestrictions.map(restriction => {
-    // Process restriction object or primitive
+    // Process restriction object or primitive with explicit null checks
     return {
       user_id: userId,
-      restriction: typeof restriction === 'object' && restriction !== null && 'value' in restriction 
+      restriction: restriction && typeof restriction === 'object' && 'value' in restriction 
         ? String(restriction.value || '') 
         : String(restriction || '')
     };

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,6 @@ import {
   getCurrentSession, 
   getUserProfile, 
   ensureUserProfile,
-  updateUserVerificationStatus
 } from "@/services/auth";
 import { UserProfile } from "@/services/auth/types";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session?.user) {
         console.log("Session exists, fetching profile...");
+        console.log("User metadata:", session.user.user_metadata);
         
         // Check if email is verified
         let isVerified = session.user.user_metadata?.email_verified === true;
@@ -148,10 +149,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
         } else if (event === "USER_UPDATED") {
           if (newSession?.user) {
+            // Important debugging
+            console.log("User updated event received:", newSession.user);
+            console.log("New user metadata:", newSession.user.user_metadata);
+            
             // Check if email verification status has changed
             const isVerified = newSession.user.user_metadata?.email_verified === true ||
                                (newSession.user.app_metadata?.provider && 
                                newSession.user.app_metadata.provider !== 'email');
+            
+            console.log("Is user email verified:", isVerified);
             setIsEmailVerified(isVerified);
             
             if (isVerified) {

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -43,8 +44,9 @@ export async function signUp({
         health_goals: Array.isArray(health_goals) 
           ? health_goals
               .filter(Boolean) // Filter out null, undefined, and falsy values
-              .map(goalItem => {
-                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
+              .map((goalItem) => {
+                // TypeScript safety: explicitly check if goalItem is an object with value property
+                if (goalItem && typeof goalItem === 'object' && 'value' in goalItem) {
                   return String(goalItem.value || ''); 
                 }
                 return String(goalItem || '');
@@ -53,8 +55,9 @@ export async function signUp({
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions
               .filter(Boolean) // Filter out null, undefined, and falsy values
-              .map(restrictionItem => {
-                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
+              .map((restrictionItem) => {
+                // TypeScript safety: explicitly check if restrictionItem is an object with value property
+                if (restrictionItem && typeof restrictionItem === 'object' && 'value' in restrictionItem) {
                   return String(restrictionItem.value || '');
                 }
                 return String(restrictionItem || '');
@@ -68,7 +71,7 @@ export async function signUp({
     
     const options = {
       data: formattedMetadata,
-      emailRedirectTo: window.location.origin + '/auth/callback'
+      emailRedirectTo: `${window.location.origin}/auth/callback` // Ensure correct callback URL format
     };
     
     const { data, error } = await supabase.auth.signUp({
@@ -187,6 +190,8 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
       return false;
     }
     
+    console.log("Updating verification status for user:", session.user.id);
+    
     // Mark the user as email verified
     const { error } = await supabase.auth.updateUser({
       data: { 
@@ -200,6 +205,31 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
     }
     
     console.log("User verification status updated successfully");
+    
+    // After verification, ensure profile exists
+    const currentMetadata = session.user.user_metadata;
+    if (currentMetadata && currentMetadata.registration_data) {
+      const { error: profileError } = await supabase.from('profiles')
+        .upsert([{
+          id: session.user.id,
+          first_name: currentMetadata.first_name || '',
+          last_name: currentMetadata.last_name || '',
+          birth_date: currentMetadata.registration_data.birth_date || null,
+          phone_number: currentMetadata.registration_data.phone_number || null,
+          profession: currentMetadata.registration_data.profession || null,
+          gender: currentMetadata.registration_data.gender || null,
+          height: currentMetadata.registration_data.height || null,
+          weight: currentMetadata.registration_data.weight || null,
+          activity_level: currentMetadata.registration_data.activity_level || null
+        }], { onConflict: 'id' });
+      
+      if (profileError) {
+        console.error("Error creating user profile:", profileError);
+      } else {
+        console.log("User profile created successfully");
+      }
+    }
+    
     return true;
   } catch (error) {
     console.error("Error in updateUserVerificationStatus:", error);

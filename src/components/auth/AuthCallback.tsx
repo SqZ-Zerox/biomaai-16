@@ -26,6 +26,8 @@ const AuthCallback: React.FC = () => {
           return; // The SocialProviderCallback component will handle this
         }
         
+        console.log("Processing email verification callback");
+        
         // Update user verification status
         const success = await updateUserVerificationStatus();
         
@@ -36,13 +38,18 @@ const AuthCallback: React.FC = () => {
           toast({
             title: "Email Verified",
             description: "Your email has been verified successfully.",
+            variant: "default",
           });
+          
+          // Important: Log the success and redirect path
+          console.log("Email verification successful, redirecting to dashboard");
           
           // Redirect to dashboard after a small delay
           setTimeout(() => {
             navigate('/dashboard');
-          }, 500);
+          }, 1000);
         } else {
+          console.error("Email verification failed");
           setError("Unable to verify your email. Please try again later.");
         }
       } catch (error) {
@@ -54,7 +61,7 @@ const AuthCallback: React.FC = () => {
     };
     
     processCallback();
-  }, [navigate, toast, checkSession]);
+  }, [navigate, toast, checkSession, provider]);
   
   if (provider) {
     return <SocialProviderCallback provider={provider} />;
