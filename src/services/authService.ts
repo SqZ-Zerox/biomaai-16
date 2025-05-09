@@ -285,9 +285,12 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
         // Ensure goal is not null/undefined before accessing properties
         if (!goal) return { user_id: userId, goal: '' };
         
+        // Safely access properties with proper type checking
         return {
           user_id: userId,
-          goal: typeof goal === 'object' ? (goal.value || '') : (goal || '')
+          goal: typeof goal === 'object' && goal !== null && 'value' in goal ? 
+                String(goal.value || '') : 
+                String(goal || '')
         };
       });
       
@@ -306,9 +309,12 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
         // Ensure restriction is not null/undefined before accessing properties
         if (!restriction) return { user_id: userId, restriction: '' };
         
+        // Safely access properties with proper type checking
         return {
           user_id: userId,
-          restriction: typeof restriction === 'object' ? (restriction.value || '') : (restriction || '')
+          restriction: typeof restriction === 'object' && restriction !== null && 'value' in restriction ? 
+                      String(restriction.value || '') : 
+                      String(restriction || '')
         };
       });
       
