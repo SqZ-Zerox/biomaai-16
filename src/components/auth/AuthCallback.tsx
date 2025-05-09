@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { updateUserVerificationStatus, ensureUserProfile } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AuthCallback: React.FC = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -14,6 +16,7 @@ const AuthCallback: React.FC = () => {
   const [userInfo, setUserInfo] = useState<{name?: string; email?: string} | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { checkSession } = useAuth();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -29,8 +32,38 @@ const AuthCallback: React.FC = () => {
           // Get user profile info
           const { data: userData } = await supabase.auth.getUser();
           if (userData?.user) {
+            // For email confirmation flow, mark as verified and create profile
+            const hash = window.location.hash;
+            const query = new URLSearchParams(hash.substring(1));
+            const type = query.get("type");
+            
+            if (type === "signup" || type === "recovery" || type === "magiclink") {
+              console.log("Processing email verification callback");
+              
+              // Update user metadata to mark as verified
+              await updateUserVerificationStatus();
+              
+              // Now that user is verified, create their profile with registration data
+              const profileCreated = await ensureUserProfile(
+                userData.user.id, 
+                { 
+                  ...userData.user.user_metadata,
+                  email_verified: true // Explicitly mark as verified
+                }
+              );
+              
+              if (profileCreated) {
+                console.log("Profile created after email verification");
+              } else {
+                console.warn("Failed to create profile after verification");
+              }
+              
+              // Refresh session to get latest user data
+              await checkSession();
+            }
+            
             setUserInfo({
-              name: userData.user.user_metadata?.full_name,
+              name: userData.user.user_metadata?.first_name,
               email: userData.user.email
             });
           }
@@ -64,8 +97,20 @@ const AuthCallback: React.FC = () => {
               // Get user profile info
               const { data: userData } = await supabase.auth.getUser();
               if (userData?.user) {
+                // Update user verification status
+                await updateUserVerificationStatus();
+                
+                // Create profile with the stored registration data
+                await ensureUserProfile(userData.user.id, {
+                  ...userData.user.user_metadata,
+                  email_verified: true
+                });
+                
+                // Refresh session to get latest user data
+                await checkSession();
+                
                 setUserInfo({
-                  name: userData.user.user_metadata?.full_name,
+                  name: userData.user.user_metadata?.first_name,
                   email: userData.user.email
                 });
               }
@@ -100,7 +145,7 @@ const AuthCallback: React.FC = () => {
     };
 
     handleAuthCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, checkSession]);
 
   const renderContent = () => {
     switch (status) {

@@ -50,34 +50,39 @@ export async function signUp({
   user_metadata = {}
 }: SignUpData) {
   try {
-    // Format user metadata for Supabase
+    // Format user metadata for Supabase - but only include basic identification info
+    // We'll save the full profile only after verification
     const formattedMetadata = {
       first_name,
       last_name,
-      birth_date,
-      phone_number,
-      profession,
-      gender,
-      height,
-      weight,
-      activity_level,
-      // Format health goals and restrictions to match the expected format
-      health_goals: Array.isArray(health_goals) 
-        ? health_goals.map(goal => ({ value: goal }))  // Ensure each goal has a value property
-        : [],
-      dietary_restrictions: Array.isArray(dietary_restrictions) 
-        ? dietary_restrictions.map(restriction => ({ value: restriction }))  // Ensure each restriction has a value property
-        : [],
-      ...user_metadata
+      email_verified: false, // Add a flag to track verification status
+      // Store all other data as temporary registration data
+      registration_data: {
+        birth_date,
+        phone_number,
+        profession,
+        gender,
+        height,
+        weight,
+        activity_level,
+        health_goals: Array.isArray(health_goals) 
+          ? health_goals.map(goal => (typeof goal === 'object' ? goal.value : goal))
+          : [],
+        dietary_restrictions: Array.isArray(dietary_restrictions) 
+          ? dietary_restrictions.map(restriction => (typeof restriction === 'object' ? restriction.value : restriction))
+          : [],
+        ...user_metadata
+      }
     };
 
-    console.log("Signing up with metadata:", formattedMetadata);
+    console.log("Signing up with minimal metadata:", formattedMetadata);
     
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: formattedMetadata
+        data: formattedMetadata,
+        emailRedirectTo: window.location.origin + '/auth/callback'
       }
     });
 
@@ -235,21 +240,34 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return true;
     }
     
-    // If profile doesn't exist, create it
-    console.log("Creating profile for user:", userId);
+    // Check if user has been email verified
+    // Only create profile if verified or if we're in a local development environment
+    const isVerified = userData.email_verified === true || 
+                       window.location.hostname === "localhost";
+    
+    if (!isVerified) {
+      console.log("User not verified yet, skipping profile creation");
+      return false;
+    }
+    
+    // Get registration data from user metadata
+    const registrationData = userData.registration_data || {};
+    
+    // If profile doesn't exist AND user is verified, create it
+    console.log("Creating verified profile for user:", userId);
     const { error: insertError } = await supabase
       .from('profiles')
       .insert([{
         id: userId,
-        first_name: userData.first_name || null,
-        last_name: userData.last_name || null,
-        birth_date: userData.birth_date || null,
-        phone_number: userData.phone_number || null,
-        profession: userData.profession || null,
-        gender: userData.gender || null,
-        height: userData.height || null,
-        weight: userData.weight || null,
-        activity_level: userData.activity_level || null
+        first_name: userData.first_name || registrationData.first_name || null,
+        last_name: userData.last_name || registrationData.last_name || null,
+        birth_date: registrationData.birth_date || null,
+        phone_number: registrationData.phone_number || null,
+        profession: registrationData.profession || null,
+        gender: registrationData.gender || null,
+        height: registrationData.height || null,
+        weight: registrationData.weight || null,
+        activity_level: registrationData.activity_level || null
       }]);
     
     if (insertError) {
@@ -257,53 +275,39 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return false;
     }
     
-    // Insert health goals if provided and properly formatted
-    if (userData.health_goals && Array.isArray(userData.health_goals)) {
-      // Extract goals, handling either plain strings or objects with a "value" property
-      const healthGoals = userData.health_goals
-        .filter((goal: any) => {
-          // Filter out null or empty values
-          const goalValue = typeof goal === 'object' ? goal.value : goal;
-          return goalValue && goalValue.trim() !== '';
-        })
-        .map((goal: any) => ({
-          user_id: userId,
-          goal: typeof goal === 'object' ? goal.value : goal
-        }));
+    // Extract health goals and dietary restrictions from registration data
+    const healthGoals = registrationData.health_goals || [];
+    const dietaryRestrictions = registrationData.dietary_restrictions || [];
+    
+    // Insert health goals if provided
+    if (Array.isArray(healthGoals) && healthGoals.length > 0) {
+      const formattedGoals = healthGoals.map(goal => ({
+        user_id: userId,
+        goal: typeof goal === 'object' ? goal.value : goal
+      }));
       
-      if (healthGoals.length > 0) {
-        const { error: goalsError } = await supabase
-          .from('user_health_goals')
-          .insert(healthGoals);
-        
-        if (goalsError) {
-          console.error("Error inserting health goals:", goalsError);
-        }
+      const { error: goalsError } = await supabase
+        .from('user_health_goals')
+        .insert(formattedGoals);
+      
+      if (goalsError) {
+        console.error("Error inserting health goals:", goalsError);
       }
     }
     
-    // Insert dietary restrictions if provided and properly formatted
-    if (userData.dietary_restrictions && Array.isArray(userData.dietary_restrictions)) {
-      // Extract restrictions, handling either plain strings or objects with a "value" property
-      const dietaryRestrictions = userData.dietary_restrictions
-        .filter((restriction: any) => {
-          // Filter out null or empty values
-          const restrictionValue = typeof restriction === 'object' ? restriction.value : restriction;
-          return restrictionValue && restrictionValue.trim() !== '';
-        })
-        .map((restriction: any) => ({
-          user_id: userId,
-          restriction: typeof restriction === 'object' ? restriction.value : restriction
-        }));
+    // Insert dietary restrictions if provided
+    if (Array.isArray(dietaryRestrictions) && dietaryRestrictions.length > 0) {
+      const formattedRestrictions = dietaryRestrictions.map(restriction => ({
+        user_id: userId,
+        restriction: typeof restriction === 'object' ? restriction.value : restriction
+      }));
       
-      if (dietaryRestrictions.length > 0) {
-        const { error: restrictionsError } = await supabase
-          .from('user_dietary_restrictions')
-          .insert(dietaryRestrictions);
-        
-        if (restrictionsError) {
-          console.error("Error inserting dietary restrictions:", restrictionsError);
-        }
+      const { error: restrictionsError } = await supabase
+        .from('user_dietary_restrictions')
+        .insert(formattedRestrictions);
+      
+      if (restrictionsError) {
+        console.error("Error inserting dietary restrictions:", restrictionsError);
       }
     }
     
@@ -311,6 +315,36 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     return true;
   } catch (error) {
     console.error("Error in ensureUserProfile:", error);
+    return false;
+  }
+}
+
+// New function to update user metadata after verification
+export async function updateUserVerificationStatus(): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.warn("No active session to update verification status");
+      return false;
+    }
+    
+    // Mark the user as email verified
+    const { error } = await supabase.auth.updateUser({
+      data: { 
+        email_verified: true 
+      }
+    });
+    
+    if (error) {
+      console.error("Error updating user verification status:", error);
+      return false;
+    }
+    
+    console.log("User verification status updated successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in updateUserVerificationStatus:", error);
     return false;
   }
 }

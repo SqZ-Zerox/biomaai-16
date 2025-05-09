@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { MailOpen, AlertCircle, Dna } from "lucide-react";
+import { MailOpen, AlertCircle, Dna, Info, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,19 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
         <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">We've sent a verification email to <span className="font-bold">{email}</span></p>
-          <p>Please check your inbox and click the verification link to activate your account and start analyzing your health data.</p>
+          <p>Please check your inbox and click the verification link to activate your account.</p>
+          
+          <div className="mt-3 p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-3">
+            <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium">Important Information</h4>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your profile will only be created after you verify your email address. This helps us prevent spam and ensure data quality.
+              </p>
+            </div>
+          </div>
           
           <div className="mt-3 p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-3">
             <Dna className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
@@ -47,6 +59,7 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
               className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
               onClick={() => window.open(`https://mail.google.com`, '_blank')}
             >
+              <ExternalLink className="h-4 w-4 mr-2" />
               Open Gmail
             </Button>
             <Button 
