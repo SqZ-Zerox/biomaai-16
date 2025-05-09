@@ -207,3 +207,222 @@ export async function updateUserVerificationStatus(): Promise<boolean> {
     return false;
   }
 }
+
+// Add Google authentication function
+export async function signInWithGoogle(): Promise<AuthResult<any>> {
+  try {
+    console.log("Initiating Google sign in");
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth/callback?provider=google'
+      }
+    });
+
+    if (error) {
+      console.error("Google signin error:", error);
+      throw error;
+    }
+    
+    console.log("Google signin initiated:", data);
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Error signing in with Google:", error);
+    
+    toast({
+      title: "Google Login Failed",
+      description: error.message || "Failed to login with Google. Please try again.",
+      variant: "destructive",
+    });
+    
+    return { data: null, error };
+  }
+}
+
+// Handle social auth profile completion
+export async function completeUserProfile(userData: Partial<SignUpData>): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.warn("No active session to update profile");
+      return false;
+    }
+    
+    // Update the user's metadata
+    const { error } = await supabase.auth.updateUser({
+      data: { 
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email_verified: true,
+        registration_data: {
+          birth_date: userData.birth_date,
+          phone_number: userData.phone_number,
+          profession: userData.profession,
+          gender: userData.gender,
+          height: userData.height,
+          weight: userData.weight,
+          activity_level: userData.activity_level,
+          health_goals: userData.health_goals,
+          dietary_restrictions: userData.dietary_restrictions,
+          ...userData.user_metadata
+        }
+      }
+    });
+    
+    if (error) {
+      console.error("Error updating user profile:", error);
+      return false;
+    }
+    
+    // Ensure user profile exists in the profiles table
+    await ensureUserProfile(session.user.id, {
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email_verified: true,
+      registration_data: {
+        birth_date: userData.birth_date,
+        phone_number: userData.phone_number,
+        profession: userData.profession,
+        gender: userData.gender,
+        height: userData.height,
+        weight: userData.weight,
+        activity_level: userData.activity_level,
+        health_goals: userData.health_goals,
+        dietary_restrictions: userData.dietary_restrictions,
+        ...userData.user_metadata
+      }
+    });
+    
+    console.log("User profile completed successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in completeUserProfile:", error);
+    return false;
+  }
+}
+
+export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
+  try {
+    // Check if profile exists
+    const { data: existingProfile, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error("Error checking profile:", checkError);
+      return false;
+    }
+    
+    // If profile exists, we're done
+    if (existingProfile) {
+      console.log("Profile already exists for user:", userId);
+      return true;
+    }
+    
+    // Check if user has been email verified
+    // Only create profile if verified or if we're in a local development environment
+    const isVerified = userData.email_verified === true || 
+                       window.location.hostname === "localhost";
+    
+    if (!isVerified) {
+      console.log("User not verified yet, skipping profile creation");
+      return false;
+    }
+    
+    // Get registration data from user metadata
+    const registrationData = userData.registration_data || {};
+    
+    // If profile doesn't exist AND user is verified, create it
+    console.log("Creating verified profile for user:", userId);
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert([{
+        id: userId,
+        first_name: userData.first_name || registrationData.first_name || null,
+        last_name: userData.last_name || registrationData.last_name || null,
+        birth_date: registrationData.birth_date || null,
+        phone_number: registrationData.phone_number || null,
+        profession: registrationData.profession || null,
+        gender: registrationData.gender || null,
+        height: registrationData.height || null,
+        weight: registrationData.weight || null,
+        activity_level: registrationData.activity_level || null
+      }]);
+    
+    if (insertError) {
+      console.error("Error creating profile:", insertError);
+      return false;
+    }
+    
+    // Process health goals and dietary restrictions
+    if (registrationData.health_goals && Array.isArray(registrationData.health_goals)) {
+      await processHealthGoals(userId, registrationData.health_goals);
+    }
+    
+    if (registrationData.dietary_restrictions && Array.isArray(registrationData.dietary_restrictions)) {
+      await processDietaryRestrictions(userId, registrationData.dietary_restrictions);
+    }
+    
+    console.log("Profile created successfully for user:", userId);
+    return true;
+  } catch (error) {
+    console.error("Error in ensureUserProfile:", error);
+    return false;
+  }
+}
+
+// Helper function to process health goals
+async function processHealthGoals(userId: string, healthGoals: any[]): Promise<void> {
+  if (healthGoals.length > 0) {
+    const formattedGoals = healthGoals.map(goal => {
+      // Ensure goal is not null/undefined
+      if (!goal) return { user_id: userId, goal: '' };
+      
+      // Process goal object or primitive
+      return {
+        user_id: userId,
+        goal: typeof goal === 'object' && goal !== null && 'value' in goal ? 
+              String(goal.value || '') : 
+              String(goal || '')
+      };
+    });
+    
+    const { error } = await supabase
+      .from('user_health_goals')
+      .insert(formattedGoals);
+    
+    if (error) {
+      console.error("Error inserting health goals:", error);
+    }
+  }
+}
+
+// Helper function to process dietary restrictions
+async function processDietaryRestrictions(userId: string, dietaryRestrictions: any[]): Promise<void> {
+  if (dietaryRestrictions.length > 0) {
+    const formattedRestrictions = dietaryRestrictions.map(restriction => {
+      // Ensure restriction is not null/undefined
+      if (!restriction) return { user_id: userId, restriction: '' };
+      
+      // Process restriction object or primitive
+      return {
+        user_id: userId,
+        restriction: typeof restriction === 'object' && restriction !== null && 'value' in restriction ? 
+                    String(restriction.value || '') : 
+                    String(restriction || '')
+      };
+    });
+    
+    const { error } = await supabase
+      .from('user_dietary_restrictions')
+      .insert(formattedRestrictions);
+    
+    if (error) {
+      console.error("Error inserting dietary restrictions:", error);
+    }
+  }
+}

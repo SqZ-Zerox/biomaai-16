@@ -9,6 +9,8 @@ import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
+import GoogleSignInButton from "./GoogleSignInButton";
+import { Separator } from "@/components/ui/separator";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,6 +204,24 @@ const LoginForm: React.FC = () => {
               </span>
             )}
           </Button>
+
+          <div className="mt-4 relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <GoogleSignInButton 
+              isLoading={isLoading} 
+              setIsLoading={setIsLoading} 
+            />
+          </div>
         </motion.div>
       </form>
     </Form>
