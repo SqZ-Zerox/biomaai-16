@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignUpData } from "./types";
@@ -36,7 +37,7 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals.map(goalItem => {
-              // Safely handle null or undefined
+              // Ensure goalItem is not null or undefined before accessing it
               if (goalItem === null || goalItem === undefined) {
                 return '';
               }
@@ -51,7 +52,7 @@ export async function signUp({
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions.map(restrictionItem => {
-              // Safely handle null or undefined
+              // Ensure restrictionItem is not null or undefined before accessing it
               if (restrictionItem === null || restrictionItem === undefined) {
                 return '';
               }
