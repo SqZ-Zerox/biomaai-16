@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import { FormField, FormItem, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { stepAnimation } from "./animations";
 import { UseFormReturn } from "react-hook-form";
 import { SignupFormValues } from "./types";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CaptchaVerificationService } from "@/services/securityService";
 
 interface SignupTermsStepProps {
   form: UseFormReturn<SignupFormValues>;
@@ -18,6 +20,8 @@ interface SignupTermsStepProps {
   captchaRef?: React.RefObject<HCaptcha>;
   handleCaptchaVerify?: (token: string) => void;
   captchaToken?: string | null;
+  captchaError?: string | null;
+  setCaptchaError?: (error: string | null) => void;
 }
 
 const SignupTermsStep: React.FC<SignupTermsStepProps> = ({ 
@@ -27,8 +31,23 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
   onSubmit,
   captchaRef,
   handleCaptchaVerify,
-  captchaToken
+  captchaToken,
+  captchaError,
+  setCaptchaError
 }) => {
+  const handleCaptchaExpire = () => {
+    if (setCaptchaError) {
+      setCaptchaError("Captcha verification expired. Please complete the verification again.");
+    }
+  };
+  
+  const handleCaptchaError = () => {
+    if (setCaptchaError) {
+      setCaptchaError("An error occurred with captcha verification. Please try again.");
+      captchaRef?.current?.resetCaptcha();
+    }
+  };
+
   return (
     <motion.div
       key="terms-step"
@@ -84,12 +103,27 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
         />
         
         {handleCaptchaVerify && (
-          <div className="flex justify-center mt-6">
-            <HCaptcha
-              sitekey={process.env.VITE_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
-              onVerify={handleCaptchaVerify}
-              ref={captchaRef}
-            />
+          <div className="space-y-3 mt-6">
+            <div className="flex justify-center items-center gap-1">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Security Verification</span>
+            </div>
+            
+            <div className="flex justify-center">
+              <HCaptcha
+                sitekey={CaptchaVerificationService.getSiteKey()}
+                onVerify={handleCaptchaVerify}
+                onExpire={handleCaptchaExpire}
+                onError={handleCaptchaError}
+                ref={captchaRef}
+              />
+            </div>
+            
+            {captchaError && (
+              <Alert variant="destructive" className="mt-2 py-2">
+                <AlertDescription className="text-xs">{captchaError}</AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
       </div>

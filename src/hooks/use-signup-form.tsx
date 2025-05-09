@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -8,6 +7,7 @@ import { signUp } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, SignupFormValues } from "@/components/auth/form/signup/types";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { CaptchaVerificationService } from "@/services/securityService";
 
 export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<'credentials' | 'personal' | 'health' | 'medical' | 'terms'>('credentials');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha | null>(null);
   
   // Signup form with expanded health information
@@ -55,6 +56,12 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
 
   // Handle captcha verification
   const handleCaptchaVerify = (token: string) => {
+    setCaptchaError(null);
+    if (!CaptchaVerificationService.validateToken(token)) {
+      setCaptchaError("Invalid captcha verification. Please try again.");
+      captchaRef.current?.resetCaptcha();
+      return;
+    }
     setCaptchaToken(token);
   };
 
@@ -145,11 +152,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       
       // Ensure captcha is completed
       if (!captchaToken) {
-        toast({
-          title: "Captcha Required",
-          description: "Please complete the captcha verification",
-          variant: "destructive",
-        });
+        setCaptchaError("Please complete the captcha verification");
         return;
       }
       
@@ -254,6 +257,8 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
     captchaRef,
     handleCaptchaVerify,
     captchaToken,
+    captchaError,
+    setCaptchaError,
     proceedToPersonalStep,
     proceedToHealthStep,
     proceedToMedicalStep,

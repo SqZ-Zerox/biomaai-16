@@ -1,40 +1,37 @@
 
 import { toast } from "@/hooks/use-toast";
+import { SecureKeyManager } from "./securityService";
 
 // Gemini API configuration
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-1.5-pro";
+const DEFAULT_TEST_KEY = "AIzaSyBaXu3nq5i_WJ0cw7P6Itk-FCNyj_JmYJU";
 
 // API Key Manager (similar to OpenAI implementation)
 class APIKeyManager {
-  private static apiKey: string | null = null;
-
   static getApiKey(): string | null {
-    // Try to get from memory first
-    if (this.apiKey) return this.apiKey;
-    
-    // Try to get from localStorage
-    const savedKey = localStorage.getItem("gemini_api_key");
-    if (savedKey) {
-      this.apiKey = savedKey;
-      return savedKey;
-    }
-    
-    return null;
+    return SecureKeyManager.getBestAvailableKey("gemini_api_key");
   }
 
   static setApiKey(key: string): void {
-    this.apiKey = key;
-    localStorage.setItem("gemini_api_key", key);
+    if (!SecureKeyManager.validateGeminiKey(key)) {
+      toast({
+        title: "Invalid API Key",
+        description: "The Gemini API key format is invalid",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    SecureKeyManager.setKey("gemini_api_key", key);
   }
 
   static clearApiKey(): void {
-    this.apiKey = null;
-    localStorage.removeItem("gemini_api_key");
+    SecureKeyManager.removeKey("gemini_api_key");
   }
 
   static hasApiKey(): boolean {
-    return !!this.getApiKey();
+    return SecureKeyManager.hasKey("gemini_api_key");
   }
 }
 
@@ -84,7 +81,7 @@ export async function sendGeminiCompletion(
   
   // Use the provided test API key if no key is set
   if (!apiKey) {
-    apiKey = "AIzaSyBaXu3nq5i_WJ0cw7P6Itk-FCNyj_JmYJU"; // Default to the test key
+    apiKey = DEFAULT_TEST_KEY; // Default to the test key
     setGeminiKey(apiKey); // Save it for future use
   }
   
@@ -101,7 +98,7 @@ export async function sendGeminiCompletion(
         contents: messages,
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxOutputTokens || 8000, // Increased from 1000 to 8000
+          maxOutputTokens: options.maxOutputTokens || 8000,
           topP: 0.95,
         },
       }),
@@ -150,7 +147,7 @@ export function setGeminiKey(key: string): void {
   APIKeyManager.setApiKey(key);
   toast({
     title: "Gemini API Key Saved",
-    description: "Your Gemini API key has been saved",
+    description: "Your Gemini API key has been saved securely",
   });
 }
 

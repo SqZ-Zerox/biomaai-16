@@ -1,17 +1,18 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signIn } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import GoogleSignInButton from "./GoogleSignInButton";
 import { Separator } from "@/components/ui/separator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { CaptchaVerificationService } from "@/services/securityService";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha | null>(null);
 
   // Login form
@@ -52,17 +54,31 @@ const LoginForm: React.FC = () => {
   });
 
   const handleCaptchaVerify = (token: string) => {
+    setCaptchaError(null);
+    if (!CaptchaVerificationService.validateToken(token)) {
+      setCaptchaError("Invalid captcha verification. Please try again.");
+      captchaRef.current?.resetCaptcha();
+      return;
+    }
+    
     setCaptchaToken(token);
     form.setValue("captchaToken", token);
+  };
+  
+  const handleCaptchaExpire = () => {
+    setCaptchaToken(null);
+    form.setValue("captchaToken", "");
+    setCaptchaError("Captcha verification expired. Please complete the verification again.");
+  };
+  
+  const handleCaptchaError = () => {
+    setCaptchaError("An error occurred with captcha verification. Please try again.");
+    captchaRef.current?.resetCaptcha();
   };
 
   const onSubmit = async (values: LoginFormValues) => {
     if (!captchaToken) {
-      toast({
-        title: "Captcha Required",
-        description: "Please complete the captcha verification",
-        variant: "destructive",
-      });
+      setCaptchaError("Please complete the captcha verification");
       return;
     }
 
@@ -213,13 +229,27 @@ const LoginForm: React.FC = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.3 }}
-          className="flex justify-center my-4"
+          className="space-y-2"
         >
-          <HCaptcha
-            sitekey={process.env.VITE_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"} 
-            onVerify={handleCaptchaVerify}
-            ref={captchaRef}
-          />
+          <div className="flex flex-col items-center">
+            <label className="flex items-center text-sm mb-2 gap-1 font-medium">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              Security Verification
+            </label>
+            <HCaptcha
+              sitekey={CaptchaVerificationService.getSiteKey()}
+              onVerify={handleCaptchaVerify}
+              onExpire={handleCaptchaExpire}
+              onError={handleCaptchaError}
+              ref={captchaRef}
+            />
+          </div>
+          
+          {captchaError && (
+            <Alert variant="destructive" className="mt-2 py-2">
+              <AlertDescription className="text-xs">{captchaError}</AlertDescription>
+            </Alert>
+          )}
         </motion.div>
         
         <motion.div
