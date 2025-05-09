@@ -36,10 +36,26 @@ export async function signUp({
         weight,
         activity_level,
         health_goals: Array.isArray(health_goals) 
-          ? health_goals.map(goal => (typeof goal === 'object' ? goal.value : goal))
+          ? health_goals.map(goal => {
+              // Ensure goal is not null/undefined before accessing properties
+              if (!goal) return '';
+              
+              // Safely access properties with proper type checking
+              return typeof goal === 'object' && goal !== null && 'value' in goal ? 
+                    String(goal.value || '') : 
+                    String(goal || '');
+            })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
-          ? dietary_restrictions.map(restriction => (typeof restriction === 'object' ? restriction.value : restriction))
+          ? dietary_restrictions.map(restriction => {
+              // Ensure restriction is not null/undefined before accessing properties
+              if (!restriction) return '';
+              
+              // Safely access properties with proper type checking
+              return typeof restriction === 'object' && restriction !== null && 'value' in restriction ? 
+                    String(restriction.value || '') : 
+                    String(restriction || '');
+            })
           : [],
         ...user_metadata
       }
