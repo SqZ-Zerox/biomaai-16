@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { toast } from "@/hooks/use-toast";
 
 export interface UserProfile {
@@ -61,8 +62,12 @@ export async function signUp({
       weight,
       activity_level,
       // Format health goals and restrictions to match the expected format
-      health_goals: Array.isArray(health_goals) ? health_goals : [],
-      dietary_restrictions: Array.isArray(dietary_restrictions) ? dietary_restrictions : [],
+      health_goals: Array.isArray(health_goals) 
+        ? health_goals.map(goal => ({ value: goal }))  // Ensure each goal has a value property
+        : [],
+      dietary_restrictions: Array.isArray(dietary_restrictions) 
+        ? dietary_restrictions.map(restriction => ({ value: restriction }))  // Ensure each restriction has a value property
+        : [],
       ...user_metadata
     };
 
@@ -252,35 +257,53 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return false;
     }
     
-    // Insert health goals if provided
-    if (userData.health_goals && Array.isArray(userData.health_goals) && userData.health_goals.length > 0) {
-      const healthGoals = userData.health_goals.map((goal: string) => ({
-        user_id: userId,
-        goal
-      }));
+    // Insert health goals if provided and properly formatted
+    if (userData.health_goals && Array.isArray(userData.health_goals)) {
+      // Extract goals, handling either plain strings or objects with a "value" property
+      const healthGoals = userData.health_goals
+        .filter((goal: any) => {
+          // Filter out null or empty values
+          const goalValue = typeof goal === 'object' ? goal.value : goal;
+          return goalValue && goalValue.trim() !== '';
+        })
+        .map((goal: any) => ({
+          user_id: userId,
+          goal: typeof goal === 'object' ? goal.value : goal
+        }));
       
-      const { error: goalsError } = await supabase
-        .from('user_health_goals')
-        .insert(healthGoals);
-      
-      if (goalsError) {
-        console.error("Error inserting health goals:", goalsError);
+      if (healthGoals.length > 0) {
+        const { error: goalsError } = await supabase
+          .from('user_health_goals')
+          .insert(healthGoals);
+        
+        if (goalsError) {
+          console.error("Error inserting health goals:", goalsError);
+        }
       }
     }
     
-    // Insert dietary restrictions if provided
-    if (userData.dietary_restrictions && Array.isArray(userData.dietary_restrictions) && userData.dietary_restrictions.length > 0) {
-      const dietaryRestrictions = userData.dietary_restrictions.map((restriction: string) => ({
-        user_id: userId,
-        restriction
-      }));
+    // Insert dietary restrictions if provided and properly formatted
+    if (userData.dietary_restrictions && Array.isArray(userData.dietary_restrictions)) {
+      // Extract restrictions, handling either plain strings or objects with a "value" property
+      const dietaryRestrictions = userData.dietary_restrictions
+        .filter((restriction: any) => {
+          // Filter out null or empty values
+          const restrictionValue = typeof restriction === 'object' ? restriction.value : restriction;
+          return restrictionValue && restrictionValue.trim() !== '';
+        })
+        .map((restriction: any) => ({
+          user_id: userId,
+          restriction: typeof restriction === 'object' ? restriction.value : restriction
+        }));
       
-      const { error: restrictionsError } = await supabase
-        .from('user_dietary_restrictions')
-        .insert(dietaryRestrictions);
-      
-      if (restrictionsError) {
-        console.error("Error inserting dietary restrictions:", restrictionsError);
+      if (dietaryRestrictions.length > 0) {
+        const { error: restrictionsError } = await supabase
+          .from('user_dietary_restrictions')
+          .insert(dietaryRestrictions);
+        
+        if (restrictionsError) {
+          console.error("Error inserting dietary restrictions:", restrictionsError);
+        }
       }
     }
     
