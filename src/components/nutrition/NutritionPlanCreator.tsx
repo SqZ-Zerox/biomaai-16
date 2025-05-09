@@ -21,7 +21,7 @@ interface NutritionPlanCreatorProps {
   calorieTarget: number;
   setCalorieTarget: (calories: number) => void;
   mealPreferences: MealPreferences;
-  onMealPreferenceToggle: (meal: keyof typeof mealPreferences) => void;
+  onMealPreferenceToggle: (meal: keyof MealPreferences) => void;
   location: string;
   setLocation: (location: string) => void;
   isLoading: boolean;
