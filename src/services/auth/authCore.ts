@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -80,34 +79,25 @@ export const extractSupabaseUser = (user: User) => {
   };
 };
 
-// Check if email already exists
+// Fix the email existence check function - this is where the bug is happening
 export const checkIfEmailExists = async (email: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      filter: { email },
+    // First approach: Try to sign in with OTP to check if email exists
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false
+      }
     });
     
-    // If we get an error with admin access, fall back to a sign-in attempt
-    if (error) {
-      console.log("Admin API not available, falling back to sign-in check");
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false
-        }
-      });
-      
-      // If there's no error about user not found, the email likely exists
-      // Different error message patterns to check for
-      if (signInError) {
-        const errorMsg = signInError.message.toLowerCase();
-        return !errorMsg.includes("user not found") && !errorMsg.includes("user does not exist");
-      }
-      return true;
+    // If there's no error about user not found, the email likely exists
+    if (signInError) {
+      const errorMsg = signInError.message.toLowerCase();
+      return !errorMsg.includes("user not found") && !errorMsg.includes("user does not exist");
     }
     
-    // Check if any users were found with this email
-    return data && data.users && data.users.length > 0;
+    // If no error, the email exists
+    return true;
   } catch (error) {
     console.error("Error checking if email exists:", error);
     return false;
