@@ -131,15 +131,18 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       
       setIsLoading(true);
       
-      // Format health goals properly
-      const healthGoals = values.health_goals.map(goal => goal);
+      // Ensure we have at least one health goal to prevent null constraint errors
+      if (!values.health_goals || values.health_goals.length === 0) {
+        toast({
+          title: "Health Goals Required",
+          description: "Please select at least one health goal.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
       
-      // Format dietary restrictions properly
-      const dietaryRestrictions = values.dietary_restrictions ? 
-        values.dietary_restrictions.map(restriction => restriction) : 
-        [];
-      
-      // Format data for API
+      // Format data for API - make sure to include raw values, not objects
       const signupData = {
         email: values.email,
         password: values.password,
@@ -151,13 +154,13 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         height: values.height,
         weight: values.weight,
         activity_level: values.activity_level,
-        health_goals: healthGoals,
-        dietary_restrictions: dietaryRestrictions,
+        health_goals: values.health_goals,
+        dietary_restrictions: values.dietary_restrictions || [],
         user_metadata: {
-          existing_conditions: values.existing_conditions,
-          allergies: values.allergies,
-          medications: values.medications,
-          family_history: values.family_history,
+          existing_conditions: values.existing_conditions || [],
+          allergies: values.allergies || "",
+          medications: values.medications || "",
+          family_history: values.family_history || [],
           recent_lab_work: values.recent_lab_work
         }
       };

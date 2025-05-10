@@ -38,8 +38,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [hasShownWelcome, setHasShownWelcome] = useState(false); // Add state to track welcome message
+  const [hasShownWelcome, setHasShownWelcome] = useState(false);
   const { toast } = useToast();
+
+  // Function to clean up any lingering auth tokens
+  const cleanupAuthState = () => {
+    // Remove standard auth tokens
+    localStorage.removeItem('supabase.auth.token');
+    // Remove all Supabase auth keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
 
   const checkSession = async () => {
     try {
@@ -61,12 +73,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("User metadata:", session.user.user_metadata);
         
         // Check if email is verified
-        let isVerified = session.user.user_metadata?.email_verified === true;
+        let isVerified = true; // Default to true for social logins
         
-        // For social logins, they are considered pre-verified
-        if (session.user.app_metadata?.provider && 
-            session.user.app_metadata.provider !== 'email') {
-          isVerified = true;
+        // For email-password logins, check email verification
+        if (session.user.app_metadata?.provider === 'email' || 
+            !session.user.app_metadata?.provider) {
+          isVerified = session.user.email_confirmed_at != null;
+          console.log("Email confirmed at:", session.user.email_confirmed_at);
         }
         
         setIsEmailVerified(isVerified);
@@ -74,16 +87,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Only create/ensure profile if email is verified or using social login
         if (isVerified) {
           // Ensure user profile exists
-          if (session.user.user_metadata) {
-            await ensureUserProfile(session.user.id, session.user.user_metadata);
-          }
-          
-          // Fetch user profile
-          const { profile, error: profileError } = await getUserProfile();
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-          } else {
-            setProfile(profile);
+          try {
+            if (session.user.user_metadata) {
+              await ensureUserProfile(session.user.id, session.user.user_metadata);
+            }
+            
+            // Fetch user profile
+            const { profile, error: profileError } = await getUserProfile();
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+            } else {
+              setProfile(profile);
+            }
+          } catch (err) {
+            console.error("Error during profile setup:", err);
           }
         } else {
           console.log("Email not verified yet, skipping profile fetch");
@@ -106,13 +123,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newSession?.user || null);
         
         if (event === "SIGNED_IN" && newSession?.user) {
-          // Check if email is verified or using social login
-          let isVerified = newSession.user.user_metadata?.email_verified === true;
+          // Check if email is verified
+          let isVerified = true; // Default to true for social logins
           
-          // For social logins, they are considered pre-verified
-          if (newSession.user.app_metadata?.provider && 
-              newSession.user.app_metadata.provider !== 'email') {
-            isVerified = true;
+          // For email-password logins, check email verification
+          if (newSession.user.app_metadata?.provider === 'email' || 
+              !newSession.user.app_metadata?.provider) {
+            isVerified = newSession.user.email_confirmed_at != null;
+            console.log("Email confirmed at:", newSession.user.email_confirmed_at);
           }
           
           setIsEmailVerified(isVerified);
@@ -121,22 +139,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (isVerified) {
             // Defer profile operations to prevent deadlocks
             setTimeout(async () => {
-              // Ensure user profile exists on sign in
-              if (newSession.user.user_metadata) {
-                await ensureUserProfile(newSession.user.id, newSession.user.user_metadata);
-              }
-              
-              const { profile } = await getUserProfile();
-              setProfile(profile);
-              
-              // Don't show welcome toast for social auth callback as it will be handled there
-              // Only show welcome message once per session
-              if (!window.location.pathname.includes('/auth/callback') && !hasShownWelcome) {
-                toast({
-                  title: "Signed in successfully",
-                  description: `Welcome${profile?.first_name ? ` ${profile.first_name}` : ""}!`,
-                });
-                setHasShownWelcome(true); // Mark welcome message as shown
+              try {
+                // Ensure user profile exists on sign in
+                if (newSession.user.user_metadata) {
+                  await ensureUserProfile(newSession.user.id, newSession.user.user_metadata);
+                }
+                
+                const { profile } = await getUserProfile();
+                setProfile(profile);
+                
+                // Don't show welcome toast for social auth callback as it will be handled there
+                // Only show welcome message once per session
+                if (!window.location.pathname.includes('/auth/callback') && !hasShownWelcome) {
+                  toast({
+                    title: "Signed in successfully",
+                    description: `Welcome${profile?.first_name ? ` ${profile.first_name}` : ""}!`,
+                  });
+                  setHasShownWelcome(true); // Mark welcome message as shown
+                }
+              } catch (err) {
+                console.error("Error during profile setup after sign-in:", err);
               }
             }, 0);
           } else {
@@ -147,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           setIsEmailVerified(false);
           setHasShownWelcome(false); // Reset welcome message flag on sign out
+          cleanupAuthState(); // Clean up any lingering auth tokens
           toast({
             title: "Signed out",
             description: "You have been signed out successfully",
@@ -156,25 +179,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Important debugging
             console.log("User updated event received:", newSession.user);
             console.log("New user metadata:", newSession.user.user_metadata);
+            console.log("Email confirmed at:", newSession.user.email_confirmed_at);
             
             // Check if email verification status has changed
-            const isVerified = newSession.user.user_metadata?.email_verified === true ||
+            const isVerified = newSession.user.email_confirmed_at != null ||
                                (newSession.user.app_metadata?.provider && 
                                newSession.user.app_metadata.provider !== 'email');
             
             console.log("Is user email verified:", isVerified);
             setIsEmailVerified(isVerified);
             
-            if (isVerified) {
+            if (isVerified && !profile) {
               // Defer profile operations to prevent deadlocks
               setTimeout(async () => {
-                // If newly verified, ensure profile is created and fetch it
-                if (newSession.user.user_metadata) {
-                  await ensureUserProfile(newSession.user.id, newSession.user.user_metadata);
+                try {
+                  // If newly verified, ensure profile is created and fetch it
+                  if (newSession.user.user_metadata) {
+                    await ensureUserProfile(newSession.user.id, newSession.user.user_metadata);
+                  }
+                  
+                  const { profile } = await getUserProfile();
+                  setProfile(profile);
+                } catch (err) {
+                  console.error("Error during profile setup after user update:", err);
                 }
-                
-                const { profile } = await getUserProfile();
-                setProfile(profile);
               }, 0);
             }
           }

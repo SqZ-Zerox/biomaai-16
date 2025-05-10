@@ -1,68 +1,116 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Helper function to process health goals
-export async function processHealthGoals(userId: string, healthGoals: any[]): Promise<void> {
-  // Return early if healthGoals is not an array or is empty
-  if (!Array.isArray(healthGoals) || healthGoals.length === 0) {
-    return;
+export const processHealthGoals = async (userId: string, healthGoals: any[]) => {
+  try {
+    console.log("Processing health goals for user:", userId, healthGoals);
+    
+    // Early return if there are no health goals
+    if (!healthGoals || healthGoals.length === 0) {
+      console.log("No health goals to process");
+      return false;
+    }
+    
+    // Make sure we have valid health goal data
+    const validGoals = healthGoals
+      .filter(goal => {
+        // Handle both string values and objects with 'value' property
+        const isValid = typeof goal === 'string' || 
+                       (typeof goal === 'object' && goal !== null && 'value' in goal);
+        
+        if (!isValid) {
+          console.warn("Invalid health goal format:", goal);
+        }
+        return isValid;
+      })
+      .map(goal => {
+        // Extract the goal value
+        const goalValue = typeof goal === 'string' ? goal : goal.value;
+        
+        return {
+          user_id: userId,
+          goal: goalValue
+        };
+      });
+    
+    console.log("Formatted goals:", validGoals);
+    
+    if (validGoals.length === 0) {
+      console.warn("No valid health goals to insert");
+      return false;
+    }
+    
+    // Insert the health goals
+    const { error } = await supabase
+      .from('user_health_goals')
+      .insert(validGoals);
+    
+    if (error) {
+      console.error("Error adding health goals:", error);
+      return false;
+    }
+    
+    console.log("Health goals processed successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in processHealthGoals:", error);
+    return false;
   }
-  
-  // Filter out null/undefined values
-  const validGoals = healthGoals.filter(Boolean);
-  
-  if (validGoals.length === 0) {
-    return;
-  }
-  
-  const formattedGoals = validGoals.map(goal => {
-    // Process goal object or primitive with explicit null checks
-    return {
-      user_id: userId,
-      goal: goal && typeof goal === 'object' && goal.value != null
-        ? String(goal.value) 
-        : String(goal || '')
-    };
-  });
-  
-  const { error } = await supabase
-    .from('user_health_goals')
-    .insert(formattedGoals);
-  
-  if (error) {
-    console.error("Error inserting health goals:", error);
-  }
-}
+};
 
-// Helper function to process dietary restrictions
-export async function processDietaryRestrictions(userId: string, dietaryRestrictions: any[]): Promise<void> {
-  // Return early if dietaryRestrictions is not an array or is empty
-  if (!Array.isArray(dietaryRestrictions) || dietaryRestrictions.length === 0) {
-    return;
+export const processDietaryRestrictions = async (userId: string, dietaryRestrictions: any[]) => {
+  try {
+    console.log("Processing dietary restrictions for user:", userId, dietaryRestrictions);
+    
+    // Early return if there are no dietary restrictions
+    if (!dietaryRestrictions || dietaryRestrictions.length === 0) {
+      console.log("No dietary restrictions to process");
+      return true; // Return true as this is not an error condition
+    }
+    
+    // Make sure we have valid dietary restriction data
+    const validRestrictions = dietaryRestrictions
+      .filter(restriction => {
+        // Handle both string values and objects with 'value' property
+        const isValid = typeof restriction === 'string' || 
+                       (typeof restriction === 'object' && restriction !== null && 'value' in restriction);
+        
+        if (!isValid) {
+          console.warn("Invalid dietary restriction format:", restriction);
+        }
+        return isValid;
+      })
+      .map(restriction => {
+        // Extract the restriction value
+        const restrictionValue = typeof restriction === 'string' ? restriction : restriction.value;
+        
+        return {
+          user_id: userId,
+          restriction: restrictionValue
+        };
+      });
+    
+    console.log("Formatted restrictions:", validRestrictions);
+    
+    if (validRestrictions.length === 0) {
+      console.log("No valid dietary restrictions to insert");
+      return true; // Return true as this is not an error condition
+    }
+    
+    // Insert the dietary restrictions
+    const { error } = await supabase
+      .from('user_dietary_restrictions')
+      .insert(validRestrictions);
+    
+    if (error) {
+      console.error("Error adding dietary restrictions:", error);
+      return false;
+    }
+    
+    console.log("Dietary restrictions processed successfully");
+    return true;
+  } catch (error) {
+    console.error("Error in processDietaryRestrictions:", error);
+    return false;
   }
-  
-  // Filter out null/undefined values
-  const validRestrictions = dietaryRestrictions.filter(Boolean);
-  
-  if (validRestrictions.length === 0) {
-    return;
-  }
-  
-  const formattedRestrictions = validRestrictions.map(restriction => {
-    // Process restriction object or primitive with explicit null checks
-    return {
-      user_id: userId,
-      restriction: restriction && typeof restriction === 'object' && restriction.value != null
-        ? String(restriction.value) 
-        : String(restriction || '')
-    };
-  });
-  
-  const { error } = await supabase
-    .from('user_dietary_restrictions')
-    .insert(formattedRestrictions);
-  
-  if (error) {
-    console.error("Error inserting dietary restrictions:", error);
-  }
-}
+};

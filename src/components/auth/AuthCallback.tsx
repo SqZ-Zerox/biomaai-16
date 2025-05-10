@@ -27,12 +27,10 @@ const AuthCallback: React.FC = () => {
         }
         
         console.log("Processing email verification callback");
+        console.log("Search params:", Object.fromEntries(searchParams.entries()));
         
         // Update user verification status
         const success = await updateUserVerificationStatus();
-        
-        // Refresh the auth context
-        await checkSession();
         
         if (success) {
           toast({
@@ -42,7 +40,10 @@ const AuthCallback: React.FC = () => {
           });
           
           // Important: Log the success and redirect path
-          console.log("Email verification successful, redirecting to dashboard");
+          console.log("Email verification successful, refreshing auth session");
+          
+          // Refresh the auth context
+          await checkSession();
           
           // Redirect to dashboard after a small delay
           setTimeout(() => {
@@ -61,7 +62,7 @@ const AuthCallback: React.FC = () => {
     };
     
     processCallback();
-  }, [navigate, toast, checkSession, provider]);
+  }, [navigate, toast, checkSession, provider, searchParams]);
   
   if (provider) {
     return <SocialProviderCallback provider={provider} />;

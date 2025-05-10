@@ -1,3 +1,4 @@
+
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -82,6 +83,17 @@ export const extractSupabaseUser = (user: User) => {
 // Add the missing authentication functions
 export const signUp = async (signupData: any) => {
   try {
+    // Format health goals and dietary restrictions correctly
+    const formattedHealthGoals = signupData.health_goals.map((goal: string) => ({
+      value: goal
+    }));
+
+    const formattedDietaryRestrictions = signupData.dietary_restrictions 
+      ? signupData.dietary_restrictions.map((restriction: string) => ({
+          value: restriction
+        })) 
+      : [];
+
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
       password: signupData.password,
@@ -95,8 +107,8 @@ export const signUp = async (signupData: any) => {
           height: signupData.height,
           weight: signupData.weight,
           activity_level: signupData.activity_level,
-          health_goals: signupData.health_goals,
-          dietary_restrictions: signupData.dietary_restrictions,
+          health_goals: formattedHealthGoals,
+          dietary_restrictions: formattedDietaryRestrictions,
           ...signupData.user_metadata
         }
       }
@@ -159,18 +171,25 @@ export const updateUserVerificationStatus = async () => {
   try {
     // Get the session parameters from the URL
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const token_hash = params.get('token_hash') || params.get('token');
     const type = params.get('type');
     
-    if (type !== 'email_verification' || !token) {
-      console.error("Invalid verification parameters");
+    if (!token_hash) {
+      console.error("No token found in URL");
       return false;
     }
     
+    if (type !== 'email_confirmation' && type !== 'signup' && type !== 'email_verification') {
+      console.error("Invalid verification type:", type);
+      return false;
+    }
+    
+    console.log("Verifying token:", token_hash, "type:", type);
+    
     // Verify the email using the token
     const { error } = await supabase.auth.verifyOtp({
-      token_hash: token,
-      type: 'email' as any // Type cast to fix type error
+      token_hash,
+      type: 'email',
     });
     
     if (error) {
@@ -178,6 +197,7 @@ export const updateUserVerificationStatus = async () => {
       return false;
     }
     
+    console.log("Email verified successfully");
     return true;
   } catch (error) {
     console.error("Verification status update error:", error);
