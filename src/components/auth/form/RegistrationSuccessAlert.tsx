@@ -32,10 +32,10 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
             <AlertCircle className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-medium">Important: Email Verification Required</h4>
+                <h4 className="font-medium text-amber-600">Important: Email Verification Required</h4>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                You must verify your email address before you can log in. If you don't see the verification email in your inbox, please check your spam/junk folder.
+                You <strong>must verify your email address</strong> before you can log in. If you don't see the verification email in your inbox, please check your spam/junk folder.
               </p>
             </div>
           </div>
@@ -47,7 +47,10 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
                 <h4 className="font-medium">Next Steps</h4>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Your profile will only be created after you verify your email address. This helps us prevent spam and ensure data quality.
+                1. Open the verification email in your inbox<br />
+                2. Click the verification link in the email<br />
+                3. Once verified, return to the login page<br />
+                4. Sign in using your email and password
               </p>
             </div>
           </div>
@@ -77,9 +80,21 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
             <Button 
               variant="outline" 
               className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={onDismiss}
+              onClick={() => window.open(`https://outlook.live.com`, '_blank')}
             >
-              Dismiss
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open Outlook
+            </Button>
+            <Button 
+              variant="default" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => {
+                onDismiss();
+                // Navigate to login page
+                window.location.href = '/login';
+              }}
+            >
+              Go to Login Page
             </Button>
           </div>
         </AlertDescription>

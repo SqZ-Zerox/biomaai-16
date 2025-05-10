@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -95,6 +95,13 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
       form.clearErrors("email");
     }
   };
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedEmailCheck.cancel();
+    };
+  }, [debouncedEmailCheck]);
 
   return (
     <motion.div

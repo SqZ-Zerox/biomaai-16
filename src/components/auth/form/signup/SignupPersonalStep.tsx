@@ -1,3 +1,4 @@
+
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, User, Calendar, Phone, AlertCircle } from "lucide-react";
@@ -32,6 +33,11 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
 }) => {
   // Check if birth date has error (age validation failed)
   const birthDateError = form.formState.errors.birth_date;
+
+  // Calculate the max date (13 years ago from today)
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() - 13);
+  const maxDateString = maxDate.toISOString().split('T')[0];
 
   return (
     <motion.div
@@ -117,7 +123,30 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
                   disabled={isLoading}
                   {...field}
                   value={field.value || ''}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+                  max={maxDateString}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    
+                    // Validate age as the user selects a date
+                    const selectedDate = new Date(e.target.value);
+                    const today = new Date();
+                    const age = today.getFullYear() - selectedDate.getFullYear();
+                    const monthDiff = today.getMonth() - selectedDate.getMonth();
+                    
+                    // If birthday hasn't occurred yet this year, subtract a year
+                    const adjustedAge = (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) 
+                      ? age - 1 
+                      : age;
+                      
+                    if (adjustedAge < 13) {
+                      form.setError('birth_date', {
+                        type: 'manual',
+                        message: 'You must be at least 13 years old to use this service.'
+                      });
+                    } else {
+                      form.clearErrors('birth_date');
+                    }
+                  }}
                 />
               </div>
             </FormControl>
@@ -202,7 +231,7 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
           type="button" 
           className="w-full" 
           onClick={onNext}
-          disabled={isLoading}
+          disabled={isLoading || !!birthDateError}
         >
           Next: Health Profile
           <ArrowRight className="ml-2 h-4 w-4" />
