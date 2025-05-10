@@ -13,8 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -25,94 +23,14 @@ const UploadPage: React.FC = () => {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [step, setStep] = useState<number>(1); // 1: Test Selection, 2: File Upload, 3: Processing, 4: Results
-  const [selectedTests, setSelectedTests] = useState<string[]>([]);
+  // Use simplified steps since we're auto-detecting test types
+  const [step, setStep] = useState<number>(1); // 1: File Upload, 2: Processing, 3: Results
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [processingProgress, setProcessingProgress] = useState<number>(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, status: string}[]>([]);
-  
-  // List of tests available for analysis
-  const availableTests = [
-    {
-      id: "complete_blood_count",
-      name: "Complete Blood Count (CBC)",
-      description: "Evaluates overall health and can detect a wide range of disorders",
-      common: true
-    },
-    {
-      id: "metabolic_panel",
-      name: "Comprehensive Metabolic Panel (CMP)",
-      description: "Checks kidney function, liver function, electrolyte levels, and more",
-      common: true
-    },
-    {
-      id: "lipid_panel",
-      name: "Lipid Panel",
-      description: "Measures cholesterol levels to assess risk of heart disease",
-      common: true
-    },
-    {
-      id: "thyroid_panel",
-      name: "Thyroid Panel",
-      description: "Evaluates thyroid function and can help diagnose thyroid disorders",
-      common: true
-    },
-    {
-      id: "hemoglobin_a1c",
-      name: "Hemoglobin A1C",
-      description: "Measures blood sugar control over the past 3 months",
-      common: true
-    },
-    {
-      id: "vitamin_d",
-      name: "Vitamin D",
-      description: "Checks for vitamin D deficiency",
-      common: true
-    },
-    {
-      id: "iron_panel",
-      name: "Iron Panel",
-      description: "Evaluates iron levels and can help diagnose anemia",
-      common: false
-    },
-    {
-      id: "hormone_panel",
-      name: "Hormone Panel",
-      description: "Checks levels of various hormones in the blood",
-      common: false
-    },
-    {
-      id: "micronutrient_panel",
-      name: "Micronutrient Panel",
-      description: "Evaluates levels of vitamins and minerals",
-      common: false
-    },
-    {
-      id: "inflammation_markers",
-      name: "Inflammation Markers",
-      description: "Checks for markers of inflammation like CRP and ESR",
-      common: false
-    }
-  ];
-
-  const handleTestToggle = (testId: string) => {
-    if (selectedTests.includes(testId)) {
-      setSelectedTests(selectedTests.filter(id => id !== testId));
-    } else {
-      setSelectedTests([...selectedTests, testId]);
-    }
-  };
-  
-  const handleSelectAllCommonTests = () => {
-    const commonTestIds = availableTests
-      .filter(test => test.common)
-      .map(test => test.id);
-    
-    setSelectedTests(commonTestIds);
-  };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -192,13 +110,13 @@ const UploadPage: React.FC = () => {
         
         // Move to processing step
         setTimeout(() => {
-          setStep(3);
+          setStep(2);
           startProcessing();
         }, 500);
         
         toast({
           title: "Upload successful",
-          description: `${selectedFiles.length} file(s) uploaded successfully`,
+          description: `${selectedFiles.length} file(s) uploaded successfully. Test types will be automatically detected.`,
         });
       }
     } catch (error: any) {
@@ -240,7 +158,7 @@ const UploadPage: React.FC = () => {
           });
           
           // Move to results step
-          setStep(4);
+          setStep(3);
           return 100;
         }
         return prev + 2;
@@ -250,19 +168,8 @@ const UploadPage: React.FC = () => {
   
   const handleContinue = () => {
     if (step === 1) {
-      if (selectedTests.length === 0) {
-        toast({
-          title: "No tests selected",
-          description: "Please select at least one test type to continue",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setStep(2);
-    } else if (step === 2) {
       handleUpload();
-    } else if (step === 4) {
+    } else if (step === 3) {
       navigate("/dashboard");
     }
   };
@@ -299,12 +206,12 @@ const UploadPage: React.FC = () => {
             <FileText className="mr-2 h-7 w-7 text-primary" />
             Lab Report Analysis
           </h1>
-          <p className="text-muted-foreground">Step {step} of 4</p>
+          <p className="text-muted-foreground">Step {step} of 3</p>
         </div>
         
         <div className="flex justify-center mb-8">
           <div className="flex items-center w-full max-w-md">
-            {[1, 2, 3, 4].map((stepNum) => (
+            {[1, 2, 3].map((stepNum) => (
               <React.Fragment key={stepNum}>
                 <div 
                   className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -317,7 +224,7 @@ const UploadPage: React.FC = () => {
                 >
                   {stepNum < step ? <Check className="h-4 w-4" /> : stepNum}
                 </div>
-                {stepNum < 4 && (
+                {stepNum < 3 && (
                   <div 
                     className={`h-1 flex-grow mx-1 rounded-full ${
                       stepNum < step
@@ -334,16 +241,14 @@ const UploadPage: React.FC = () => {
         <Card className="border-border/40">
           <CardHeader className="pb-4">
             <CardTitle>
-              {step === 1 && "Select Test Types"}
-              {step === 2 && "Upload Lab Reports"}
-              {step === 3 && "Processing Documents"}
-              {step === 4 && "Analysis Complete"}
+              {step === 1 && "Upload Lab Reports"}
+              {step === 2 && "Processing Documents"}
+              {step === 3 && "Analysis Complete"}
             </CardTitle>
             <CardDescription>
-              {step === 1 && "Choose which tests you'd like to analyze"}
-              {step === 2 && "Upload your lab report documents"}
-              {step === 3 && "We're analyzing your lab reports"}
-              {step === 4 && "Here's what we found in your reports"}
+              {step === 1 && "Upload your lab report documents - test types will be automatically detected"}
+              {step === 2 && "We're analyzing your lab reports"}
+              {step === 3 && "Here's what we found in your reports"}
             </CardDescription>
           </CardHeader>
           
@@ -356,75 +261,6 @@ const UploadPage: React.FC = () => {
               transition={{ duration: 0.3 }}
             >
               {step === 1 && (
-                <CardContent className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Available Tests</h3>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleSelectAllCommonTests}
-                    >
-                      Select Common Tests
-                    </Button>
-                  </div>
-                  
-                  <Alert className="bg-muted/50 border-primary/20">
-                    <AlertCircle className="h-4 w-4 text-primary" />
-                    <AlertTitle>Select relevant tests</AlertTitle>
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      Selecting the specific tests in your lab reports helps our AI provide more accurate analysis.
-                    </AlertDescription>
-                  </Alert>
-                  
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="space-y-4">
-                      {availableTests.map((test) => (
-                        <Card 
-                          key={test.id}
-                          className={`cursor-pointer border transition-all duration-200 ${
-                            selectedTests.includes(test.id) 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border/40 hover:border-primary/30"
-                          }`}
-                          onClick={() => handleTestToggle(test.id)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="pt-1">
-                                <Checkbox
-                                  checked={selectedTests.includes(test.id)}
-                                  onCheckedChange={() => handleTestToggle(test.id)}
-                                  id={test.id}
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <Label 
-                                    htmlFor={test.id} 
-                                    className="font-medium cursor-pointer"
-                                  >
-                                    {test.name}
-                                  </Label>
-                                  {test.common && (
-                                    <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                                      Common
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {test.description}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              )}
-              
-              {step === 2 && (
                 <CardContent className="space-y-6">
                   <div className="border-2 border-dashed border-border/40 rounded-lg p-8 text-center">
                     <input
@@ -491,25 +327,16 @@ const UploadPage: React.FC = () => {
                   </div>
                   
                   <Alert className="bg-muted/50 border-primary/20">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <AlertTitle>Selected Test Types</AlertTitle>
-                    <AlertDescription>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {selectedTests.map((testId) => (
-                          <div 
-                            key={testId} 
-                            className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md"
-                          >
-                            {availableTests.find(test => test.id === testId)?.name}
-                          </div>
-                        ))}
-                      </div>
+                    <AlertCircle className="h-4 w-4 text-primary" />
+                    <AlertTitle>Automatic Test Detection</AlertTitle>
+                    <AlertDescription className="text-sm text-muted-foreground">
+                      Our AI will automatically identify the types of tests in your lab report. You don't need to specify them manually.
                     </AlertDescription>
                   </Alert>
                 </CardContent>
               )}
               
-              {step === 3 && (
+              {step === 2 && (
                 <CardContent className="py-12">
                   <div className="flex flex-col items-center justify-center space-y-6">
                     <div className="relative">
@@ -537,7 +364,7 @@ const UploadPage: React.FC = () => {
                           <span className="text-sm">Current step:</span>
                         </div>
                         <span className="text-sm font-medium">
-                          {processingProgress < 30 ? "Extracting Text" : 
+                          {processingProgress < 30 ? "Extracting Text & Detecting Tests" : 
                            processingProgress < 60 ? "Identifying Lab Values" : 
                            processingProgress < 90 ? "Comparing to Reference Ranges" : 
                            "Generating Insights"}
@@ -548,7 +375,7 @@ const UploadPage: React.FC = () => {
                 </CardContent>
               )}
               
-              {step === 4 && (
+              {step === 3 && (
                 <CardContent className="py-8">
                   <div className="mb-6 text-center">
                     <div className="flex justify-center mb-4">
@@ -568,12 +395,12 @@ const UploadPage: React.FC = () => {
                         <h4 className="font-medium mb-2">Report Summary</h4>
                         <ul className="space-y-2">
                           <li className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Tests Analyzed:</span>
-                            <span className="font-medium">{selectedTests.length} tests</span>
-                          </li>
-                          <li className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Documents Processed:</span>
                             <span className="font-medium">{selectedFiles.length} files</span>
+                          </li>
+                          <li className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Tests Detected:</span>
+                            <span className="font-medium">Automatically identified</span>
                           </li>
                           <li className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Values Outside Reference:</span>
@@ -604,16 +431,16 @@ const UploadPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={handleBack}
-              disabled={isUploading || isProcessing || step === 3}
+              disabled={isUploading || isProcessing || step === 2}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button
               onClick={handleContinue}
-              disabled={isUploading || isProcessing || step === 3}
+              disabled={isUploading || isProcessing || step === 2}
             >
-              {step === 4 ? 'View Dashboard' : 'Continue'}
+              {step === 3 ? 'View Dashboard' : 'Continue'}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </CardFooter>

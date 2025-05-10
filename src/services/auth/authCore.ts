@@ -46,10 +46,10 @@ export async function signUp({
               .filter(Boolean) // Filter out null, undefined, and falsy values
               .map((goalItem) => {
                 // TypeScript safety: explicitly check if goalItem is an object with value property
-                if (goalItem && typeof goalItem === 'object' && 'value' in goalItem) {
-                  return String(goalItem.value || ''); 
+                if (goalItem && typeof goalItem === 'object' && 'value' in goalItem && goalItem.value != null) {
+                  return String(goalItem.value); 
                 }
-                return String(goalItem || '');
+                return goalItem ? String(goalItem) : '';
               })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
@@ -57,10 +57,10 @@ export async function signUp({
               .filter(Boolean) // Filter out null, undefined, and falsy values
               .map((restrictionItem) => {
                 // TypeScript safety: explicitly check if restrictionItem is an object with value property
-                if (restrictionItem && typeof restrictionItem === 'object' && 'value' in restrictionItem) {
-                  return String(restrictionItem.value || '');
+                if (restrictionItem && typeof restrictionItem === 'object' && 'value' in restrictionItem && restrictionItem.value != null) {
+                  return String(restrictionItem.value);
                 }
-                return String(restrictionItem || '');
+                return restrictionItem ? String(restrictionItem) : '';
               })
           : [],
         ...user_metadata

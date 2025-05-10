@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { sendGeminiCompletion, GeminiMessage } from "./geminiService";
@@ -79,7 +78,7 @@ export const uploadLabReport = async (file: File, userId: string): Promise<{
       return { report: null, error: dbError.message };
     }
 
-    // Start analysis process
+    // Start analysis process without waiting for test type selection
     analyzeLabReport(report as LabReport, publicUrl);
 
     return { report: report as LabReport, error: null };
@@ -237,10 +236,12 @@ const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
       "HDL: 38 mg/dL (Reference Range: >40 mg/dL)\n" +
       "LDL: 160 mg/dL (Reference Range: <100 mg/dL)\n" +
       "Triglycerides: 190 mg/dL (Reference Range: <150 mg/dL)";
-      
-    // Create prompt for Gemini AI
+    
+    // Create prompt for Gemini AI to identify test types and analyze results
     const prompt = `
-      You are a health and wellness assistant. Analyze the following lab test results for a fitness-focused individual. Identify the type of test(s), explain what each biomarker means in simple terms, and categorize each as Optimal, Borderline, or Critical based on clinical norms and wellness goals. Then provide:
+      You are a health and wellness assistant. First, identify all the specific test types in the provided lab results. 
+      Then analyze the results for a fitness-focused individual. Explain what each biomarker means in simple terms, 
+      and categorize each as Optimal, Borderline, or Critical based on clinical norms and wellness goals. Then provide:
 
       1. Key insights – what stands out and why it matters for their health/fitness.
       2. Personalized recommendations – diet, supplements, lifestyle tips to improve any borderline values.
@@ -271,6 +272,9 @@ const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
     // Parse Gemini's response to extract structured data
     const insights = parseGeminiResponse(response);
     
+    // Detect test types from the text
+    const testTypes = detectTestTypes(extractedText);
+    
     // Store results in database - in real implementation, we would extract the biomarker values
     // from the PDF/image or from Gemini's response
     const biomarkers = [
@@ -284,11 +288,11 @@ const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
       { name: "Triglycerides", value: "190", unit: "mg/dL", reference_range: "<150", status: "high" as const, category: "lipids" }
     ];
     
-    // Update lab report with test types
+    // Update lab report with automatically detected test types
     await supabase
       .from('lab_reports')
       .update({
-        test_types: ["CBC", "Lipid Panel"],
+        test_types: testTypes,
         status: 'analyzed'
       })
       .eq('id', report.id);
@@ -330,6 +334,60 @@ const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
       })
       .eq('id', report.id);
   }
+};
+
+// Function to detect test types from the text
+const detectTestTypes = (text: string): string[] => {
+  const testTypes: string[] = [];
+  
+  // Check for common lab test patterns in the text
+  if (text.includes("Complete Blood Count") || text.includes("CBC") || 
+      text.match(/Hemoglobin|Hematocrit|RBC|WBC|Platelets|MCV|MCH|MCHC/i)) {
+    testTypes.push("CBC");
+  }
+  
+  if (text.includes("Lipid Panel") || text.match(/Cholesterol|HDL|LDL|Triglycerides/i)) {
+    testTypes.push("Lipid Panel");
+  }
+  
+  if (text.match(/TSH|T3|T4|Free T4|Thyroid|Thyroxine/i)) {
+    testTypes.push("Thyroid Panel");
+  }
+  
+  if (text.match(/Glucose|A1C|Hemoglobin A1C|HbA1c/i)) {
+    testTypes.push("Glucose/A1C");
+  }
+  
+  if (text.match(/Vitamin D|25-OH|25-hydroxyvitamin/i)) {
+    testTypes.push("Vitamin D");
+  }
+  
+  if (text.match(/Iron|Ferritin|TIBC|Transferrin/i)) {
+    testTypes.push("Iron Panel");
+  }
+  
+  if (text.match(/CRP|ESR|Inflammation|Sed Rate/i)) {
+    testTypes.push("Inflammation Markers");
+  }
+  
+  if (text.match(/ALT|AST|Bilirubin|Alkaline Phosphatase|Liver/i)) {
+    testTypes.push("Liver Function");
+  }
+  
+  if (text.match(/BUN|Creatinine|eGFR|Kidney/i)) {
+    testTypes.push("Kidney Function");
+  }
+  
+  if (text.match(/Electrolytes|Sodium|Potassium|Chloride|Magnesium|Calcium/i)) {
+    testTypes.push("Electrolytes");
+  }
+  
+  // If no test types detected, add "General Blood Panel" as fallback
+  if (testTypes.length === 0) {
+    testTypes.push("General Blood Panel");
+  }
+  
+  return testTypes;
 };
 
 // Helper function to parse Gemini's response
