@@ -3,9 +3,11 @@ import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { uploadLabReport } from "@/services/labReportService";
 import { 
   FileText, UploadCloud, ArrowRight, Check, Clock, 
-  ArrowLeft, FileUp, Loader2, AlertCircle, CheckCircle 
+  ArrowLeft, FileUp, Loader, AlertCircle, CheckCircle 
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 const UploadPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [step, setStep] = useState<number>(1); // 1: Test Selection, 2: File Upload, 3: Processing, 4: Results
@@ -118,7 +121,16 @@ const UploadPage: React.FC = () => {
     }
   };
   
-  const handleUpload = () => {
+  const handleUpload = async () => {
+    if (!user) {
+      toast({
+        title: "Not logged in",
+        description: "Please log in to upload lab reports",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (selectedFiles.length === 0) {
       toast({
         title: "No files selected",
@@ -129,50 +141,110 @@ const UploadPage: React.FC = () => {
     }
     
     setIsUploading(true);
+    setUploadProgress(0);
     
-    // Simulate file upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 5;
-      setUploadProgress(progress);
+    // Start the upload progress animation
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 500);
+    
+    try {
+      // Upload each selected file
+      const uploadPromises = selectedFiles.map(file => 
+        uploadLabReport(file, user.id)
+      );
       
-      if (progress >= 100) {
-        clearInterval(interval);
-        setUploadedFiles(selectedFiles.map(file => ({
-          name: file.name,
-          status: "success"
-        })));
-        setIsUploading(false);
+      const results = await Promise.all(uploadPromises);
+      
+      // Check if any upload failed
+      const failedUploads = results.filter(result => result.error);
+      
+      if (failedUploads.length > 0) {
+        toast({
+          title: "Upload failed",
+          description: `${failedUploads.length} file(s) failed to upload`,
+          variant: "destructive",
+        });
+        
+        setUploadedFiles(
+          results.map((result, i) => ({
+            name: selectedFiles[i].name,
+            status: result.error ? "failed" : "success"
+          }))
+        );
+      } else {
+        // All uploads successful
+        setUploadedFiles(
+          selectedFiles.map(file => ({
+            name: file.name,
+            status: "success"
+          }))
+        );
+        
+        // Complete the upload progress animation
+        setUploadProgress(100);
         
         // Move to processing step
-        setStep(3);
-        startProcessing();
+        setTimeout(() => {
+          setStep(3);
+          startProcessing();
+        }, 500);
+        
+        toast({
+          title: "Upload successful",
+          description: `${selectedFiles.length} file(s) uploaded successfully`,
+        });
       }
-    }, 200);
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "An error occurred while uploading files",
+        variant: "destructive",
+      });
+      
+      setUploadedFiles(
+        selectedFiles.map(file => ({
+          name: file.name,
+          status: "failed"
+        }))
+      );
+    } finally {
+      clearInterval(progressInterval);
+      setIsUploading(false);
+      setUploadProgress(100);
+    }
   };
   
   const startProcessing = () => {
     setIsProcessing(true);
+    setProcessingProgress(0);
     
     // Simulate processing progress
-    let progress = 0;
     const interval = setInterval(() => {
-      progress += 2;
-      setProcessingProgress(progress);
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setIsProcessing(false);
-        
-        // Show success message
-        toast({
-          title: "Analysis complete",
-          description: "Your lab reports have been successfully analyzed",
-        });
-        
-        // Move to results step
-        setStep(4);
-      }
+      setProcessingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsProcessing(false);
+          
+          // Show success message
+          toast({
+            title: "Analysis complete",
+            description: "Your lab reports have been successfully analyzed",
+          });
+          
+          // Move to results step
+          setStep(4);
+          return 100;
+        }
+        return prev + 2;
+      });
     }, 300);
   };
   
@@ -442,7 +514,7 @@ const UploadPage: React.FC = () => {
                   <div className="flex flex-col items-center justify-center space-y-6">
                     <div className="relative">
                       <div className="p-4 bg-primary/10 rounded-full">
-                        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                        <Loader className="h-12 w-12 text-primary animate-spin" />
                       </div>
                     </div>
                     <div className="text-center">
@@ -505,11 +577,11 @@ const UploadPage: React.FC = () => {
                           </li>
                           <li className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Values Outside Reference:</span>
-                            <span className="font-medium">3 markers</span>
+                            <span className="font-medium">5 markers</span>
                           </li>
                           <li className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Generated Insights:</span>
-                            <span className="font-medium">5 recommendations</span>
+                            <span className="font-medium">4 recommendations</span>
                           </li>
                         </ul>
                       </CardContent>

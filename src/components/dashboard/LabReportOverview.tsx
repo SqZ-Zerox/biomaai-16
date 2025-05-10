@@ -1,50 +1,168 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, AlertCircle, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle, AlertTriangle, ArrowRight, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { getLatestLabReport, LabInsight, LabResult, LabReport } from "@/services/labReportService";
+import { useToast } from "@/hooks/use-toast";
 
 const LabReportOverview: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [report, setReport] = useState<LabReport | null>(null);
+  const [results, setResults] = useState<LabResult[] | null>(null);
+  const [insights, setInsights] = useState<LabInsight | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  // Mock data - in a real app, this would come from API or state management
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const { report, results, insights, error } = await getLatestLabReport(user.id);
+        
+        if (error) {
+          console.error("Error fetching lab report:", error);
+          setError(error);
+        } else {
+          setReport(report);
+          setResults(results);
+          setInsights(insights);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch lab report data:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user]);
+  
+  // Group results by status
+  const categorizedResults = results ? 
+    results.reduce<Record<string, LabResult[]>>((acc, result) => {
+      const status = 
+        result.status === 'critical' ? 'critical' :
+        (result.status === 'high' || result.status === 'low') ? 'warning' : 'normal';
+      
+      if (!acc[status]) acc[status] = [];
+      acc[status].push(result);
+      return acc;
+    }, {}) : {};
+  
+  // Prepare data for display
   const labCategories = [
     {
       name: "Critical Attention",
-      count: 2,
+      count: categorizedResults.critical?.length || 0,
       status: "critical",
       icon: <AlertCircle className="h-4 w-4" />,
-      items: [
-        { name: "Vitamin D", value: "20 ng/mL", status: "critical" },
-        { name: "HDL Cholesterol", value: "38 mg/dL", status: "critical" },
-      ]
+      items: (categorizedResults.critical || []).slice(0, 3)
     },
     {
       name: "Monitoring Needed",
-      count: 3,
+      count: categorizedResults.warning?.length || 0,
       status: "warning",
       icon: <AlertTriangle className="h-4 w-4" />,
-      items: [
-        { name: "Total Cholesterol", value: "210 mg/dL", status: "warning" },
-        { name: "LDL Cholesterol", value: "132 mg/dL", status: "warning" },
-        { name: "Triglycerides", value: "155 mg/dL", status: "warning" },
-      ]
+      items: (categorizedResults.warning || []).slice(0, 3)
     },
     {
       name: "Optimal Range",
-      count: 12,
+      count: categorizedResults.normal?.length || 0,
       status: "normal",
       icon: <CheckCircle className="h-4 w-4" />,
-      items: [
-        { name: "Blood Glucose", value: "87 mg/dL", status: "normal" },
-        { name: "Hemoglobin", value: "14.2 g/dL", status: "normal" },
-        { name: "White Blood Cells", value: "6.8 K/uL", status: "normal" },
-      ]
+      items: (categorizedResults.normal || []).slice(0, 3)
     },
   ];
+  
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="shadow-sm border-border/40">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <CardTitle>Lab Report Overview</CardTitle>
+              </div>
+            </div>
+            <CardDescription>
+              Loading your lab data...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center items-center py-12">
+            <div className="flex flex-col items-center gap-4">
+              <Loader className="h-8 w-8 text-primary animate-spin" />
+              <p className="text-muted-foreground">Retrieving your latest lab report</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+  
+  if (!report || !results || results.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="shadow-sm border-border/40">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <CardTitle>Lab Report Overview</CardTitle>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate("/upload")}
+                className="border-primary/30 text-primary hover:bg-primary hover:text-white"
+              >
+                Upload New Report
+              </Button>
+            </div>
+            <CardDescription>
+              {error ? "Error retrieving lab data" : "No lab reports uploaded yet"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center items-center py-8">
+            <div className="text-center space-y-4">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
+              <div>
+                <h3 className="text-lg font-medium mb-1">No Lab Results Found</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  {error 
+                    ? "There was an error retrieving your lab data. Please try again later."
+                    : "Upload your lab reports to get personalized insights and recommendations."}
+                </p>
+                <Button onClick={() => navigate("/upload")}>
+                  Upload Your First Report
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
   
   return (
     <motion.div
@@ -105,13 +223,15 @@ const LabReportOverview: React.FC = () => {
                 <div className="space-y-1">
                   {category.items.map((item, itemIndex) => (
                     <div key={itemIndex} className="flex items-center justify-between p-2 rounded-md bg-muted/30">
-                      <span className="text-sm">{item.name}</span>
+                      <span className="text-sm">{item.biomarker_name}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{item.value}</span>
+                        <span className="text-sm font-medium">
+                          {item.value}{item.unit ? ` ${item.unit}` : ''}
+                        </span>
                         <div
                           className={`w-2 h-2 rounded-full
                             ${item.status === "critical" ? "bg-destructive" : ""}
-                            ${item.status === "warning" ? "bg-yellow-500" : ""}
+                            ${item.status === "high" || item.status === "low" ? "bg-yellow-500" : ""}
                             ${item.status === "normal" ? "bg-green-500" : ""}
                           `}
                         ></div>
@@ -125,20 +245,25 @@ const LabReportOverview: React.FC = () => {
             <div className="pt-3 border-t border-border">
               <h3 className="font-semibold mb-2">Next Steps</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-                  <span>Consider scheduling a doctor's visit to address vitamin D deficiency</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
-                  <span>Explore our nutrition plan to help improve cholesterol levels</span>
-                </li>
+                {insights && insights.warnings && insights.warnings.length > 0 ? (
+                  <li className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
+                    <span>{insights.warnings[0]}</span>
+                  </li>
+                ) : null}
+                
+                {insights && insights.recommendations && insights.recommendations.length > 0 ? (
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                    <span>{insights.recommendations[0]}</span>
+                  </li>
+                ) : null}
               </ul>
               <Button 
                 className="mt-4 w-full"
-                onClick={() => navigate("/action-plan")}
+                onClick={() => navigate("/lab-details")}
               >
-                View Detailed Action Plan
+                View Detailed Analysis
               </Button>
             </div>
           </div>

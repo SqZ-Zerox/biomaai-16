@@ -20,6 +20,7 @@ import NutritionPage from "./pages/NutritionPage";
 import ChatPage from "./pages/ChatPage";
 import RecipeSuggestionsPage from "./pages/RecipeSuggestionsPage";
 import SettingsPage from "./pages/SettingsPage";
+import LabDetailsPage from "./pages/LabDetailsPage";
 
 // Dashboard layout wrapper component
 const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () => void; isDarkMode: boolean }) => {
@@ -79,6 +80,9 @@ function App() {
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/progress" element={<Index />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/lab-details" element={<LabDetailsPage />} />
+              <Route path="/lab-details/:reportId" element={<LabDetailsPage />} />
+              <Route path="/lab-details/:category" element={<LabDetailsPage />} />
             </Route>
             
             {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}

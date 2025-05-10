@@ -9,6 +9,121 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      lab_insights: {
+        Row: {
+          created_at: string
+          follow_ups: Json
+          id: string
+          insights: Json
+          recommendations: Json
+          report_id: string
+          warnings: Json
+        }
+        Insert: {
+          created_at?: string
+          follow_ups?: Json
+          id?: string
+          insights?: Json
+          recommendations?: Json
+          report_id: string
+          warnings?: Json
+        }
+        Update: {
+          created_at?: string
+          follow_ups?: Json
+          id?: string
+          insights?: Json
+          recommendations?: Json
+          report_id?: string
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_insights_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "lab_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_reports: {
+        Row: {
+          file_name: string
+          file_path: string
+          id: string
+          is_deleted: boolean
+          status: string
+          test_types: string[] | null
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          id?: string
+          is_deleted?: boolean
+          status?: string
+          test_types?: string[] | null
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          id?: string
+          is_deleted?: boolean
+          status?: string
+          test_types?: string[] | null
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lab_results: {
+        Row: {
+          biomarker_name: string
+          category: string | null
+          created_at: string
+          id: string
+          reference_range: string | null
+          report_id: string
+          status: string
+          unit: string | null
+          value: string
+        }
+        Insert: {
+          biomarker_name: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          reference_range?: string | null
+          report_id: string
+          status: string
+          unit?: string | null
+          value: string
+        }
+        Update: {
+          biomarker_name?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          reference_range?: string | null
+          report_id?: string
+          status?: string
+          unit?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_results_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "lab_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           activity_level: string | null
