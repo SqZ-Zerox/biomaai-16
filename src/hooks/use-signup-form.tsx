@@ -78,9 +78,20 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const proceedToMedicalStep = () => {
     const { height, weight, activity_level, health_goals } = form.getValues();
     
+    console.log("Health goals when proceeding to medical step:", health_goals);
+    
     // Validate current fields before proceeding
-    if (!height || !weight || !activity_level || health_goals.length === 0) {
-      form.trigger(["height", "weight", "activity_level", "health_goals"]);
+    if (!height || !weight || !activity_level) {
+      form.trigger(["height", "weight", "activity_level"]);
+      return;
+    }
+    
+    // Specific validation for health goals
+    if (!health_goals || health_goals.length === 0) {
+      form.setError('health_goals', {
+        type: 'manual',
+        message: 'Please select at least one health goal'
+      });
       return;
     }
     
@@ -117,6 +128,8 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
 
   const onSubmit = async () => {
     try {
+      setIsLoading(true);
+      
       const values = form.getValues();
       
       // Ensure terms are accepted
@@ -126,12 +139,11 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
           description: "You must accept the terms and conditions to create an account.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       
-      setIsLoading(true);
-      
-      // Enhanced validation for health goals - log the value
+      // Enhanced validation for health goals
       console.log("Health goals selected:", values.health_goals);
       
       if (!values.health_goals || values.health_goals.length === 0) {
@@ -145,7 +157,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         return;
       }
       
-      // Format data for API - make sure to include raw values, not objects
+      // Format data for API - make sure to send raw string values for health goals and dietary restrictions
       const signupData = {
         email: values.email,
         password: values.password,
@@ -179,6 +191,16 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
         let errorMessage = "Failed to create account. Please try again.";
         if (error.message) {
           errorMessage = error.message;
+        }
+        
+        // Handle specific error cases
+        if (errorMessage.includes("already registered") || errorMessage.includes("already exists")) {
+          errorMessage = "This email is already registered. Please use a different email or try logging in.";
+          form.setError('email', {
+            type: 'manual',
+            message: 'This email is already registered'
+          });
+          setCurrentStep('credentials');
         }
         
         toast({

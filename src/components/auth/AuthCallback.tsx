@@ -45,21 +45,28 @@ const AuthCallback: React.FC = () => {
           // Important: Log the success and redirect path
           console.log("Email verification successful, refreshing auth session");
           
-          // Refresh the auth context with a small delay to ensure verification is complete
+          // Refresh the auth context with a delay to ensure verification is complete
           setTimeout(async () => {
-            await checkSession();
-            
-            // Redirect to dashboard after verification is complete
-            navigate('/dashboard');
-          }, 1000);
+            try {
+              await checkSession();
+              
+              // Redirect to dashboard after verification is complete
+              console.log("Session checked, redirecting to dashboard");
+              navigate('/dashboard');
+            } catch (sessionError) {
+              console.error("Session check failed:", sessionError);
+              setError("Failed to establish your session. Please try logging in manually.");
+              setIsProcessing(false);
+            }
+          }, 1500);
         } else {
           console.error("Email verification failed");
-          setError("Unable to verify your email. Please try again later.");
+          setError("Unable to verify your email. The verification link may have expired or is invalid.");
+          setIsProcessing(false);
         }
       } catch (error) {
         console.error("Auth callback error:", error);
-        setError("An error occurred while verifying your email.");
-      } finally {
+        setError("An error occurred while verifying your email. Please try again or contact support.");
         setIsProcessing(false);
       }
     };

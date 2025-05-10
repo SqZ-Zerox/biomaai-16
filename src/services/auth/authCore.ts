@@ -80,18 +80,67 @@ export const extractSupabaseUser = (user: User) => {
   };
 };
 
+// Check if email already exists
+export const checkIfEmailExists = async (email: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      filter: { email },
+    });
+    
+    // If we get an error with admin access, fall back to a sign-in attempt
+    if (error) {
+      console.log("Admin API not available, falling back to sign-in check");
+      const { error: signInError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false
+        }
+      });
+      
+      // If there's no error about user not found, the email likely exists
+      // Different error message patterns to check for
+      if (signInError) {
+        const errorMsg = signInError.message.toLowerCase();
+        return !errorMsg.includes("user not found") && !errorMsg.includes("user does not exist");
+      }
+      return true;
+    }
+    
+    // Check if any users were found with this email
+    return data && data.users && data.users.length > 0;
+  } catch (error) {
+    console.error("Error checking if email exists:", error);
+    return false;
+  }
+};
+
 // Add the missing authentication functions
 export const signUp = async (signupData: any) => {
   try {
     console.log("Raw signup data:", signupData);
     
+    // Check if email already exists to prevent duplicate registrations
+    const emailExists = await checkIfEmailExists(signupData.email);
+    if (emailExists) {
+      console.error("Email already exists:", signupData.email);
+      return {
+        data: null,
+        error: {
+          message: "An account with this email already exists. Please try logging in or use a different email.",
+          status: 409
+        }
+      };
+    }
+    
     // Format health goals correctly - ensure we have an array of objects with 'value' property
-    const formattedHealthGoals = signupData.health_goals.map((goal: string) => ({
-      value: goal
-    }));
+    const formattedHealthGoals = Array.isArray(signupData.health_goals) && signupData.health_goals.length > 0
+      ? signupData.health_goals.map((goal: string) => ({
+          value: goal
+        }))
+      : [];
 
     // Format dietary restrictions correctly - ensure we have an array of objects with 'value' property
-    const formattedDietaryRestrictions = signupData.dietary_restrictions && signupData.dietary_restrictions.length > 0
+    const formattedDietaryRestrictions = signupData.dietary_restrictions && Array.isArray(signupData.dietary_restrictions) && signupData.dietary_restrictions.length > 0
       ? signupData.dietary_restrictions.map((restriction: string) => ({
           value: restriction
         })) 
@@ -99,6 +148,18 @@ export const signUp = async (signupData: any) => {
     
     console.log("Formatted health goals:", formattedHealthGoals);
     console.log("Formatted dietary restrictions:", formattedDietaryRestrictions);
+
+    // Validate that health goals and dietary restrictions are properly formatted before signup
+    if (formattedHealthGoals.length === 0 && signupData.health_goals && signupData.health_goals.length > 0) {
+      console.error("Failed to format health goals:", signupData.health_goals);
+      return {
+        data: null,
+        error: {
+          message: "Failed to process health goals. Please try again.",
+          status: 400
+        }
+      };
+    }
 
     // Clean up local storage to prevent conflicts
     cleanupAuthState();
@@ -131,7 +192,31 @@ export const signUp = async (signupData: any) => {
       }
     });
     
+    // Log the complete response for debugging
     console.log("Signup response:", data, error);
+    
+    // Enhanced error handling
+    if (error) {
+      console.error("Signup error details:", error);
+      
+      // Create a more specific error message based on the error code
+      let errorMessage = error.message;
+      
+      if (error.message.includes("already registered")) {
+        errorMessage = "This email is already registered. Please use a different email or try logging in.";
+      } else if (error.message.includes("password")) {
+        errorMessage = "Password is invalid. Please ensure it's at least 6 characters long.";
+      }
+      
+      return { 
+        data: null, 
+        error: {
+          ...error,
+          message: errorMessage
+        }
+      };
+    }
+    
     return { data, error };
   } catch (error: any) {
     console.error("Sign up error:", error);
@@ -156,6 +241,27 @@ export const signIn = async ({ email, password }: { email: string; password: str
       email,
       password
     });
+    
+    if (error) {
+      console.error("Sign in error:", error);
+      
+      // Provide better error messages based on error types
+      let errorMessage = error.message;
+      
+      if (error.message.includes("Invalid login")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message.includes("not confirmed")) {
+        errorMessage = "Your email has not been verified. Please check your inbox for a confirmation email.";
+      }
+      
+      return { 
+        data: null, 
+        error: {
+          ...error,
+          message: errorMessage
+        }
+      };
+    }
     
     return { data, error };
   } catch (error: any) {
@@ -214,12 +320,17 @@ export const updateUserVerificationStatus = async () => {
       return false;
     }
     
-    if (type !== 'email_confirmation' && type !== 'signup' && type !== 'recovery' && type !== 'email_verification') {
+    // Accept more verification types for better compatibility
+    const validTypes = ['email_confirmation', 'signup', 'recovery', 'email_verification', 'email_change'];
+    if (!type || !validTypes.includes(type)) {
       console.error("Invalid verification type:", type);
       return false;
     }
     
     console.log("Verifying token:", token_hash, "type:", type);
+    
+    // Clean up auth state before verification to prevent conflicts
+    cleanupAuthState();
     
     // Verify the email using the token
     const { error } = await supabase.auth.verifyOtp({

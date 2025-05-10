@@ -10,7 +10,8 @@ export {
   getCurrentSession,
   updateUserVerificationStatus,
   processProfileData,
-  extractSupabaseUser
+  extractSupabaseUser,
+  cleanupAuthState
 } from "./authCore";
 
 // Export profile management

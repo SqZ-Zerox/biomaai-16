@@ -11,7 +11,7 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
       return false;
     }
     
-    // Make sure we have valid health goal data
+    // Format health goals correctly for insertion
     const validGoals = healthGoals
       .filter(goal => {
         // Handle both string values and objects with 'value' property
@@ -33,7 +33,7 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
         };
       });
     
-    console.log("Formatted goals:", validGoals);
+    console.log("Formatted goals for insertion:", validGoals);
     
     if (validGoals.length === 0) {
       console.warn("No valid health goals to insert");
@@ -41,10 +41,15 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
     }
     
     // Delete any existing health goals for this user to prevent duplicates
-    await supabase
+    const { error: deleteError } = await supabase
       .from('user_health_goals')
       .delete()
       .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error("Error deleting existing health goals:", deleteError);
+      return false;
+    }
     
     // Insert the health goals
     const { error } = await supabase
@@ -74,7 +79,7 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
       return true; // Return true as this is not an error condition
     }
     
-    // Make sure we have valid dietary restriction data
+    // Format dietary restrictions correctly for insertion
     const validRestrictions = dietaryRestrictions
       .filter(restriction => {
         // Handle both string values and objects with 'value' property
@@ -96,7 +101,7 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
         };
       });
     
-    console.log("Formatted restrictions:", validRestrictions);
+    console.log("Formatted restrictions for insertion:", validRestrictions);
     
     if (validRestrictions.length === 0) {
       console.log("No valid dietary restrictions to insert");
@@ -104,10 +109,15 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
     }
     
     // Delete any existing dietary restrictions for this user to prevent duplicates
-    await supabase
+    const { error: deleteError } = await supabase
       .from('user_dietary_restrictions')
       .delete()
       .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error("Error deleting existing dietary restrictions:", deleteError);
+      return false;
+    }
     
     // Insert the dietary restrictions
     const { error } = await supabase

@@ -23,6 +23,11 @@ const AuthCallbackPage: React.FC = () => {
     params.forEach((value, key) => {
       console.log(`Parameter ${key}:`, value);
     });
+    
+    // Let users know about critical configuration in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.info("Important: For authentication to work properly in production, ensure your Site URL and Redirect URLs are correctly configured in the Supabase Auth settings.");
+    }
   }, [location]);
   
   return <AuthCallback />;
