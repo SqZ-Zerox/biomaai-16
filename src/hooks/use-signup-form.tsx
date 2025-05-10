@@ -227,22 +227,28 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       form.reset();
       onRegistrationSuccess(values.email);
       
-      // Automatically navigate to dashboard if email confirmation is disabled in Supabase
-      if (data?.session) {
+      // Show appropriate message based on email verification requirement
+      const emailVerificationRequired = !data?.session;
+      
+      if (emailVerificationRequired) {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account before attempting to log in.",
+        });
+      } else {
+        // Automatically navigate to dashboard if email confirmation is disabled in Supabase
         // Refresh the auth context to ensure it has the latest session data
         await checkSession();
+        
+        toast({
+          title: "Account created!",
+          description: "Your account has been created successfully. Redirecting to dashboard...",
+        });
         
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
       }
-      
-      toast({
-        title: "Account created!",
-        description: data?.session 
-          ? "Your account has been created successfully. Redirecting to dashboard..."
-          : "Please check your email to verify your account.",
-      });
     } catch (error: any) {
       console.error("Signup submission error:", error);
       

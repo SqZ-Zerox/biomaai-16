@@ -26,13 +26,25 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
         <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">We've sent a verification email to <span className="font-bold">{email}</span></p>
-          <p>Please check your inbox and click the verification link to activate your account.</p>
+          <p className="font-medium text-foreground">Please check your inbox and click the verification link to activate your account before attempting to log in.</p>
+          
+          <div className="mt-3 p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium">Important: Email Verification Required</h4>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                You must verify your email address before you can log in. If you don't see the verification email in your inbox, please check your spam/junk folder.
+              </p>
+            </div>
+          </div>
           
           <div className="mt-3 p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-3">
             <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-medium">Important Information</h4>
+                <h4 className="font-medium">Next Steps</h4>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Your profile will only be created after you verify your email address. This helps us prevent spam and ensure data quality.

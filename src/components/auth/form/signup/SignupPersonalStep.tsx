@@ -1,7 +1,6 @@
-
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, User, Calendar, Phone } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, Calendar, Phone, AlertCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { SignupFormValues } from "./types";
 import { slideVariants } from "./animations";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SignupPersonalStepProps {
   form: UseFormReturn<SignupFormValues>;
@@ -30,6 +30,9 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
   onNext, 
   onBack 
 }) => {
+  // Check if birth date has error (age validation failed)
+  const birthDateError = form.formState.errors.birth_date;
+
   return (
     <motion.div
       key="personal"
@@ -43,6 +46,15 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-medium">2</div>
         <h3 className="text-lg font-medium">Personal Information</h3>
       </div>
+      
+      {birthDateError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>
+            {birthDateError.message as string}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -105,10 +117,12 @@ const SignupPersonalStep: React.FC<SignupPersonalStepProps> = ({
                   disabled={isLoading}
                   {...field}
                   value={field.value || ''}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
                 />
               </div>
             </FormControl>
             <FormMessage />
+            <p className="text-xs text-muted-foreground mt-1">You must be at least 13 years old to use this service.</p>
           </FormItem>
         )}
       />

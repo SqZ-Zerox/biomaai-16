@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,28 +57,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Checking session...");
       setIsLoading(true);
       
-      const { session, error } = await getCurrentSession();
+      const { data } = await getCurrentSession();
       
-      if (error) {
-        console.error("Error checking session:", error);
+      if (!data || !data.session) {
+        console.error("Error checking session:", data.error);
         return;
       }
       
-      setSession(session);
-      setUser(session?.user || null);
+      setSession(data.session);
+      setUser(data.session?.user || null);
       
-      if (session?.user) {
+      if (data.session?.user) {
         console.log("Session exists, fetching profile...");
-        console.log("User metadata:", session.user.user_metadata);
+        console.log("User metadata:", data.session.user.user_metadata);
         
         // Check if email is verified
         let isVerified = true; // Default to true for social logins
         
         // For email-password logins, check email verification
-        if (session.user.app_metadata?.provider === 'email' || 
-            !session.user.app_metadata?.provider) {
-          isVerified = session.user.email_confirmed_at != null;
-          console.log("Email confirmed at:", session.user.email_confirmed_at);
+        if (data.session.user.app_metadata?.provider === 'email' || 
+            !data.session.user.app_metadata?.provider) {
+          isVerified = data.session.user.email_confirmed_at != null;
+          console.log("Email confirmed at:", data.session.user.email_confirmed_at);
         }
         
         setIsEmailVerified(isVerified);
@@ -88,8 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isVerified) {
           // Ensure user profile exists
           try {
-            if (session.user.user_metadata) {
-              await ensureUserProfile(session.user.id, session.user.user_metadata);
+            if (data.session.user.user_metadata) {
+              await ensureUserProfile(data.session.user.id, data.session.user.user_metadata);
             }
             
             // Fetch user profile
