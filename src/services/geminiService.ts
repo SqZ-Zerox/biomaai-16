@@ -1,11 +1,10 @@
-
 import { toast } from "@/hooks/use-toast";
 import { SecureKeyManager } from "./securityService";
 
 // Gemini API configuration
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-1.5-pro";
-const DEFAULT_TEST_KEY = "AIzaSyBaXu3nq5i_WJ0cw7P6Itk-FCNyj_JmYJU";
+const DEFAULT_TEST_KEY = "AIzaSyCPwVwVaiibKnyAj6fHj1_MxSgANcX4evc";
 
 // API Key Manager (similar to OpenAI implementation)
 class APIKeyManager {

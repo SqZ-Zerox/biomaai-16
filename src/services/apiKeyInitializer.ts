@@ -18,7 +18,7 @@ export const initializeAPIKeys = () => {
   }
   
   // Set the Gemini API key if not already set
-  const DEFAULT_GEMINI_KEY = "AIzaSyBaXu3nq5i_WJ0cw7P6Itk-FCNyj_JmYJU";
+  const DEFAULT_GEMINI_KEY = "AIzaSyCPwVwVaiibKnyAj6fHj1_MxSgANcX4evc";
   
   // Set the key if it's not already set
   if (localStorage.getItem("gemini_api_key") === null) {

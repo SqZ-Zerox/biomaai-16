@@ -1,241 +1,78 @@
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { AuthResult, SessionResult, SignupData } from "./types";
+import { User } from "@supabase/supabase-js";
 
-export async function signUp({
-  email,
-  password,
-  first_name,
-  last_name,
-  birth_date,
-  phone_number,
-  gender = null,
-  height = null,
-  weight = null,
-  activity_level = null,
-  profession = null,
-  health_goals = [],
-  dietary_restrictions = [],
-  user_metadata = {
-    existing_conditions: [],
-    allergies: '',
-    medications: '',
-    family_history: [],
-    recent_lab_work: ''
-  }
-}: SignupData): Promise<AuthResult> {
-  try {
-    // Format user metadata for Supabase - but only include basic identification info
-    // We'll save the full profile only after verification
-    const formattedMetadata = {
-      first_name,
-      last_name,
-      email_verified: false, // Add a flag to track verification status
-      // Store all other data as temporary registration data
-      registration_data: {
-        birth_date,
-        phone_number,
-        profession,
-        gender,
-        height,
-        weight,
-        activity_level,
-        health_goals: Array.isArray(health_goals) 
-          ? health_goals
-              .filter((item): item is NonNullable<typeof item> => item != null) // Filter out null and undefined values with type predicate
-              .map((goalItem) => {
-                // Check if goalItem is an object with value property
-                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
-                  const valueProperty = goalItem.value;
-                  return valueProperty != null ? String(valueProperty) : '';
-                }
-                // Handle primitive values
-                return String(goalItem);
-              })
-          : [],
-        dietary_restrictions: Array.isArray(dietary_restrictions) 
-          ? dietary_restrictions
-              .filter((item): item is NonNullable<typeof item> => item != null) // Filter out null and undefined values with type predicate
-              .map((restrictionItem) => {
-                // Check if restrictionItem is an object with value property
-                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
-                  const valueProperty = restrictionItem.value;
-                  return valueProperty != null ? String(valueProperty) : '';
-                }
-                // Handle primitive values
-                return String(restrictionItem);
-              })
-          : [],
-        ...user_metadata
-      }
-    };
-
-    console.log("Signing up with minimal metadata:", formattedMetadata);
-    
-    const options = {
-      data: formattedMetadata,
-      emailRedirectTo: `${window.location.origin}/auth/callback` // Ensure correct callback URL format
-    };
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options
-    });
-
-    if (error) {
-      console.error("Supabase signup error:", error);
-      throw error;
-    }
-    
-    console.log("Signup response:", data);
-    return { data, error: null };
-  } catch (error: any) {
-    console.error("Error signing up:", error);
-    
-    // Provide more specific error messages
-    let errorMessage = "Failed to create account. Please try again.";
-    
-    if (error.message) {
-      if (error.message.includes("already registered")) {
-        errorMessage = "This email is already registered. Please login or use a different email.";
-      } else if (error.message.includes("password")) {
-        errorMessage = "Password error: " + error.message;
-      } else if (error.message.includes("email")) {
-        errorMessage = "Email error: " + error.message;
-      }
-    }
-    
-    toast({
-      title: "Signup Failed",
-      description: errorMessage,
-      variant: "destructive",
-    });
-    
-    return { data: null, error: { ...error, message: errorMessage } };
-  }
+// Define the structure for health goals and dietary restrictions
+interface SelectOption {
+  id: string;
+  name: string;
+  selected: boolean;
 }
 
-export async function signIn({ 
-  email, 
-  password
-}: { 
-  email: string; 
-  password: string;
-}): Promise<AuthResult> {
-  try {
-    console.log("Attempting signin with email:", email);
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      console.error("Signin error:", error);
-      throw error;
-    }
-    
-    console.log("Signin successful:", data.session?.user?.id);
-    return { data, error: null };
-  } catch (error: any) {
-    console.error("Error signing in:", error);
-    
-    // Provide more specific error messages
-    let errorMessage = "Failed to sign in. Please try again.";
-    
-    if (error.message) {
-      if (error.message.includes("Invalid login")) {
-        errorMessage = "Invalid email or password. Please try again.";
-      } else if (error.message.includes("Email not confirmed")) {
-        errorMessage = "Please confirm your email before logging in.";
-      }
-    }
-    
-    toast({
-      title: "Login Failed",
-      description: errorMessage,
-      variant: "destructive",
-    });
-    
-    return { data: null, error: { ...error, message: errorMessage } };
-  }
+// Define the structure for user profile data
+export interface UserProfileData {
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+  healthGoals: SelectOption[];
+  dietaryRestrictions: SelectOption[];
 }
 
-export async function signOut(): Promise<{ error: any }> {
-  try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    return { error: null };
-  } catch (error: any) {
-    console.error("Error signing out:", error.message);
-    return { error };
-  }
+// Helper function to check if an item is not null and has a 'value' property
+function isValidItem<T extends { value: string }>(item: T | null): item is T {
+  return item !== null && typeof item === 'object' && 'value' in item;
 }
 
-export async function getCurrentSession(): Promise<SessionResult> {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return { session: data.session, error: null };
-  } catch (error: any) {
-    console.error("Error getting session:", error.message);
-    return { session: null, error };
-  }
-}
+export const processProfileData = (userData: any): UserProfileData => {
+  const profileData: UserProfileData = {
+    fullName: userData.raw_user_meta_data?.full_name || userData.email,
+    email: userData.email,
+    avatarUrl: userData.raw_user_meta_data?.avatar_url || null,
+    healthGoals: [],
+    dietaryRestrictions: [],
+  };
 
-export async function updateUserVerificationStatus(): Promise<boolean> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      console.warn("No active session to update verification status");
-      return false;
+  // Process health goals if present and valid
+  if (
+    userData.raw_user_meta_data?.health_goals &&
+    Array.isArray(userData.raw_user_meta_data.health_goals)
+  ) {
+    const healthGoals = userData.raw_user_meta_data.health_goals
+      .filter(isValidItem)
+      .map(goalItem => ({
+        id: goalItem.value,
+        name: goalItem.value,
+        selected: true
+      }));
+
+    if (healthGoals.length > 0) {
+      profileData.healthGoals = healthGoals;
     }
-    
-    console.log("Updating verification status for user:", session.user.id);
-    
-    // Mark the user as email verified
-    const { error } = await supabase.auth.updateUser({
-      data: { 
-        email_verified: true 
-      }
-    });
-    
-    if (error) {
-      console.error("Error updating user verification status:", error);
-      return false;
-    }
-    
-    console.log("User verification status updated successfully");
-    
-    // After verification, ensure profile exists
-    const currentMetadata = session.user.user_metadata;
-    if (currentMetadata && currentMetadata.registration_data) {
-      const { error: profileError } = await supabase.from('profiles')
-        .upsert([{
-          id: session.user.id,
-          first_name: currentMetadata.first_name || '',
-          last_name: currentMetadata.last_name || '',
-          birth_date: currentMetadata.registration_data.birth_date || null,
-          phone_number: currentMetadata.registration_data.phone_number || null,
-          profession: currentMetadata.registration_data.profession || null,
-          gender: currentMetadata.registration_data.gender || null,
-          height: currentMetadata.registration_data.height || null,
-          weight: currentMetadata.registration_data.weight || null,
-          activity_level: currentMetadata.registration_data.activity_level || null
-        }], { onConflict: 'id' });
-      
-      if (profileError) {
-        console.error("Error creating user profile:", profileError);
-      } else {
-        console.log("User profile created successfully");
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Error in updateUserVerificationStatus:", error);
-    return false;
   }
-}
+
+  // Process dietary restrictions if present and valid
+  if (
+    userData.raw_user_meta_data?.dietary_restrictions &&
+    Array.isArray(userData.raw_user_meta_data.dietary_restrictions)
+  ) {
+    const dietaryRestrictions = userData.raw_user_meta_data.dietary_restrictions
+      .filter(isValidItem)
+      .map(restrictionItem => ({
+        id: restrictionItem.value,
+        name: restrictionItem.value,
+        selected: true
+      }));
+
+    if (dietaryRestrictions.length > 0) {
+      profileData.dietaryRestrictions = dietaryRestrictions;
+    }
+  }
+
+  return profileData;
+};
+
+export const extractSupabaseUser = (user: User) => {
+  return {
+    id: user.id,
+    email: user.email!,
+    user_metadata: user.user_metadata,
+  };
+};
