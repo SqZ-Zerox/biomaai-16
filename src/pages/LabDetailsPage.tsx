@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLabReportDetails, getUserLabReports, LabInsight, LabReport, LabResult } from "@/services/labReportService";
+import { getLabReportDetails, getUserLabReports, LabInsight, LabReport, LabResult } from "@/services/lab-reports";
 import LabResultsDisplay from "@/components/lab-reports/LabResultsDisplay";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

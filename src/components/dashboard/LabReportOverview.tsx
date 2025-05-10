@@ -7,7 +7,7 @@ import { FileText, AlertCircle, CheckCircle, AlertTriangle, ArrowRight, Loader }
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLatestLabReport, LabInsight, LabResult, LabReport } from "@/services/labReportService";
+import { getLatestLabReport, LabInsight, LabResult, LabReport } from "@/services/lab-reports";
 import { useToast } from "@/hooks/use-toast";
 
 const LabReportOverview: React.FC = () => {

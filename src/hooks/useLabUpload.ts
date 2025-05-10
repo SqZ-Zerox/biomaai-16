@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadLabReport } from "@/services/labReportService";
+import { uploadLabReport } from "@/services/lab-reports";
 
 export const useLabUpload = () => {
   const navigate = useNavigate();
