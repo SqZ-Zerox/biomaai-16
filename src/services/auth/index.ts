@@ -32,3 +32,9 @@ export {
   processHealthGoals,
   processDietaryRestrictions
 } from "./dataProcessor";
+
+// Export email utilities (new addition)
+export {
+  checkIfEmailExists,
+  validateEmailFormat
+} from "./emailUtils";
