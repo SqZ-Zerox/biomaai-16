@@ -42,13 +42,12 @@ export async function signUp({
         activity_level,
         health_goals: Array.isArray(health_goals) 
           ? health_goals
-              .filter(Boolean) // Filter out null, undefined, and falsy values
+              .filter((item): item is NonNullable<typeof item> => item != null) // Filter out null and undefined values with type predicate
               .map((goalItem) => {
-                if (!goalItem) return ''; // Handle null/undefined
-                
-                // TypeScript safety: explicitly check if goalItem is an object with value property
-                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem && goalItem.value != null) {
-                  return String(goalItem.value); 
+                // Check if goalItem is an object with value property
+                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem) {
+                  const valueProperty = goalItem.value;
+                  return valueProperty != null ? String(valueProperty) : '';
                 }
                 // Handle primitive values
                 return String(goalItem);
@@ -56,13 +55,12 @@ export async function signUp({
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions
-              .filter(Boolean) // Filter out null, undefined, and falsy values
+              .filter((item): item is NonNullable<typeof item> => item != null) // Filter out null and undefined values with type predicate
               .map((restrictionItem) => {
-                if (!restrictionItem) return ''; // Handle null/undefined
-                
-                // TypeScript safety: explicitly check if restrictionItem is an object with value property
-                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem && restrictionItem.value != null) {
-                  return String(restrictionItem.value);
+                // Check if restrictionItem is an object with value property
+                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem) {
+                  const valueProperty = restrictionItem.value;
+                  return valueProperty != null ? String(valueProperty) : '';
                 }
                 // Handle primitive values
                 return String(restrictionItem);
