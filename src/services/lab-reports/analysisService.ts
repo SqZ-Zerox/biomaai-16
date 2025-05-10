@@ -71,7 +71,6 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
     
     // Generate insights based on abnormal results
     const insights = {
-      summary: `Found ${abnormalResults.length} abnormal results out of ${results.length} total biomarkers.`,
       insights: [
         "Your lab results show some biomarkers outside the normal range.",
         "Consider discussing these results with your healthcare provider."
@@ -89,12 +88,11 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
         : []
     };
     
-    // Store the insights in the database
+    // Store the insights in the database - removed the summary field which doesn't exist in the schema
     const { error: insertError } = await supabase
       .from("lab_insights")
       .upsert({
         report_id: reportId,
-        summary: insights.summary,
         insights: insights.insights,
         recommendations: insights.recommendations,
         warnings: insights.warnings,
@@ -102,7 +100,10 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
         created_at: new Date().toISOString()
       });
       
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("Error inserting insights:", insertError);
+      throw insertError;
+    }
     
     // Update the report status to "analyzed"
     const { error: updateError } = await supabase
