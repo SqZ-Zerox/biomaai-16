@@ -18,7 +18,9 @@ export {
   ensureUserProfile,
   completeUserProfile,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  extractHealthGoals,
+  extractDietaryRestrictions
 } from "./profileManager";
 
 // Export operations (for backwards compatibility)
