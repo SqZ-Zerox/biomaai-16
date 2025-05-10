@@ -1,114 +1,97 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { updateUserVerificationStatus, cleanupAuthState } from '@/services/auth';
-import SocialProviderCallback from './SocialProviderCallback';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { updateUserVerificationStatus } from "@/services/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { Check, X } from "lucide-react";
 
 const AuthCallback: React.FC = () => {
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { checkSession } = useAuth();
-  const [searchParams] = useSearchParams();
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Check for social provider information
-  const provider = searchParams.get('provider');
-  
+
   useEffect(() => {
-    const processCallback = async () => {
+    const handleVerification = async () => {
       try {
-        // If this is a social login callback, don't process as standard email verification
-        if (provider) {
-          return; // The SocialProviderCallback component will handle this
-        }
-        
-        console.log("Processing email verification callback");
-        console.log("Search params:", Object.fromEntries(searchParams.entries()));
-        
-        // Clean up auth state before verifying to prevent conflicts
-        cleanupAuthState();
-        
-        // Update user verification status
-        const success = await updateUserVerificationStatus();
-        
-        if (success) {
-          toast({
-            title: "Email Verified",
-            description: "Your email has been verified successfully.",
-            variant: "default",
-          });
+        console.log("Starting verification process...");
+        setIsVerifying(true);
+
+        // Process the verification
+        const verified = await updateUserVerificationStatus();
+        console.log("Verification result:", verified);
+
+        if (verified) {
+          setIsSuccess(true);
+          // Refresh auth session
+          await checkSession();
           
-          // Important: Log the success and redirect path
-          console.log("Email verification successful, refreshing auth session");
-          
-          // Refresh the auth context with a delay to ensure verification is complete
-          setTimeout(async () => {
-            try {
-              await checkSession();
-              
-              // Redirect to dashboard after verification is complete
-              console.log("Session checked, redirecting to dashboard");
-              navigate('/dashboard');
-            } catch (sessionError) {
-              console.error("Session check failed:", sessionError);
-              setError("Failed to establish your session. Please try logging in manually.");
-              setIsProcessing(false);
-            }
-          }, 1500);
+          // Navigate to dashboard after a short delay
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 2000);
         } else {
-          console.error("Email verification failed");
-          setError("Unable to verify your email. The verification link may have expired or is invalid.");
-          setIsProcessing(false);
+          setIsSuccess(false);
+          setErrorMessage("Verification failed. The link may have expired or is invalid.");
+          
+          // Navigate back to login after a short delay
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
         }
       } catch (error) {
-        console.error("Auth callback error:", error);
-        setError("An error occurred while verifying your email. Please try again or contact support.");
-        setIsProcessing(false);
+        console.error("Error during verification:", error);
+        setIsSuccess(false);
+        setErrorMessage("An error occurred during verification.");
+      } finally {
+        setIsVerifying(false);
       }
     };
-    
-    processCallback();
-  }, [navigate, toast, checkSession, provider, searchParams]);
-  
-  if (provider) {
-    return <SocialProviderCallback provider={provider} />;
-  }
-  
+
+    handleVerification();
+  }, [checkSession, navigate]);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md mx-auto bg-card border border-border/30 shadow-xl rounded-xl overflow-hidden p-10 text-center">
-        {isProcessing ? (
-          <>
-            <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Verifying your email</h2>
-            <p className="text-muted-foreground">Please wait while we verify your email address...</p>
-          </>
-        ) : error ? (
-          <>
-            <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-destructive text-xl">×</span>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md bg-card p-8 rounded-xl shadow-lg border border-border">
+        <h1 className="text-2xl font-bold mb-6 text-center">Account Verification</h1>
+        
+        {isVerifying && (
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p>Verifying your account...</p>
+          </div>
+        )}
+        
+        {!isVerifying && isSuccess && (
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-2xl font-semibold mb-2">Verification Failed</h2>
-            <p className="text-destructive mb-4">{error}</p>
+            <h2 className="text-xl font-semibold mb-2">Verification Successful!</h2>
+            <p className="text-muted-foreground text-center">
+              Your account has been verified successfully. Redirecting you to the dashboard...
+            </p>
+          </div>
+        )}
+        
+        {!isVerifying && !isSuccess && (
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <X className="w-8 h-8 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Verification Failed</h2>
+            <p className="text-muted-foreground text-center mb-4">
+              {errorMessage || "Something went wrong during verification."}
+            </p>
             <button 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
               onClick={() => navigate('/login')}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
             >
-              Back to Login
+              Return to Login
             </button>
-          </>
-        ) : (
-          <>
-            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <span className="text-green-600 text-xl">✓</span>
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">Email Verified!</h2>
-            <p className="text-muted-foreground mb-4">Your email has been successfully verified. Redirecting to dashboard...</p>
-          </>
+          </div>
         )}
       </div>
     </div>

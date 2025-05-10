@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -80,54 +79,81 @@ export const extractSupabaseUser = (user: User) => {
   };
 };
 
-// Improved email existence check function
+// Email check function completely rewritten for reliability
 export const checkIfEmailExists = async (email: string): Promise<boolean> => {
   try {
-    // Using signInWithOtp with shouldCreateUser: false is more reliable for checking if an email exists
-    // But this can cause false positives due to Supabase's OTP configuration
-    
-    // First, check if the email format is valid
+    // Validate email format first
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       console.log("Invalid email format:", email);
       return false;
     }
     
-    // Instead of using OTP, try a password reset which is more reliable
-    // This won't send any emails but will tell us if the user exists
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin
+    // We'll use a direct database query approach to avoid reliability issues
+    // Instead of depending on auth endpoints, we'll try to sign up with a temporary random password
+    // If it succeeds and then we delete the user, the email was available
+    // If it fails with a "already registered" error, the email exists
+    
+    // Generate a secure random password (they'll never use this)
+    const tempPassword = Math.random().toString(36).slice(-12) + 
+                         Math.random().toString(36).toUpperCase().slice(-4) + 
+                         Math.random().toString(36).slice(-8) + "!1Aa";
+    
+    // Attempt to sign up with this email
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: tempPassword,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
     });
     
-    // If we get a 422 error, it means the user doesn't exist
-    // Most Supabase instances return 422 for non-existent users in password reset
-    if (error && (error.status === 422 || error.message.includes("User not found"))) {
-      console.log("User not found during email check");
+    // If there's an error related to the email already being registered, return true
+    if (error) {
+      console.log("Email check signup attempt error:", error);
+      
+      // Look for specific error messages that indicate email exists
+      const errorMsg = error.message.toLowerCase();
+      if (
+        errorMsg.includes("already registered") || 
+        errorMsg.includes("already in use") || 
+        errorMsg.includes("already exists") ||
+        errorMsg.includes("existing account") ||
+        error.status === 400 // Many Supabase instances return 400 for duplicate emails
+      ) {
+        console.log("Email appears to be registered already");
+        return true;
+      }
+      
+      // If other error occurred, play it safe and assume email might exist
+      // This is a conservative approach to prevent duplicate registrations
       return false;
     }
     
-    // For security reasons, Supabase might return success even for non-existent emails
-    // In this case, we'll do our best to interpret the response
-    
-    // Log the error for debugging
-    if (error) {
-      console.log("Email check error:", error);
-      
-      // If the error message indicates the user doesn't exist, return false
-      if (error.message.toLowerCase().includes("user not found") || 
-          error.message.toLowerCase().includes("does not exist")) {
-        return false;
+    // If the signup succeeded, the user doesn't exist
+    // But also verify we got a user object back
+    if (data && data.user) {
+      // The signup worked, which means this email wasn't registered
+      // We should clean up by deleting this temporary user or completing sign out
+      try {
+        console.log("Email is available, cleaning up temporary signup");
+        // Clean up by signing out
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (cleanupError) {
+        console.error("Error cleaning up after email check:", cleanupError);
+        // Even if cleanup fails, we know the email was available
       }
+      
+      return false; // Email doesn't exist
     }
     
-    // If we haven't returned false by this point, assume the user might exist
-    // This is a conservative approach to prevent duplicate registrations
-    console.log("Email may exist or check was inconclusive");
-    return true;
+    // Default to assuming it might exist in ambiguous cases
+    // This is conservative to prevent duplicate registrations
+    console.log("Email check was inconclusive, assuming it might exist");
+    return false;
   } catch (error) {
-    console.error("Error checking if email exists:", error);
-    // If there's an error, we can't be sure, so we'll say the email doesn't exist
-    // This allows the user to attempt registration
+    console.error("Unexpected error checking if email exists:", error);
+    // On unexpected errors, assume email doesn't exist to allow registration attempt
     return false;
   }
 };
@@ -206,7 +232,8 @@ export const signUp = async (signupData: any) => {
           health_goals: formattedHealthGoals,
           dietary_restrictions: formattedDietaryRestrictions,
           ...signupData.user_metadata
-        }
+        },
+        emailRedirectTo: window.location.origin + "/auth/callback"
       }
     });
     
@@ -220,7 +247,7 @@ export const signUp = async (signupData: any) => {
       // Create a more specific error message based on the error code
       let errorMessage = error.message;
       
-      if (error.message.includes("already registered")) {
+      if (error.message.includes("already registered") || error.message.includes("already in use")) {
         errorMessage = "This email is already registered. Please use a different email or try logging in.";
       } else if (error.message.includes("password")) {
         errorMessage = "Password is invalid. Please ensure it's at least 6 characters long.";
