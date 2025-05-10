@@ -16,7 +16,7 @@ const AuthCallbackPage: React.FC = () => {
     const token = params.get('token_hash') || params.get('token');
     const type = params.get('type');
     
-    console.log("Token:", token);
+    console.log("Token:", token ? "Found" : "Missing");
     console.log("Type:", type);
     
     // Check all query parameters

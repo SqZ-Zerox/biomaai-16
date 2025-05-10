@@ -131,7 +131,9 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       
       setIsLoading(true);
       
-      // Ensure we have at least one health goal to prevent null constraint errors
+      // Enhanced validation for health goals - log the value
+      console.log("Health goals selected:", values.health_goals);
+      
       if (!values.health_goals || values.health_goals.length === 0) {
         toast({
           title: "Health Goals Required",
@@ -139,6 +141,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
           variant: "destructive",
         });
         setIsLoading(false);
+        setCurrentStep('health'); // Take user back to health goals section
         return;
       }
       
@@ -183,6 +186,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
           description: errorMessage,
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
       

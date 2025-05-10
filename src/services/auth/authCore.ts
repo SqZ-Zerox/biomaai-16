@@ -83,16 +83,33 @@ export const extractSupabaseUser = (user: User) => {
 // Add the missing authentication functions
 export const signUp = async (signupData: any) => {
   try {
-    // Format health goals and dietary restrictions correctly
+    console.log("Raw signup data:", signupData);
+    
+    // Format health goals correctly - ensure we have an array of objects with 'value' property
     const formattedHealthGoals = signupData.health_goals.map((goal: string) => ({
       value: goal
     }));
 
-    const formattedDietaryRestrictions = signupData.dietary_restrictions 
+    // Format dietary restrictions correctly - ensure we have an array of objects with 'value' property
+    const formattedDietaryRestrictions = signupData.dietary_restrictions && signupData.dietary_restrictions.length > 0
       ? signupData.dietary_restrictions.map((restriction: string) => ({
           value: restriction
         })) 
       : [];
+    
+    console.log("Formatted health goals:", formattedHealthGoals);
+    console.log("Formatted dietary restrictions:", formattedDietaryRestrictions);
+
+    // Clean up local storage to prevent conflicts
+    cleanupAuthState();
+    
+    // Attempt to sign out any existing session first
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (signOutError) {
+      console.log("Pre-signup signout failed (this is ok):", signOutError);
+      // Continue with signup even if sign out fails
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
@@ -114,6 +131,7 @@ export const signUp = async (signupData: any) => {
       }
     });
     
+    console.log("Signup response:", data, error);
     return { data, error };
   } catch (error: any) {
     console.error("Sign up error:", error);
@@ -123,6 +141,17 @@ export const signUp = async (signupData: any) => {
 
 export const signIn = async ({ email, password }: { email: string; password: string }) => {
   try {
+    // Clean up local storage to prevent conflicts
+    cleanupAuthState();
+    
+    // Attempt to sign out any existing session first
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (signOutError) {
+      console.log("Pre-signin signout failed (this is ok):", signOutError);
+      // Continue with signin even if sign out fails
+    }
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -137,7 +166,10 @@ export const signIn = async ({ email, password }: { email: string; password: str
 
 export const signOut = async () => {
   try {
-    const { error } = await supabase.auth.signOut();
+    // Clean up local storage first
+    cleanupAuthState();
+    
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     
     if (error) {
       throw error;
@@ -174,12 +206,15 @@ export const updateUserVerificationStatus = async () => {
     const token_hash = params.get('token_hash') || params.get('token');
     const type = params.get('type');
     
+    console.log("Verification params:", { token_hash, type });
+    console.log("All URL parameters:", Object.fromEntries(params.entries()));
+    
     if (!token_hash) {
       console.error("No token found in URL");
       return false;
     }
     
-    if (type !== 'email_confirmation' && type !== 'signup' && type !== 'email_verification') {
+    if (type !== 'email_confirmation' && type !== 'signup' && type !== 'recovery' && type !== 'email_verification') {
       console.error("Invalid verification type:", type);
       return false;
     }
@@ -203,4 +238,26 @@ export const updateUserVerificationStatus = async () => {
     console.error("Verification status update error:", error);
     return false;
   }
+};
+
+// Helper function to clean up auth state in local storage
+export const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      console.log(`Removing localStorage key: ${key}`);
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      console.log(`Removing sessionStorage key: ${key}`);
+      sessionStorage.removeItem(key);
+    }
+  });
 };

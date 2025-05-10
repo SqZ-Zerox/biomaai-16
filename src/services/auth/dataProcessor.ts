@@ -40,6 +40,12 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
       return false;
     }
     
+    // Delete any existing health goals for this user to prevent duplicates
+    await supabase
+      .from('user_health_goals')
+      .delete()
+      .eq('user_id', userId);
+    
     // Insert the health goals
     const { error } = await supabase
       .from('user_health_goals')
@@ -96,6 +102,12 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
       console.log("No valid dietary restrictions to insert");
       return true; // Return true as this is not an error condition
     }
+    
+    // Delete any existing dietary restrictions for this user to prevent duplicates
+    await supabase
+      .from('user_dietary_restrictions')
+      .delete()
+      .eq('user_id', userId);
     
     // Insert the dietary restrictions
     const { error } = await supabase

@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateUserVerificationStatus } from '@/services/auth';
+import { updateUserVerificationStatus, cleanupAuthState } from '@/services/auth';
 import SocialProviderCallback from './SocialProviderCallback';
 
 const AuthCallback: React.FC = () => {
@@ -29,6 +29,9 @@ const AuthCallback: React.FC = () => {
         console.log("Processing email verification callback");
         console.log("Search params:", Object.fromEntries(searchParams.entries()));
         
+        // Clean up auth state before verifying to prevent conflicts
+        cleanupAuthState();
+        
         // Update user verification status
         const success = await updateUserVerificationStatus();
         
@@ -42,11 +45,11 @@ const AuthCallback: React.FC = () => {
           // Important: Log the success and redirect path
           console.log("Email verification successful, refreshing auth session");
           
-          // Refresh the auth context
-          await checkSession();
-          
-          // Redirect to dashboard after a small delay
-          setTimeout(() => {
+          // Refresh the auth context with a small delay to ensure verification is complete
+          setTimeout(async () => {
+            await checkSession();
+            
+            // Redirect to dashboard after verification is complete
             navigate('/dashboard');
           }, 1000);
         } else {
