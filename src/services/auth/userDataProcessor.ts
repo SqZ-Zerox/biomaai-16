@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 
 // Define the structure for health goals and dietary restrictions

@@ -3,8 +3,10 @@
 import { 
   processProfileData, 
   extractSupabaseUser,
-  UserProfileData
 } from "./userDataProcessor";
+
+// Import the type separately with explicit 'type' keyword
+import type { UserProfileData } from "./userDataProcessor";
 
 import {
   signUp,
@@ -42,5 +44,5 @@ export {
   validateEmailFormat,
   
   // Type definitions
-  UserProfileData
+  type UserProfileData
 };
