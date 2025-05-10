@@ -11,7 +11,6 @@ export const validateEmailFormat = (email: string): boolean => {
 
 /**
  * Checks if an email already exists in the Supabase auth system
- * Uses a temporary signup approach for reliable checking
  */
 export const checkIfEmailExists = async (email: string): Promise<boolean> => {
   try {
@@ -21,29 +20,36 @@ export const checkIfEmailExists = async (email: string): Promise<boolean> => {
       return false;
     }
     
-    // Try to request password reset for this email
-    // If it succeeds, the email exists
-    // If it fails with a specific error message, the email doesn't exist
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin
+    // Use signInWithOtp to check if email exists
+    // This is more reliable than password reset as it doesn't send emails
+    // but still lets us know if the account exists
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false // Only check if user exists, don't create
+      }
     });
     
     if (error) {
-      console.log("Email check error:", error);
-      
-      // These specific error messages indicate the email doesn't exist
+      // If we get "User not found" error, the email doesn't exist
       if (error.message.includes("user not found") || 
           error.message.includes("not found") ||
           error.message.includes("doesn't exist")) {
         return false;
       }
       
-      // For other errors, be conservative and assume it might exist
-      // to prevent duplicate registrations
-      return true;
+      // For other errors, check if it indicates the user exists
+      if (error.message.includes("Email link")) {
+        // Getting an email link error means the user exists
+        return true;
+      }
+      
+      console.log("Email check error:", error);
+      // Be conservative for other errors - assume it might not exist
+      return false;
     }
     
-    // If no error, email exists
+    // If no error using shouldCreateUser: false, the user exists
     return true;
   } catch (error) {
     console.error("Unexpected error checking if email exists:", error);

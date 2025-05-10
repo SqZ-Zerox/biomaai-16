@@ -109,6 +109,15 @@ export const signUp = async (signupData: any) => {
       };
     }
     
+    // Handle email verification message explicitly
+    if (data && !data.session) {
+      return {
+        data,
+        error: null,
+        message: "Please check your email for a verification link to complete your registration."
+      };
+    }
+    
     return { data, error };
   } catch (error: any) {
     console.error("Sign up error:", error);

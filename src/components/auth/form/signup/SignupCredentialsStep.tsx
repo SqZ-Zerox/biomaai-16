@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { SignupFormValues } from "./types";
 import { slideVariants } from "./animations";
+import { checkIfEmailExists } from "@/services/auth";
 
 interface SignupCredentialsStepProps {
   form: UseFormReturn<SignupFormValues>;
@@ -28,6 +29,31 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  // Check email existence when user finishes typing
+  const handleEmailBlur = async () => {
+    const email = form.getValues("email");
+    if (!email || form.formState.errors.email) return;
+    
+    setEmailTouched(true);
+    setCheckingEmail(true);
+    
+    try {
+      const exists = await checkIfEmailExists(email);
+      if (exists) {
+        form.setError("email", {
+          type: "manual",
+          message: "This email is already registered. Please try logging in or use a different email."
+        });
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   return (
     <motion.div
@@ -55,9 +81,13 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                 <Input 
                   placeholder="you@example.com" 
                   className="pl-10 bg-background" 
-                  disabled={isLoading}
+                  disabled={isLoading || checkingEmail}
+                  onBlur={handleEmailBlur}
                   {...field} 
                 />
+                {checkingEmail && (
+                  <Loader2 className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground animate-spin" />
+                )}
               </div>
             </FormControl>
             <FormMessage />
@@ -143,7 +173,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         type="button" 
         className="w-full mt-6" 
         onClick={onNext}
-        disabled={isLoading}
+        disabled={isLoading || checkingEmail || (emailTouched && !!form.formState.errors.email)}
       >
         Next: Personal Information
         <ArrowRight className="ml-2 h-4 w-4" />

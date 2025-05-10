@@ -28,9 +28,9 @@ export const signupSchema = z.object({
         age--;
       }
       
-      // Check if age is between 13 and 100
-      return age >= 13 && age <= 100;
-    }, { message: "You must be at least 13 years old and not older than 100 years" }),
+      // Check if age is at least 13
+      return age >= 13;
+    }, { message: "You must be at least 13 years old to use this service" }),
   phone_number: z.string().optional(),
   gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say"], {
     required_error: "Please select your gender",
