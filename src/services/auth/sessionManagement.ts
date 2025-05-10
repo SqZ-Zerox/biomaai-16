@@ -2,94 +2,70 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Fetches the current user session
+ * Get the current session from Supabase
  */
 export const getCurrentSession = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
     
-    return {
-      session: data.session,
-      error
-    };
-  } catch (error: any) {
-    console.error("Get session error:", error);
-    return {
-      session: null,
-      error
-    };
+    if (error) {
+      throw error;
+    }
+    
+    return data.session;
+  } catch (error) {
+    console.error("Error getting current session:", error);
+    return null;
   }
 };
 
 /**
- * Handles updating user verification status from URL parameters
+ * Update the user's email verification status
  */
 export const updateUserVerificationStatus = async () => {
   try {
-    // Get the session parameters from the URL
-    const params = new URLSearchParams(window.location.search);
-    const token_hash = params.get('token_hash') || params.get('token');
-    const type = params.get('type');
+    const session = await getCurrentSession();
     
-    console.log("Verification params:", { token_hash, type });
-    console.log("All URL parameters:", Object.fromEntries(params.entries()));
-    
-    if (!token_hash) {
-      console.error("No token found in URL");
-      return false;
+    if (!session) {
+      return { updated: false, verified: false };
     }
     
-    // Accept more verification types for better compatibility
-    const validTypes = ['email_confirmation', 'signup', 'recovery', 'email_verification', 'email_change'];
-    if (!type || !validTypes.includes(type)) {
-      console.error("Invalid verification type:", type);
-      return false;
-    }
-    
-    console.log("Verifying token:", token_hash, "type:", type);
-    
-    // Clean up auth state before verification to prevent conflicts
-    cleanupAuthState();
-    
-    // Verify the email using the token
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type: 'email',
-    });
+    // Check if the user's email has been verified
+    const { data, error } = await supabase.auth.refreshSession();
     
     if (error) {
-      console.error("Email verification error:", error);
-      return false;
+      throw error;
     }
     
-    console.log("Email verified successfully");
-    return true;
+    const verified = data.session?.user?.email_confirmed_at ? true : false;
+    return { updated: true, verified };
   } catch (error) {
-    console.error("Verification status update error:", error);
-    return false;
+    console.error("Error updating verification status:", error);
+    return { updated: false, verified: false };
   }
 };
 
 /**
- * Helper function to clean up auth state in local storage
+ * Clean up auth state in localStorage
+ * Only cleans specific Supabase keys to avoid performance issues
  */
 export const cleanupAuthState = () => {
-  // Remove standard auth tokens
-  localStorage.removeItem('supabase.auth.token');
-  
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      console.log(`Removing localStorage key: ${key}`);
-      localStorage.removeItem(key);
-    }
-  });
-  
-  // Remove from sessionStorage if in use
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      console.log(`Removing sessionStorage key: ${key}`);
-      sessionStorage.removeItem(key);
-    }
-  });
+  try {
+    // Define the keys we want to clean up instead of iterating through all localStorage
+    const supabaseKeysToClean = [
+      'supabase.auth.token',
+      'supabase.auth.refreshToken',
+      'sb-refresh-token',
+      'sb-access-token'
+    ];
+    
+    // Only remove specific keys instead of iterating through all localStorage
+    supabaseKeysToClean.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error("Error cleaning up auth state:", error);
+  }
 };

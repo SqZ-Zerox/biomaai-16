@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signUp } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, SignupFormValues } from "@/components/auth/form/signup/types";
+import { clearEmailExistsCache } from "@/services/auth/emailUtils";
 
 export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const navigate = useNavigate();
@@ -14,6 +15,9 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const { checkSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<'credentials' | 'personal' | 'health' | 'medical' | 'terms'>('credentials');
+  
+  // Clear email cache when form is initialized
+  clearEmailExistsCache();
   
   // Signup form with expanded health information
   const form = useForm<SignupFormValues>({
@@ -57,6 +61,11 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
     // Validate current fields before proceeding
     if (!email || !password || !confirmPassword || password !== confirmPassword) {
       form.trigger(["email", "password", "confirmPassword"]);
+      return;
+    }
+    
+    // Check for email error before proceeding
+    if (form.formState.errors.email) {
       return;
     }
     
@@ -177,7 +186,9 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
           medications: values.medications || "",
           family_history: values.family_history || [],
           recent_lab_work: values.recent_lab_work
-        }
+        },
+        // Flag to indicate email has already been checked
+        _emailChecked: true
       };
 
       console.log("Submitting signup data:", signupData);

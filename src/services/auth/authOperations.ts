@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { checkIfEmailExists } from "./emailUtils";
+import { checkIfEmailExists, clearEmailExistsCache } from "./emailUtils";
 import { cleanupAuthState } from "./sessionManagement";
 
 /**
@@ -11,7 +11,12 @@ export const signUp = async (signupData: any) => {
     console.log("Raw signup data:", signupData);
     
     // Check if email already exists to prevent duplicate registrations
-    const emailExists = await checkIfEmailExists(signupData.email);
+    // Only check if not already checked in the UI (to avoid double checking)
+    let emailExists = false;
+    if (!signupData._emailChecked) {
+      emailExists = await checkIfEmailExists(signupData.email);
+    }
+    
     if (emailExists) {
       console.error("Email already exists:", signupData.email);
       return {
@@ -52,12 +57,18 @@ export const signUp = async (signupData: any) => {
       };
     }
 
-    // Clean up local storage to prevent conflicts
+    // Clean up local storage but only do it once before signup
     cleanupAuthState();
     
-    // Attempt to sign out any existing session first
+    // Only attempt sign out if the user might be logged in
+    // This reduces unnecessary network requests
+    let session = null;
     try {
-      await supabase.auth.signOut({ scope: 'global' });
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+      if (session) {
+        await supabase.auth.signOut({ scope: 'global' });
+      }
     } catch (signOutError) {
       console.log("Pre-signup signout failed (this is ok):", signOutError);
       // Continue with signup even if sign out fails
@@ -83,6 +94,9 @@ export const signUp = async (signupData: any) => {
         emailRedirectTo: window.location.origin + "/auth/callback"
       }
     });
+    
+    // Clear email cache after signup attempt to ensure fresh state
+    clearEmailExistsCache();
     
     // Log the complete response for debugging
     console.log("Signup response:", data, error);
@@ -130,12 +144,18 @@ export const signUp = async (signupData: any) => {
  */
 export const signIn = async ({ email, password }: { email: string; password: string }) => {
   try {
-    // Clean up local storage to prevent conflicts
+    // Clean up local storage but only do it once before signin
     cleanupAuthState();
     
-    // Attempt to sign out any existing session first
+    // Only attempt sign out if the user might be logged in
+    // This reduces unnecessary network requests
+    let session = null;
     try {
-      await supabase.auth.signOut({ scope: 'global' });
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+      if (session) {
+        await supabase.auth.signOut({ scope: 'global' });
+      }
     } catch (signOutError) {
       console.log("Pre-signin signout failed (this is ok):", signOutError);
       // Continue with signin even if sign out fails

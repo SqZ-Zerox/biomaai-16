@@ -20,7 +20,7 @@ export const signupSchema = z.object({
       // Check if date is invalid
       if (isNaN(birthDate.getTime())) return false;
       
-      // Calculate age
+      // Calculate age more accurately
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
       
@@ -28,7 +28,7 @@ export const signupSchema = z.object({
         age--;
       }
       
-      // Check if age is at least 13
+      // Ensure age is at least 13
       return age >= 13;
     }, { message: "You must be at least 13 years old to use this service" }),
   phone_number: z.string().optional(),

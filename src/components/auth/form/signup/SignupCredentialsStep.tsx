@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -15,12 +15,16 @@ import {
 import { SignupFormValues } from "./types";
 import { slideVariants } from "./animations";
 import { checkIfEmailExists } from "@/services/auth";
+import { debounce } from "lodash";
 
 interface SignupCredentialsStepProps {
   form: UseFormReturn<SignupFormValues>;
   isLoading: boolean;
   onNext: () => void;
 }
+
+// Cache for emails that have already been checked
+const emailCheckCache = new Map<string, boolean>();
 
 const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({ 
   form, 
@@ -32,7 +36,47 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
 
-  // Check email existence when user finishes typing
+  // Create a debounced email check function that only runs after 500ms of inactivity
+  const debouncedEmailCheck = useRef(
+    debounce(async (email: string) => {
+      if (!email || form.formState.errors.email) {
+        setCheckingEmail(false);
+        return;
+      }
+
+      try {
+        // Check cache first to avoid unnecessary API calls
+        if (emailCheckCache.has(email)) {
+          const exists = emailCheckCache.get(email);
+          if (exists) {
+            form.setError("email", {
+              type: "manual",
+              message: "This email is already registered. Please try logging in or use a different email."
+            });
+          }
+          setCheckingEmail(false);
+          return;
+        }
+
+        const exists = await checkIfEmailExists(email);
+        // Save result in cache
+        emailCheckCache.set(email, exists);
+        
+        if (exists) {
+          form.setError("email", {
+            type: "manual",
+            message: "This email is already registered. Please try logging in or use a different email."
+          });
+        }
+      } catch (error) {
+        console.error("Error checking email:", error);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 500)
+  ).current;
+
+  // Handle email blur to check if email exists
   const handleEmailBlur = async () => {
     const email = form.getValues("email");
     if (!email || form.formState.errors.email) return;
@@ -40,18 +84,15 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
     setEmailTouched(true);
     setCheckingEmail(true);
     
-    try {
-      const exists = await checkIfEmailExists(email);
-      if (exists) {
-        form.setError("email", {
-          type: "manual",
-          message: "This email is already registered. Please try logging in or use a different email."
-        });
-      }
-    } catch (error) {
-      console.error("Error checking email:", error);
-    } finally {
-      setCheckingEmail(false);
+    // Use debounced function to avoid too many API calls
+    debouncedEmailCheck(email);
+  };
+
+  // Clear email error when user starts typing again
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const currentErrors = form.formState.errors;
+    if (currentErrors.email && currentErrors.email.type === "manual") {
+      form.clearErrors("email");
     }
   };
 
@@ -83,6 +124,10 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                   className="pl-10 bg-background" 
                   disabled={isLoading || checkingEmail}
                   onBlur={handleEmailBlur}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleEmailChange(e);
+                  }}
                   {...field} 
                 />
                 {checkingEmail && (
