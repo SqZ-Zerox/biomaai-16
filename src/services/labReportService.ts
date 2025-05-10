@@ -80,9 +80,9 @@ export const uploadLabReport = async (file: File, userId: string): Promise<{
     }
 
     // Start analysis process
-    analyzeLabReport(report, publicUrl);
+    analyzeLabReport(report as LabReport, publicUrl);
 
-    return { report, error: null };
+    return { report: report as LabReport, error: null };
   } catch (error: any) {
     console.error("Upload error:", error);
     return { report: null, error: error.message };
@@ -106,7 +106,7 @@ export const getUserLabReports = async (userId: string): Promise<{
       return { reports: null, error: error.message };
     }
 
-    return { reports: data, error: null };
+    return { reports: data as LabReport[], error: null };
   } catch (error: any) {
     return { reports: null, error: error.message };
   }
@@ -138,7 +138,7 @@ export const getLabReportDetails = async (reportId: string): Promise<{
       .eq('report_id', reportId);
 
     if (resultsError) {
-      return { report, results: null, insights: null, error: resultsError.message };
+      return { report: report as LabReport, results: null, insights: null, error: resultsError.message };
     }
 
     // Get lab insights
@@ -149,10 +149,15 @@ export const getLabReportDetails = async (reportId: string): Promise<{
       .single();
 
     if (insightsError && insightsError.code !== 'PGRST116') { // PGRST116 is "No rows returned" which is fine
-      return { report, results, insights: null, error: insightsError.message };
+      return { report: report as LabReport, results: results as LabResult[], insights: null, error: insightsError.message };
     }
 
-    return { report, results, insights, error: null };
+    return { 
+      report: report as LabReport, 
+      results: results as LabResult[], 
+      insights: insights as LabInsight, 
+      error: null 
+    };
   } catch (error: any) {
     return { report: null, results: null, insights: null, error: error.message };
   }
@@ -180,7 +185,7 @@ export const getLatestLabReport = async (userId: string): Promise<{
       return { report: null, results: null, insights: null, error: reportError?.message || 'No reports found' };
     }
 
-    const report = reports[0];
+    const report = reports[0] as LabReport;
 
     // Get lab results
     const { data: results, error: resultsError } = await supabase
@@ -200,10 +205,15 @@ export const getLatestLabReport = async (userId: string): Promise<{
       .single();
 
     if (insightsError && insightsError.code !== 'PGRST116') { // PGRST116 is "No rows returned" which is fine
-      return { report, results, insights: null, error: insightsError.message };
+      return { report, results: results as LabResult[], insights: null, error: insightsError.message };
     }
 
-    return { report, results, insights, error: null };
+    return { 
+      report, 
+      results: results as LabResult[], 
+      insights: insights as LabInsight, 
+      error: null 
+    };
   } catch (error: any) {
     return { report: null, results: null, insights: null, error: error.message };
   }
@@ -264,14 +274,14 @@ const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
     // Store results in database - in real implementation, we would extract the biomarker values
     // from the PDF/image or from Gemini's response
     const biomarkers = [
-      { name: "Hemoglobin", value: "11.2", unit: "g/dL", reference_range: "12.0-15.5", status: "low", category: "blood" },
-      { name: "Hematocrit", value: "34", unit: "%", reference_range: "35.5-44.9", status: "low", category: "blood" },
-      { name: "MCV", value: "78", unit: "fL", reference_range: "80-96", status: "low", category: "blood" },
-      { name: "Platelet Count", value: "250", unit: "K/uL", reference_range: "150-450", status: "normal", category: "blood" },
-      { name: "Total Cholesterol", value: "245", unit: "mg/dL", reference_range: "<200", status: "high", category: "lipids" },
-      { name: "HDL", value: "38", unit: "mg/dL", reference_range: ">40", status: "low", category: "lipids" },
-      { name: "LDL", value: "160", unit: "mg/dL", reference_range: "<100", status: "high", category: "lipids" },
-      { name: "Triglycerides", value: "190", unit: "mg/dL", reference_range: "<150", status: "high", category: "lipids" }
+      { name: "Hemoglobin", value: "11.2", unit: "g/dL", reference_range: "12.0-15.5", status: "low" as const, category: "blood" },
+      { name: "Hematocrit", value: "34", unit: "%", reference_range: "35.5-44.9", status: "low" as const, category: "blood" },
+      { name: "MCV", value: "78", unit: "fL", reference_range: "80-96", status: "low" as const, category: "blood" },
+      { name: "Platelet Count", value: "250", unit: "K/uL", reference_range: "150-450", status: "normal" as const, category: "blood" },
+      { name: "Total Cholesterol", value: "245", unit: "mg/dL", reference_range: "<200", status: "high" as const, category: "lipids" },
+      { name: "HDL", value: "38", unit: "mg/dL", reference_range: ">40", status: "low" as const, category: "lipids" },
+      { name: "LDL", value: "160", unit: "mg/dL", reference_range: "<100", status: "high" as const, category: "lipids" },
+      { name: "Triglycerides", value: "190", unit: "mg/dL", reference_range: "<150", status: "high" as const, category: "lipids" }
     ];
     
     // Update lab report with test types

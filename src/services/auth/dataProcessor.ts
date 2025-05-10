@@ -19,7 +19,7 @@ export async function processHealthGoals(userId: string, healthGoals: any[]): Pr
     // Process goal object or primitive with explicit null checks
     return {
       user_id: userId,
-      goal: goal && typeof goal === 'object' && goal.value !== null && goal.value !== undefined
+      goal: goal && typeof goal === 'object' && goal.value != null
         ? String(goal.value) 
         : String(goal || '')
     };
@@ -52,7 +52,7 @@ export async function processDietaryRestrictions(userId: string, dietaryRestrict
     // Process restriction object or primitive with explicit null checks
     return {
       user_id: userId,
-      restriction: restriction && typeof restriction === 'object' && restriction.value !== null && restriction.value !== undefined
+      restriction: restriction && typeof restriction === 'object' && restriction.value != null
         ? String(restriction.value) 
         : String(restriction || '')
     };
