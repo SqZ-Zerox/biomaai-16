@@ -9,6 +9,11 @@ const DEFAULT_MODEL = "gemini-1.5-pro";
 // Use a more reliable API key - same as what we use in the edge function
 const DEFAULT_TEST_KEY = "AIzaSyDdPQCvHDo-lQfTaNZPoaziqyUiM9O8pX0";
 
+// Maximum number of retries for API calls
+const MAX_RETRIES = 3;
+// Delay between retries (ms) - will be multiplied by retry count for backoff
+const RETRY_DELAY = 1000;
+
 // API Key Manager (similar to OpenAI implementation)
 class APIKeyManager {
   static getApiKey(): string | null {
@@ -70,6 +75,9 @@ export interface GeminiCompletionResponse {
   };
 }
 
+// Sleep function for retry backoff
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Gemini service functions
 export async function sendGeminiCompletion(
   messages: GeminiMessage[],
@@ -87,67 +95,91 @@ export async function sendGeminiCompletion(
     setGeminiKey(apiKey); // Save it for future use
   }
   
-  try {
-    const model = options.model || DEFAULT_MODEL;
-    const url = `${GEMINI_API_URL}/models/${model}:generateContent?key=${apiKey}`;
-    
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: messages,
-        generationConfig: {
-          temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxOutputTokens || 4000,
-          topP: 0.95,
-        },
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData.error?.message || `Failed to get response from Gemini (Status: ${response.status})`;
+  let retries = 0;
+  let lastError: Error | null = null;
+  
+  while (retries <= MAX_RETRIES) {
+    try {
+      const model = options.model || DEFAULT_MODEL;
+      const url = `${GEMINI_API_URL}/models/${model}:generateContent?key=${apiKey}`;
       
-      // Handle quota errors specifically with a more user-friendly message
-      if (errorMessage.includes("quota") || response.status === 429) {
-        toast({
-          title: "Gemini API Rate Limit Reached",
-          description: "You've reached the API rate limit. Our system will use a fallback analysis method. For the best experience, you may want to use your own API key in Settings.",
-          variant: "warning",
-          duration: 8000,
-        });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: messages,
+          generationConfig: {
+            temperature: options.temperature || 0.7,
+            maxOutputTokens: options.maxOutputTokens || 4000,
+            topP: 0.95,
+          },
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.error?.message || `Failed to get response from Gemini (Status: ${response.status})`;
+        
+        // Handle quota errors specifically with a more user-friendly message
+        if (errorMessage.includes("quota") || response.status === 429) {
+          toast({
+            title: "Gemini API Rate Limit Reached",
+            description: "You've reached the API rate limit. Our system will use a fallback analysis method. For the best experience, you may want to use your own API key in Settings.",
+            variant: "default",
+            duration: 8000,
+          });
+          
+          // If rate limited, try to use fallback immediately
+          throw new Error("Rate limit exceeded");
+        }
+        
+        throw new Error(errorMessage);
       }
       
-      throw new Error(errorMessage);
+      const data: GeminiCompletionResponse = await response.json();
+      
+      if (data.promptFeedback?.blockReason) {
+        throw new Error(`Prompt blocked: ${data.promptFeedback.blockReason}`);
+      }
+      
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error("No response generated");
+      }
+      
+      return data.candidates[0].content.parts[0].text;
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Gemini API error (attempt ${retries + 1}/${MAX_RETRIES + 1}):`, error);
+      
+      // Only retry on certain errors (network issues, rate limits)
+      if (error.message.includes("rate limit") || error.message.includes("quota") || error.message.includes("429")) {
+        retries++;
+        if (retries <= MAX_RETRIES) {
+          // Exponential backoff
+          const delay = RETRY_DELAY * retries;
+          console.log(`Retrying in ${delay}ms...`);
+          await sleep(delay);
+          continue;
+        }
+      } else {
+        // Don't retry on other errors
+        break;
+      }
     }
-    
-    const data: GeminiCompletionResponse = await response.json();
-    
-    if (data.promptFeedback?.blockReason) {
-      throw new Error(`Prompt blocked: ${data.promptFeedback.blockReason}`);
-    }
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new Error("No response generated");
-    }
-    
-    return data.candidates[0].content.parts[0].text;
-  } catch (error: any) {
-    console.error("Gemini API error:", error);
-    
-    // Only show toast for non-rate-limit errors (we handle those specifically above)
-    if (!error.message.includes("rate limit") && !error.message.includes("quota")) {
-      toast({
-        title: "AI Request Failed",
-        description: "Using fallback analysis method. " + (error.message || "Failed to communicate with Gemini API"),
-        variant: "warning",
-      });
-    }
-    
-    return null;
   }
+  
+  // Only show toast for non-rate-limit errors (we handle those specifically above)
+  if (lastError && !lastError.message.includes("rate limit") && !lastError.message.includes("quota")) {
+    toast({
+      title: "AI Request Failed",
+      description: "Using fallback analysis method. " + (lastError.message || "Failed to communicate with Gemini API"),
+      variant: "default",
+    });
+  }
+  
+  return null;
 }
 
 // Helper components and functions for UI interaction
