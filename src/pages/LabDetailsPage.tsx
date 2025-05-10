@@ -7,7 +7,7 @@ import LabResultsDisplay from "@/components/lab-reports/LabResultsDisplay";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Loader } from "lucide-react";
+import { ArrowLeft, FileText, Loader, RefreshCcw } from "lucide-react";
 
 const LabDetailsPage: React.FC = () => {
   const { user } = useAuth();
@@ -20,61 +20,100 @@ const LabDetailsPage: React.FC = () => {
   const [results, setResults] = useState<LabResult[] | null>(null);
   const [insights, setInsights] = useState<LabInsight | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        if (reportId) {
-          // Fetch specific report
-          const { report, results, insights, error } = await getLabReportDetails(reportId);
-          
-          if (error) {
-            setError(error);
-          } else {
-            setReport(report);
-            setResults(results);
-            setInsights(insights);
-          }
+  const fetchReportData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      if (reportId) {
+        // Fetch specific report
+        const { report, results, insights, error } = await getLabReportDetails(reportId);
+        
+        if (error) {
+          setError(error);
         } else {
-          // No report ID provided, get the latest report
-          const { reports, error: reportsError } = await getUserLabReports(user.id);
+          setReport(report);
+          setResults(results);
+          setInsights(insights);
+        }
+      } else {
+        // No report ID provided, get the latest report
+        const { reports, error: reportsError } = await getUserLabReports(user.id);
+        
+        if (reportsError || !reports || reports.length === 0) {
+          setError(reportsError || "No lab reports found");
+        } else {
+          // Get the latest analyzed report
+          const latestReport = reports.find(r => r.status === "analyzed") || reports[0];
           
-          if (reportsError || !reports || reports.length === 0) {
-            setError(reportsError || "No lab reports found");
+          if (!latestReport) {
+            setError("No analyzed lab reports found");
           } else {
-            // Get the latest analyzed report
-            const latestReport = reports.find(r => r.status === "analyzed");
+            const { report, results, insights, error } = await getLabReportDetails(latestReport.id);
             
-            if (!latestReport) {
-              setError("No analyzed lab reports found");
+            if (error) {
+              setError(error);
             } else {
-              const { report, results, insights, error } = await getLabReportDetails(latestReport.id);
-              
-              if (error) {
-                setError(error);
-              } else {
-                setReport(report);
-                setResults(results);
-                setInsights(insights);
-              }
+              setReport(report);
+              setResults(results);
+              setInsights(insights);
             }
           }
         }
-      } catch (err: any) {
-        console.error("Failed to fetch lab report data:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchData();
+    } catch (err: any) {
+      console.error("Failed to fetch lab report data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchReportData();
   }, [user, reportId]);
+  
+  const handleRefreshInsights = async () => {
+    if (!report) return;
+    
+    setIsRefreshing(true);
+    
+    try {
+      // Re-analyze the report to generate new insights
+      const { analyzeLabResults } = await import("@/services/lab-reports");
+      const { success, error } = await analyzeLabResults(report.id);
+      
+      if (success) {
+        toast({
+          title: "Analysis Updated",
+          description: "Lab insights have been refreshed with the latest AI analysis"
+        });
+        
+        // Refetch the data to get updated insights
+        fetchReportData();
+      } else {
+        toast({
+          title: "Analysis Failed",
+          description: error || "Failed to update analysis",
+          variant: "destructive"
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Something went wrong",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   if (loading) {
     return (
@@ -137,7 +176,7 @@ const LabDetailsPage: React.FC = () => {
   
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-      <div className="flex justify-start mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
@@ -145,6 +184,16 @@ const LabDetailsPage: React.FC = () => {
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          disabled={isRefreshing}
+          onClick={handleRefreshInsights}
+          className="text-primary border-primary/30 hover:bg-primary hover:text-white"
+        >
+          <RefreshCcw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh Analysis"}
         </Button>
       </div>
       

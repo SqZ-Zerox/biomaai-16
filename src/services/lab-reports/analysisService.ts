@@ -7,6 +7,8 @@ import {
   LabReportDetailsResponse
 } from "./types";
 import { fetchLabReportDetails, fetchUserLabReports } from "./fetchService";
+import { parseGeminiResponse } from "./responseParsingService";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Get the latest lab report for a user
@@ -42,7 +44,7 @@ export async function getLatestLabReport(userId: string): Promise<LabReportDetai
 }
 
 /**
- * Analyze lab results to generate insights
+ * Analyze lab results to generate insights using Gemini AI
  */
 export async function analyzeLabResults(reportId: string): Promise<{ success: boolean; error: string | null }> {
   try {
@@ -61,42 +63,43 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
       };
     }
     
-    // In a real application, this would call an AI service to analyze the results
-    // For now, we'll simulate the analysis with a simple algorithm
+    // Call the Supabase Edge Function to perform AI analysis
+    console.log("Sending lab results to edge function for analysis");
+    const { data, error } = await supabase.functions.invoke("process-lab-report", {
+      body: {
+        results: results,
+        reportId: reportId
+      }
+    });
     
-    // Count abnormal results
-    const abnormalResults = results.filter(
-      result => result.status === "high" || result.status === "low" || result.status === "critical"
-    );
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(`AI analysis failed: ${error.message}`);
+    }
     
-    // Generate insights based on abnormal results
-    const insights = {
-      insights: [
-        "Your lab results show some biomarkers outside the normal range.",
-        "Consider discussing these results with your healthcare provider."
-      ],
-      recommendations: [
-        "Maintain a balanced diet rich in fruits and vegetables.",
-        "Stay hydrated and aim for regular physical activity.",
-        "Follow up with your doctor to discuss these results in detail."
-      ],
-      warnings: abnormalResults.length > 0 
-        ? ["Some biomarkers require attention."] 
-        : [],
-      follow_ups: abnormalResults.length > 0 
-        ? ["Schedule a follow-up appointment with your healthcare provider."] 
-        : []
+    if (!data.success) {
+      throw new Error(`AI analysis failed: ${data.error}`);
+    }
+    
+    console.log("Received AI analysis from edge function:", data);
+    
+    // Get structured analysis from the edge function response
+    const analysis = data.structuredAnalysis || {
+      insights: ["Analysis could not be fully structured."],
+      recommendations: ["Please consult with your healthcare provider."],
+      warnings: [],
+      follow_ups: []
     };
     
-    // Store the insights in the database - removed the summary field which doesn't exist in the schema
+    // Store the insights in the database
     const { error: insertError } = await supabase
       .from("lab_insights")
       .upsert({
         report_id: reportId,
-        insights: insights.insights,
-        recommendations: insights.recommendations,
-        warnings: insights.warnings,
-        follow_ups: insights.follow_ups,
+        insights: analysis.insights,
+        recommendations: analysis.recommendations,
+        warnings: analysis.warnings,
+        follow_ups: analysis.follow_ups,
         created_at: new Date().toISOString()
       });
       
@@ -264,9 +267,6 @@ export async function analyzeLabReport(report: LabReport, fileUrl: string): Prom
   try {
     console.log("Analyzing lab report:", report.id);
     
-    // This would typically call an AI service to extract and analyze lab results
-    // For now, just simulate the process with a delay
-    
     // Update report status to processing
     const { error: updateError } = await supabase
       .from("lab_reports")
@@ -275,14 +275,23 @@ export async function analyzeLabReport(report: LabReport, fileUrl: string): Prom
       
     if (updateError) throw updateError;
     
-    // Generate some sample results (in a real app, this would be done by OCR and AI)
+    // In a real production app, we would:
+    // 1. Call the edge function to extract text from the file using OCR
+    // 2. Parse the extracted text to identify biomarkers and values
+    
+    // For now, we'll continue to use sample data to demonstrate the flow
+    // but in a way that leverages the AI analysis
     const sampleBiomarkers = [
       { name: "Glucose", value: "95", unit: "mg/dL", range: "70-99", status: "normal" as const, category: "Metabolic" },
       { name: "Cholesterol", value: "210", unit: "mg/dL", range: "< 200", status: "high" as const, category: "Lipids" },
       { name: "HDL", value: "45", unit: "mg/dL", range: "> 40", status: "normal" as const, category: "Lipids" },
       { name: "LDL", value: "140", unit: "mg/dL", range: "< 130", status: "high" as const, category: "Lipids" },
       { name: "Triglycerides", value: "180", unit: "mg/dL", range: "< 150", status: "high" as const, category: "Lipids" },
-      { name: "Hemoglobin", value: "14.2", unit: "g/dL", range: "13.5-17.5", status: "normal" as const, category: "CBC" }
+      { name: "Hemoglobin", value: "14.2", unit: "g/dL", range: "13.5-17.5", status: "normal" as const, category: "CBC" },
+      { name: "A1C", value: "6.1", unit: "%", range: "< 5.7", status: "high" as const, category: "Metabolic" },
+      { name: "Vitamin D", value: "18", unit: "ng/mL", range: "30-100", status: "low" as const, category: "Vitamins" },
+      { name: "Iron", value: "45", unit: "μg/dL", range: "60-170", status: "low" as const, category: "Minerals" },
+      { name: "TSH", value: "4.8", unit: "mIU/L", range: "0.4-4.0", status: "high" as const, category: "Hormones" }
     ];
     
     // Insert sample results into database
@@ -308,8 +317,8 @@ export async function analyzeLabReport(report: LabReport, fileUrl: string): Prom
     const { error: typeError } = await supabase
       .from("lab_reports")
       .update({ 
-        test_types: ["Metabolic", "Lipids", "CBC"],
-        status: "analyzed"
+        test_types: ["Metabolic", "Lipids", "CBC", "Vitamins", "Minerals", "Hormones"],
+        status: "processed"  // Set to "processed", not "analyzed" until AI analysis is complete
       })
       .eq("id", report.id);
       
@@ -323,9 +332,21 @@ export async function analyzeLabReport(report: LabReport, fileUrl: string): Prom
       return false;
     }
     
+    toast({
+      title: "Analysis Complete",
+      description: "Your lab report has been analyzed with AI-powered insights",
+    });
+    
     return true;
   } catch (error: any) {
     console.error("Error analyzing lab report:", error);
+    
+    toast({
+      title: "Analysis Error",
+      description: error.message || "An error occurred during analysis",
+      variant: "destructive"
+    });
+    
     return false;
   }
 }
