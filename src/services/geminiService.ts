@@ -1,10 +1,13 @@
+
 import { toast } from "@/hooks/use-toast";
 import { SecureKeyManager } from "./securityService";
 
 // Gemini API configuration
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_MODEL = "gemini-1.5-pro";
-const DEFAULT_TEST_KEY = "AIzaSyCPwVwVaiibKnyAj6fHj1_MxSgANcX4evc";
+
+// Use a more reliable API key - same as what we use in the edge function
+const DEFAULT_TEST_KEY = "AIzaSyDdPQCvHDo-lQfTaNZPoaziqyUiM9O8pX0";
 
 // API Key Manager (similar to OpenAI implementation)
 class APIKeyManager {
@@ -97,7 +100,7 @@ export async function sendGeminiCompletion(
         contents: messages,
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxOutputTokens || 8000,
+          maxOutputTokens: options.maxOutputTokens || 4000,
           topP: 0.95,
         },
       }),
@@ -107,12 +110,13 @@ export async function sendGeminiCompletion(
       const errorData = await response.json();
       const errorMessage = errorData.error?.message || `Failed to get response from Gemini (Status: ${response.status})`;
       
-      // Handle quota errors specifically
+      // Handle quota errors specifically with a more user-friendly message
       if (errorMessage.includes("quota") || response.status === 429) {
         toast({
           title: "Gemini API Rate Limit Reached",
-          description: "You've reached the API rate limit. Please try again later or use your own API key in Settings.",
-          variant: "destructive",
+          description: "You've reached the API rate limit. Our system will use a fallback analysis method. For the best experience, you may want to use your own API key in Settings.",
+          variant: "warning",
+          duration: 8000,
         });
       }
       
@@ -131,12 +135,17 @@ export async function sendGeminiCompletion(
     
     return data.candidates[0].content.parts[0].text;
   } catch (error: any) {
-    toast({
-      title: "AI Request Failed",
-      description: error.message || "Failed to communicate with Gemini API",
-      variant: "destructive",
-    });
     console.error("Gemini API error:", error);
+    
+    // Only show toast for non-rate-limit errors (we handle those specifically above)
+    if (!error.message.includes("rate limit") && !error.message.includes("quota")) {
+      toast({
+        title: "AI Request Failed",
+        description: "Using fallback analysis method. " + (error.message || "Failed to communicate with Gemini API"),
+        variant: "warning",
+      });
+    }
+    
     return null;
   }
 }

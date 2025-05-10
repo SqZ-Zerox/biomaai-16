@@ -7,7 +7,7 @@ import {
   LabReportDetailsResponse
 } from "./types";
 import { fetchLabReportDetails, fetchUserLabReports } from "./fetchService";
-import { parseGeminiResponse } from "./responseParsingService";
+import { parseGeminiResponse, extractMeaningfulContent } from "./responseParsingService";
 import { toast } from "@/hooks/use-toast";
 
 /**
@@ -44,7 +44,7 @@ export async function getLatestLabReport(userId: string): Promise<LabReportDetai
 }
 
 /**
- * Analyze lab results to generate insights using Gemini AI
+ * Analyze lab results to generate insights using AI
  */
 export async function analyzeLabResults(reportId: string): Promise<{ success: boolean; error: string | null }> {
   try {
@@ -63,14 +63,32 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
       };
     }
     
+    // Update report status to processing
+    const { error: updateStartError } = await supabase
+      .from("lab_reports")
+      .update({ status: "processing" })
+      .eq("id", reportId);
+      
+    if (updateStartError) {
+      console.error("Error updating report status:", updateStartError);
+    }
+    
     // Call the Supabase Edge Function to perform AI analysis
     console.log("Sending lab results to edge function for analysis");
-    const { data, error } = await supabase.functions.invoke("process-lab-report", {
+    
+    // Adding a timeout to ensure we don't wait forever
+    const timeout = new Promise<{ success: false, error: string }>((_, reject) => {
+      setTimeout(() => reject({ success: false, error: "Analysis timed out" }), 30000);
+    });
+    
+    const analysisPromise = supabase.functions.invoke("process-lab-report", {
       body: {
         results: results,
         reportId: reportId
       }
     });
+    
+    const { data, error } = await Promise.race([analysisPromise, timeout]) as any;
     
     if (error) {
       console.error("Edge function error:", error);
@@ -84,12 +102,27 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
     console.log("Received AI analysis from edge function:", data);
     
     // Get structured analysis from the edge function response
-    const analysis = data.structuredAnalysis || {
-      insights: ["Analysis could not be fully structured."],
-      recommendations: ["Please consult with your healthcare provider."],
-      warnings: [],
-      follow_ups: []
-    };
+    let analysis = data.structuredAnalysis;
+    let provider = data.provider || "unknown";
+    
+    // If there's no structuredAnalysis but there is rawAnalysis, parse it
+    if ((!analysis || Object.keys(analysis).length === 0) && data.rawAnalysis) {
+      console.log("Using fallback parser for raw analysis");
+      analysis = parseGeminiResponse(data.rawAnalysis);
+      provider = "parsed-" + provider;
+    }
+    
+    // If all else fails, use basic fallback
+    if (!analysis || Object.keys(analysis).length === 0) {
+      console.log("Using hardcoded fallback analysis");
+      analysis = {
+        insights: ["Analysis could not be fully structured."],
+        recommendations: ["Please consult with your healthcare provider."],
+        warnings: [],
+        follow_ups: []
+      };
+      provider = "fallback";
+    }
     
     // Store the insights in the database
     const { error: insertError } = await supabase
@@ -98,9 +131,10 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
         report_id: reportId,
         insights: analysis.insights,
         recommendations: analysis.recommendations,
-        warnings: analysis.warnings,
-        follow_ups: analysis.follow_ups,
-        created_at: new Date().toISOString()
+        warnings: analysis.warnings || [],
+        follow_ups: analysis.followUps || [],
+        created_at: new Date().toISOString(),
+        ai_provider: provider
       });
       
     if (insertError) {
@@ -119,6 +153,34 @@ export async function analyzeLabResults(reportId: string): Promise<{ success: bo
     return { success: true, error: null };
   } catch (error: any) {
     console.error("Error analyzing lab results:", error);
+    
+    // If analysis fails, still set the status to "analyzed" so the user can see something
+    try {
+      const { error: updateError } = await supabase
+        .from("lab_reports")
+        .update({ status: "analyzed" })
+        .eq("id", reportId);
+        
+      if (updateError) console.error("Error updating report status after failure:", updateError);
+      
+      // Create a fallback insight entry
+      const { error: fallbackError } = await supabase
+        .from("lab_insights")
+        .upsert({
+          report_id: reportId,
+          insights: ["We encountered an issue while analyzing your lab results."],
+          recommendations: ["Please consult with your healthcare provider to review these results."],
+          warnings: [],
+          follow_ups: ["Consider retesting if the values seem unusual."],
+          created_at: new Date().toISOString(),
+          ai_provider: "fallback-error"
+        });
+        
+      if (fallbackError) console.error("Error inserting fallback insights:", fallbackError);
+    } catch (secondError) {
+      console.error("Error in error handling:", secondError);
+    }
+    
     return { success: false, error: error.message };
   }
 }

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { setGeminiKey, hasGeminiKey, clearGeminiKey } from "@/services/geminiService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Bot, Shield } from "lucide-react";
+import { AlertCircle, CheckCircle2, Bot, Shield, Info } from "lucide-react";
 import { SecureKeyManager } from "@/services/securityService";
 
 const GeminiSettings: React.FC = () => {
@@ -74,13 +74,24 @@ const GeminiSettings: React.FC = () => {
       
       <CardContent>
         {isConfigured && !isEditing ? (
-          <Alert variant="default" className="bg-green-100 dark:bg-green-900/20">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
-            <AlertTitle>Gemini API Key Configured</AlertTitle>
-            <AlertDescription>
-              Your Google Gemini API key has been saved securely. You can now use enhanced AI features throughout the application.
-            </AlertDescription>
-          </Alert>
+          <>
+            <Alert variant="default" className="bg-green-100 dark:bg-green-900/20 mb-4">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+              <AlertTitle>Gemini API Key Configured</AlertTitle>
+              <AlertDescription>
+                Your Google Gemini API key has been saved securely. You can now use enhanced AI features throughout the application.
+              </AlertDescription>
+            </Alert>
+            
+            <Alert variant="default" className="bg-blue-100 dark:bg-blue-900/20">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-500" />
+              <AlertTitle>Understanding AI Quota Limits</AlertTitle>
+              <AlertDescription>
+                <p className="mb-2">Google Gemini API has usage quotas that may result in temporary limitations during high usage periods.</p>
+                <p className="text-sm">If you experience "Rate Limit" errors, the system will automatically use fallback analysis methods to ensure you still receive insights.</p>
+              </AlertDescription>
+            </Alert>
+          </>
         ) : (
           <>
             {!isConfigured && (
@@ -88,9 +99,9 @@ const GeminiSettings: React.FC = () => {
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-500" />
                 <AlertTitle>API Key Required</AlertTitle>
                 <AlertDescription>
-                  Enter your Gemini API key to enable enhanced AI features. Your key is stored securely in your browser's local storage with enhanced encryption.
+                  <p>Enter your Gemini API key to enable enhanced AI features. Your key is stored securely in your browser's local storage with enhanced encryption.</p>
                   <p className="mt-2 text-xs">
-                    A default test API key is provided, but you may want to use your own for production.
+                    A default test API key is provided, but for better performance and quota limits, use your own key from the <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google AI Studio</a>.
                   </p>
                 </AlertDescription>
               </Alert>
