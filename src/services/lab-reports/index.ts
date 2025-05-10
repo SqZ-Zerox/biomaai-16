@@ -6,3 +6,9 @@ export * from "./fetchService";
 export * from "./analysisService";
 export * from "./testDetectionService";
 export * from "./responseParsingService";
+
+// Add aliases for renamed functions to maintain backwards compatibility
+import { fetchLabReportDetails, fetchUserLabReports } from "./fetchService";
+
+export const getLabReportDetails = fetchLabReportDetails;
+export const getUserLabReports = fetchUserLabReports;

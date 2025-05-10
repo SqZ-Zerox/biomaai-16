@@ -3,11 +3,11 @@
 // Import and re-export all functionality from the new modular structure
 
 import { 
-  signUp, 
-  signIn, 
-  signOut, 
-  getCurrentSession, 
-  updateUserVerificationStatus 
+  signUp as signUpCore, 
+  signIn as signInCore, 
+  signOut as signOutCore, 
+  getCurrentSession as getSessionCore, 
+  updateUserVerificationStatus as verifyEmailCore 
 } from './authCore';
 
 import { 
@@ -21,14 +21,10 @@ import {
 } from './dataProcessor';
 
 // Re-export all functions for backward compatibility
-export {
-  signUp,
-  signIn,
-  signOut,
-  getCurrentSession,
-  updateUserVerificationStatus,
-  ensureUserProfile,
-  completeUserProfile,
-  processHealthGoals,
-  processDietaryRestrictions
-};
+export const signUp = signUpCore;
+export const signIn = signInCore;
+export const signOut = signOutCore;
+export const getCurrentSession = getSessionCore;
+export const updateUserVerificationStatus = verifyEmailCore;
+export { ensureUserProfile, completeUserProfile };
+export { processHealthGoals, processDietaryRestrictions };

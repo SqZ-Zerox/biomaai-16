@@ -1,124 +1,256 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { sendGeminiCompletion, GeminiMessage } from "../geminiService";
-import { LabReport } from "./types";
-import { detectTestTypes } from "./testDetectionService";
-import { parseGeminiResponse } from "./responseParsingService";
+import { 
+  LabReport,
+  LabResult, 
+  LabInsight,
+  LabReportDetailsResponse
+} from "./types";
+import { fetchLabReportDetails, fetchUserLabReports } from "./fetchService";
 
-// Function to analyze lab report using Gemini AI
-export const analyzeLabReport = async (report: LabReport, fileUrl: string) => {
+/**
+ * Get the latest lab report for a user
+ */
+export async function getLatestLabReport(userId: string): Promise<LabReportDetailsResponse> {
   try {
-    // For real implementation, we'd extract text from the PDF/image here
-    // This would typically be done in a Supabase Edge Function
+    // Fetch all reports for the user
+    const { reports, error: reportsError } = await fetchUserLabReports(userId);
     
-    // For this prototype, let's simulate the text extraction with mock data
-    const extractedText = 
-      "Complete Blood Count (CBC):\n" +
-      "Hemoglobin: 11.2 g/dL (Reference Range: 12.0-15.5)\n" +
-      "Hematocrit: 34% (Reference Range: 35.5-44.9%)\n" +
-      "MCV: 78 fL (Reference Range: 80-96 fL)\n" +
-      "Platelet Count: 250 K/uL (Reference Range: 150-450 K/uL)\n\n" +
-      "Lipid Panel:\n" +
-      "Total Cholesterol: 245 mg/dL (Reference Range: <200 mg/dL)\n" +
-      "HDL: 38 mg/dL (Reference Range: >40 mg/dL)\n" +
-      "LDL: 160 mg/dL (Reference Range: <100 mg/dL)\n" +
-      "Triglycerides: 190 mg/dL (Reference Range: <150 mg/dL)";
-    
-    // Create prompt for Gemini AI to identify test types and analyze results
-    const prompt = `
-      You are a health and wellness assistant. First, identify all the specific test types in the provided lab results. 
-      Then analyze the results for a fitness-focused individual. Explain what each biomarker means in simple terms, 
-      and categorize each as Optimal, Borderline, or Critical based on clinical norms and wellness goals. Then provide:
-
-      1. Key insights – what stands out and why it matters for their health/fitness.
-      2. Personalized recommendations – diet, supplements, lifestyle tips to improve any borderline values.
-      3. Warnings – any health risks or urgent concerns.
-      4. Suggested follow-up tests if needed.
-
-      Keep the tone supportive and user-friendly, not medical or alarming. Present the response in four clear sections:  
-      **Insights**, **Recommendations**, **Warnings**, **Follow-up Tests**.
-
-      Lab Test Results:
-      ${extractedText}
-    `;
-
-    // Send prompt to Gemini
-    const messages: GeminiMessage[] = [
-      {
-        role: "user",
-        parts: [{ text: prompt }]
-      }
-    ];
-    
-    const response = await sendGeminiCompletion(messages);
-    
-    if (!response) {
-      throw new Error("Failed to get analysis from Gemini");
+    if (reportsError || !reports || reports.length === 0) {
+      return {
+        report: null,
+        results: null,
+        insights: null,
+        error: reportsError || "No lab reports found"
+      };
     }
     
-    // Parse Gemini's response to extract structured data
-    const insights = parseGeminiResponse(response);
+    // Find the latest analyzed report
+    const latestReport = reports.find(r => r.status === "analyzed") || reports[0];
     
-    // Detect test types from the text
-    const testTypes = detectTestTypes(extractedText);
+    // Fetch the details for the latest report
+    return await fetchLabReportDetails(latestReport.id);
+  } catch (error: any) {
+    console.error("Error fetching latest lab report:", error);
+    return {
+      report: null,
+      results: null,
+      insights: null,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Analyze lab results to generate insights
+ */
+export async function analyzeLabResults(reportId: string): Promise<{ success: boolean; error: string | null }> {
+  try {
+    // Check if the report exists and has results
+    const { data: results, error: resultsError } = await supabase
+      .from("lab_results")
+      .select("*")
+      .eq("report_id", reportId);
+      
+    if (resultsError) throw resultsError;
     
-    // Store results in database - in real implementation, we would extract the biomarker values
-    // from the PDF/image or from Gemini's response
-    const biomarkers = [
-      { name: "Hemoglobin", value: "11.2", unit: "g/dL", reference_range: "12.0-15.5", status: "low" as const, category: "blood" },
-      { name: "Hematocrit", value: "34", unit: "%", reference_range: "35.5-44.9", status: "low" as const, category: "blood" },
-      { name: "MCV", value: "78", unit: "fL", reference_range: "80-96", status: "low" as const, category: "blood" },
-      { name: "Platelet Count", value: "250", unit: "K/uL", reference_range: "150-450", status: "normal" as const, category: "blood" },
-      { name: "Total Cholesterol", value: "245", unit: "mg/dL", reference_range: "<200", status: "high" as const, category: "lipids" },
-      { name: "HDL", value: "38", unit: "mg/dL", reference_range: ">40", status: "low" as const, category: "lipids" },
-      { name: "LDL", value: "160", unit: "mg/dL", reference_range: "<100", status: "high" as const, category: "lipids" },
-      { name: "Triglycerides", value: "190", unit: "mg/dL", reference_range: "<150", status: "high" as const, category: "lipids" }
-    ];
-    
-    // Update lab report with automatically detected test types
-    await supabase
-      .from('lab_reports')
-      .update({
-        test_types: testTypes,
-        status: 'analyzed'
-      })
-      .eq('id', report.id);
-    
-    // Insert lab results
-    for (const biomarker of biomarkers) {
-      await supabase
-        .from('lab_results')
-        .insert({
-          report_id: report.id,
-          biomarker_name: biomarker.name,
-          value: biomarker.value,
-          unit: biomarker.unit,
-          reference_range: biomarker.reference_range,
-          status: biomarker.status,
-          category: biomarker.category
-        });
+    if (!results || results.length === 0) {
+      return { 
+        success: false, 
+        error: "No lab results found for this report" 
+      };
     }
     
-    // Insert lab insights
-    await supabase
-      .from('lab_insights')
-      .insert({
-        report_id: report.id,
+    // In a real application, this would call an AI service to analyze the results
+    // For now, we'll simulate the analysis with a simple algorithm
+    
+    // Count abnormal results
+    const abnormalResults = results.filter(
+      result => result.status === "high" || result.status === "low" || result.status === "critical"
+    );
+    
+    // Generate insights based on abnormal results
+    const insights = {
+      summary: `Found ${abnormalResults.length} abnormal results out of ${results.length} total biomarkers.`,
+      insights: [
+        "Your lab results show some biomarkers outside the normal range.",
+        "Consider discussing these results with your healthcare provider."
+      ],
+      recommendations: [
+        "Maintain a balanced diet rich in fruits and vegetables.",
+        "Stay hydrated and aim for regular physical activity.",
+        "Follow up with your doctor to discuss these results in detail."
+      ],
+      warnings: abnormalResults.length > 0 
+        ? ["Some biomarkers require attention."] 
+        : [],
+      follow_ups: abnormalResults.length > 0 
+        ? ["Schedule a follow-up appointment with your healthcare provider."] 
+        : []
+    };
+    
+    // Store the insights in the database
+    const { error: insertError } = await supabase
+      .from("lab_insights")
+      .upsert({
+        report_id: reportId,
+        summary: insights.summary,
         insights: insights.insights,
         recommendations: insights.recommendations,
         warnings: insights.warnings,
-        follow_ups: insights.followUps
+        follow_ups: insights.follow_ups,
+        created_at: new Date().toISOString()
       });
+      
+    if (insertError) throw insertError;
     
+    // Update the report status to "analyzed"
+    const { error: updateError } = await supabase
+      .from("lab_reports")
+      .update({ status: "analyzed" })
+      .eq("id", reportId);
+      
+    if (updateError) throw updateError;
+    
+    return { success: true, error: null };
   } catch (error: any) {
-    console.error("Analysis error:", error);
-    
-    // Update report status to indicate error
-    await supabase
-      .from('lab_reports')
-      .update({
-        status: 'error'
-      })
-      .eq('id', report.id);
+    console.error("Error analyzing lab results:", error);
+    return { success: false, error: error.message };
   }
-};
+}
+
+/**
+ * Get health score based on lab results
+ */
+export async function calculateHealthScore(reportId: string): Promise<{ score: number; error: string | null }> {
+  try {
+    // Fetch lab results for the report
+    const { data: results, error } = await supabase
+      .from("lab_results")
+      .select("*")
+      .eq("report_id", reportId);
+      
+    if (error) throw error;
+    
+    if (!results || results.length === 0) {
+      return { score: 0, error: "No lab results found" };
+    }
+    
+    // Calculate health score based on results
+    // This is a simplified algorithm - in a real app, this would be more sophisticated
+    const totalBiomarkers = results.length;
+    const normalBiomarkers = results.filter(result => result.status === "normal").length;
+    const slightlyAbnormal = results.filter(
+      result => result.status === "high" || result.status === "low"
+    ).length;
+    const criticalBiomarkers = results.filter(result => result.status === "critical").length;
+    
+    // Score calculation: 
+    // - Normal biomarkers contribute positively
+    // - Slightly abnormal biomarkers reduce the score slightly
+    // - Critical biomarkers reduce the score significantly
+    let score = (normalBiomarkers / totalBiomarkers) * 100;
+    score -= (slightlyAbnormal / totalBiomarkers) * 20;
+    score -= (criticalBiomarkers / totalBiomarkers) * 40;
+    
+    // Ensure score is between 0 and 100
+    score = Math.max(0, Math.min(100, score));
+    
+    return { score: Math.round(score), error: null };
+  } catch (error: any) {
+    console.error("Error calculating health score:", error);
+    return { score: 0, error: error.message };
+  }
+}
+
+/**
+ * Compare two lab reports to track changes
+ */
+export async function compareLabReports(
+  reportId1: string, 
+  reportId2: string
+): Promise<{ 
+  improved: LabResult[]; 
+  worsened: LabResult[]; 
+  unchanged: LabResult[]; 
+  error: string | null 
+}> {
+  try {
+    // Fetch results for first report
+    const { data: results1, error: error1 } = await supabase
+      .from("lab_results")
+      .select("*")
+      .eq("report_id", reportId1);
+      
+    if (error1) throw error1;
+    
+    // Fetch results for second report
+    const { data: results2, error: error2 } = await supabase
+      .from("lab_results")
+      .select("*")
+      .eq("report_id", reportId2);
+      
+    if (error2) throw error2;
+    
+    if (!results1 || !results2) {
+      return { 
+        improved: [], 
+        worsened: [], 
+        unchanged: [], 
+        error: "Could not find results for one or both reports" 
+      };
+    }
+    
+    // Map results by biomarker name for easy comparison
+    const resultsMap1 = new Map(
+      results1.map(result => [result.biomarker_name, result])
+    );
+    
+    // Compare results
+    const improved: LabResult[] = [];
+    const worsened: LabResult[] = [];
+    const unchanged: LabResult[] = [];
+    
+    results2.forEach(newResult => {
+      const oldResult = resultsMap1.get(newResult.biomarker_name);
+      
+      if (!oldResult) {
+        // No previous result to compare
+        return;
+      }
+      
+      // Determine status change
+      const statusValues = {
+        "normal": 0,
+        "low": 1,
+        "high": 1,
+        "critical": 2
+      };
+      
+      const oldStatusValue = statusValues[oldResult.status as keyof typeof statusValues];
+      const newStatusValue = statusValues[newResult.status as keyof typeof statusValues];
+      
+      if (newStatusValue < oldStatusValue) {
+        improved.push(newResult);
+      } else if (newStatusValue > oldStatusValue) {
+        worsened.push(newResult);
+      } else {
+        unchanged.push(newResult);
+      }
+    });
+    
+    return {
+      improved,
+      worsened,
+      unchanged,
+      error: null
+    };
+  } catch (error: any) {
+    console.error("Error comparing lab reports:", error);
+    return {
+      improved: [],
+      worsened: [],
+      unchanged: [],
+      error: error.message
+    };
+  }
+}
