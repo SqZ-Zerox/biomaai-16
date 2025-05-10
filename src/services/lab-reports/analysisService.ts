@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   LabReport,
@@ -226,15 +227,15 @@ export async function compareLabReports(
         "critical": 2
       };
       
-      const oldStatusValue = statusValues[oldResult.status as keyof typeof statusValues];
-      const newStatusValue = statusValues[newResult.status as keyof typeof statusValues];
+      const oldStatusValue = statusValues[oldResult.status as keyof typeof statusValues] || 0;
+      const newStatusValue = statusValues[newResult.status as keyof typeof statusValues] || 0;
       
       if (newStatusValue < oldStatusValue) {
-        improved.push(newResult);
+        improved.push(newResult as unknown as LabResult);
       } else if (newStatusValue > oldStatusValue) {
-        worsened.push(newResult);
+        worsened.push(newResult as unknown as LabResult);
       } else {
-        unchanged.push(newResult);
+        unchanged.push(newResult as unknown as LabResult);
       }
     });
     
@@ -252,5 +253,78 @@ export async function compareLabReports(
       unchanged: [],
       error: error.message
     };
+  }
+}
+
+/**
+ * Process and analyze a lab report file
+ */
+export async function analyzeLabReport(report: LabReport, fileUrl: string): Promise<boolean> {
+  try {
+    console.log("Analyzing lab report:", report.id);
+    
+    // This would typically call an AI service to extract and analyze lab results
+    // For now, just simulate the process with a delay
+    
+    // Update report status to processing
+    const { error: updateError } = await supabase
+      .from("lab_reports")
+      .update({ status: "processing" })
+      .eq("id", report.id);
+      
+    if (updateError) throw updateError;
+    
+    // Generate some sample results (in a real app, this would be done by OCR and AI)
+    const sampleBiomarkers = [
+      { name: "Glucose", value: "95", unit: "mg/dL", range: "70-99", status: "normal" as const, category: "Metabolic" },
+      { name: "Cholesterol", value: "210", unit: "mg/dL", range: "< 200", status: "high" as const, category: "Lipids" },
+      { name: "HDL", value: "45", unit: "mg/dL", range: "> 40", status: "normal" as const, category: "Lipids" },
+      { name: "LDL", value: "140", unit: "mg/dL", range: "< 130", status: "high" as const, category: "Lipids" },
+      { name: "Triglycerides", value: "180", unit: "mg/dL", range: "< 150", status: "high" as const, category: "Lipids" },
+      { name: "Hemoglobin", value: "14.2", unit: "g/dL", range: "13.5-17.5", status: "normal" as const, category: "CBC" }
+    ];
+    
+    // Insert sample results into database
+    for (const biomarker of sampleBiomarkers) {
+      const { error: insertError } = await supabase
+        .from("lab_results")
+        .insert({
+          report_id: report.id,
+          biomarker_name: biomarker.name,
+          value: biomarker.value,
+          unit: biomarker.unit,
+          reference_range: biomarker.range,
+          status: biomarker.status,
+          category: biomarker.category
+        });
+        
+      if (insertError) {
+        console.error("Error inserting result:", insertError);
+      }
+    }
+    
+    // Set test types detected
+    const { error: typeError } = await supabase
+      .from("lab_reports")
+      .update({ 
+        test_types: ["Metabolic", "Lipids", "CBC"],
+        status: "analyzed"
+      })
+      .eq("id", report.id);
+      
+    if (typeError) throw typeError;
+    
+    // Generate insights using the analyzeLabResults function
+    const { success, error } = await analyzeLabResults(report.id);
+    
+    if (!success) {
+      console.error("Error analyzing results:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error: any) {
+    console.error("Error analyzing lab report:", error);
+    return false;
   }
 }

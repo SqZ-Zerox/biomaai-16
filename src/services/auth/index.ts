@@ -1,12 +1,31 @@
 
-// Re-export types
-export * from './types';
+// Export types
+export * from "./types";
 
-// Re-export core authentication functions
-export * from './authCore';
+// Export core auth functions
+export {
+  signUp,
+  signIn,
+  signOut,
+  getCurrentSession,
+  updateUserVerificationStatus,
+  processProfileData,
+  extractSupabaseUser
+} from "./authCore";
 
-// Re-export profile management functions
-export * from './profileManager';
+// Export profile management
+export {
+  ensureUserProfile,
+  completeUserProfile,
+  getUserProfile,
+  updateUserProfile
+} from "./profileManager";
 
-// Re-export specific exports from profileService
-export { getUserProfile } from './profileService';
+// Export operations (for backwards compatibility)
+export * from "./authOperations";
+
+// Export data processing utilities
+export {
+  processHealthGoals,
+  processDietaryRestrictions
+} from "./dataProcessor";

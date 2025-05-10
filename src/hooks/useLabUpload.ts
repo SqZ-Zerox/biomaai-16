@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +9,7 @@ export const useLabUpload = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [step, setStep] = useState<number>(1); // 1: File Upload, 2: Processing, 3: Results
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -16,11 +18,47 @@ export const useLabUpload = () => {
   const [processingProgress, setProcessingProgress] = useState<number>(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, status: string}[]>([]);
+  const [dragActive, setDragActive] = useState<boolean>(false);
   
+  // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
       setSelectedFiles(filesArray);
+      console.log("Files selected:", filesArray.map(f => f.name).join(', '));
+    }
+  };
+  
+  // Handle drag events
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+  
+  // Handle file drop
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const filesArray = Array.from(e.dataTransfer.files);
+      // Filter for only accepted file types
+      const validFiles = filesArray.filter(file => {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        return ['pdf', 'jpg', 'jpeg', 'png'].includes(ext || '');
+      });
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles(validFiles);
+        console.log("Files dropped:", validFiles.map(f => f.name).join(', '));
+      }
     }
   };
   
@@ -167,6 +205,12 @@ export const useLabUpload = () => {
     }
   };
   
+  const handleBrowseFiles = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
   return {
     step,
     isUploading,
@@ -175,9 +219,14 @@ export const useLabUpload = () => {
     processingProgress,
     selectedFiles,
     uploadedFiles,
+    dragActive,
     handleFileChange,
     handleUpload,
     handleContinue,
     handleBack,
+    handleBrowseFiles,
+    handleDrag,
+    handleDrop,
+    fileInputRef
   };
 };

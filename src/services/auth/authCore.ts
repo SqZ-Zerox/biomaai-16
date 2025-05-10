@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -171,7 +170,7 @@ export const updateUserVerificationStatus = async () => {
     // Verify the email using the token
     const { error } = await supabase.auth.verifyOtp({
       token_hash: token,
-      type: 'email_verification'
+      type: 'email' as any // Type cast to fix type error
     });
     
     if (error) {

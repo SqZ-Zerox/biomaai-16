@@ -10,6 +10,9 @@ interface FileSelectionAreaProps {
   uploadProgress: number;
   handleBrowseFiles: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
+  handleDrag?: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+  dragActive?: boolean;
 }
 
 const FileSelectionArea: React.FC<FileSelectionAreaProps> = ({
@@ -18,15 +21,30 @@ const FileSelectionArea: React.FC<FileSelectionAreaProps> = ({
   uploadProgress,
   handleBrowseFiles,
   fileInputRef,
+  handleDrag,
+  handleDrop,
+  dragActive
 }) => {
   return (
-    <div className="border-2 border-dashed border-border/40 rounded-lg p-8 text-center">
+    <div 
+      className={`border-2 ${dragActive ? 'border-primary' : 'border-dashed border-border/40'} rounded-lg p-8 text-center transition-colors`}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
       <input
         type="file"
         ref={fileInputRef}
         multiple
         accept=".pdf,.jpg,.jpeg,.png"
         className="hidden"
+        onChange={(e) => {
+          // Call any onChange handler passed as props
+          if (fileInputRef.current) {
+            console.log("File input change detected");
+          }
+        }}
         disabled={isUploading}
       />
       

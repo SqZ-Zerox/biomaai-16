@@ -1,5 +1,5 @@
 
-import React, { useRef } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 
@@ -15,7 +15,6 @@ import UploadStepIndicator from "@/components/upload/UploadStepIndicator";
 import UploadAlert from "@/components/upload/UploadAlert";
 
 const UploadPage: React.FC = () => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { 
     step, 
     isUploading, 
@@ -25,14 +24,30 @@ const UploadPage: React.FC = () => {
     selectedFiles, 
     handleFileChange, 
     handleContinue, 
-    handleBack 
+    handleBack,
+    handleBrowseFiles,
+    fileInputRef,
+    handleDrag,
+    handleDrop,
+    dragActive
   } = useLabUpload();
   
-  const handleBrowseFiles = () => {
+  // Reference to the file input
+  React.useEffect(() => {
     if (fileInputRef.current) {
-      fileInputRef.current.click();
+      fileInputRef.current.addEventListener('change', (e) => {
+        handleFileChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
+      });
     }
-  };
+    
+    return () => {
+      if (fileInputRef.current) {
+        fileInputRef.current.removeEventListener('change', (e) => {
+          handleFileChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
+        });
+      }
+    };
+  }, [fileInputRef, handleFileChange]);
   
   const getStepTitle = () => {
     if (step === 1) return "Upload Lab Reports";
@@ -92,6 +107,9 @@ const UploadPage: React.FC = () => {
                       uploadProgress={uploadProgress}
                       handleBrowseFiles={handleBrowseFiles}
                       fileInputRef={fileInputRef}
+                      handleDrag={handleDrag}
+                      handleDrop={handleDrop}
+                      dragActive={dragActive}
                     />
                     <UploadAlert />
                   </>
