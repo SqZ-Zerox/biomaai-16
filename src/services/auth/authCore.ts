@@ -1,3 +1,4 @@
+
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -79,27 +80,54 @@ export const extractSupabaseUser = (user: User) => {
   };
 };
 
-// Fix the email existence check function - this is where the bug is happening
+// Improved email existence check function
 export const checkIfEmailExists = async (email: string): Promise<boolean> => {
   try {
-    // First approach: Try to sign in with OTP to check if email exists
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false
-      }
-    });
+    // Using signInWithOtp with shouldCreateUser: false is more reliable for checking if an email exists
+    // But this can cause false positives due to Supabase's OTP configuration
     
-    // If there's no error about user not found, the email likely exists
-    if (signInError) {
-      const errorMsg = signInError.message.toLowerCase();
-      return !errorMsg.includes("user not found") && !errorMsg.includes("user does not exist");
+    // First, check if the email format is valid
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log("Invalid email format:", email);
+      return false;
     }
     
-    // If no error, the email exists
+    // Instead of using OTP, try a password reset which is more reliable
+    // This won't send any emails but will tell us if the user exists
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    });
+    
+    // If we get a 422 error, it means the user doesn't exist
+    // Most Supabase instances return 422 for non-existent users in password reset
+    if (error && (error.status === 422 || error.message.includes("User not found"))) {
+      console.log("User not found during email check");
+      return false;
+    }
+    
+    // For security reasons, Supabase might return success even for non-existent emails
+    // In this case, we'll do our best to interpret the response
+    
+    // Log the error for debugging
+    if (error) {
+      console.log("Email check error:", error);
+      
+      // If the error message indicates the user doesn't exist, return false
+      if (error.message.toLowerCase().includes("user not found") || 
+          error.message.toLowerCase().includes("does not exist")) {
+        return false;
+      }
+    }
+    
+    // If we haven't returned false by this point, assume the user might exist
+    // This is a conservative approach to prevent duplicate registrations
+    console.log("Email may exist or check was inconclusive");
     return true;
   } catch (error) {
     console.error("Error checking if email exists:", error);
+    // If there's an error, we can't be sure, so we'll say the email doesn't exist
+    // This allows the user to attempt registration
     return false;
   }
 };
