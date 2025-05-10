@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AuthResult, SessionResult, SignupData } from "./types";
@@ -45,22 +44,28 @@ export async function signUp({
           ? health_goals
               .filter(Boolean) // Filter out null, undefined, and falsy values
               .map((goalItem) => {
+                if (!goalItem) return ''; // Handle null/undefined
+                
                 // TypeScript safety: explicitly check if goalItem is an object with value property
-                if (goalItem && typeof goalItem === 'object' && 'value' in goalItem && goalItem.value != null) {
+                if (typeof goalItem === 'object' && goalItem !== null && 'value' in goalItem && goalItem.value != null) {
                   return String(goalItem.value); 
                 }
-                return goalItem ? String(goalItem) : '';
+                // Handle primitive values
+                return String(goalItem);
               })
           : [],
         dietary_restrictions: Array.isArray(dietary_restrictions) 
           ? dietary_restrictions
               .filter(Boolean) // Filter out null, undefined, and falsy values
               .map((restrictionItem) => {
+                if (!restrictionItem) return ''; // Handle null/undefined
+                
                 // TypeScript safety: explicitly check if restrictionItem is an object with value property
-                if (restrictionItem && typeof restrictionItem === 'object' && 'value' in restrictionItem && restrictionItem.value != null) {
+                if (typeof restrictionItem === 'object' && restrictionItem !== null && 'value' in restrictionItem && restrictionItem.value != null) {
                   return String(restrictionItem.value);
                 }
-                return restrictionItem ? String(restrictionItem) : '';
+                // Handle primitive values
+                return String(restrictionItem);
               })
           : [],
         ...user_metadata
