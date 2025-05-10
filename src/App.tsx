@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import "./App.css";
@@ -33,12 +33,12 @@ const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () =>
 
 // Initialize the app
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+  const [isDarkMode, setIsDarkMode] = React.useState<boolean>(() => {
     const storedMode = localStorage.getItem("bioma_dark_mode");
     return storedMode ? JSON.parse(storedMode) : false;
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Initialize API keys on app load
     initializeAPIKeys();
     
