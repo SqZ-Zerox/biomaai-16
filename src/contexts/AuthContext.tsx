@@ -31,10 +31,10 @@ interface AuthContextType {
   authStatus: AuthStatus;
   globalLoading: boolean;
   checkSession: () => Promise<void>;
-  // Add missing properties to fix TypeScript errors
   isAuthenticated: boolean;
   isLoading: boolean;
   profile: any | null;
+  isEmailVerified: boolean;
 }
 
 // Create the AuthContext with a default value
@@ -44,10 +44,10 @@ const AuthContext = createContext<AuthContextType>({
   authStatus: AuthStatus.PENDING,
   globalLoading: false,
   checkSession: async () => {},
-  // Add default values for missing properties
   isAuthenticated: false,
   isLoading: true,
   profile: null,
+  isEmailVerified: false,
 });
 
 // AuthProvider component
@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authStatus, setAuthStatus] = useState<AuthStatus>(AuthStatus.PENDING);
   const [globalLoading, setGlobalLoading] = useState<boolean>(true);
   const [profile, setProfile] = useState<any | null>(null);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -73,9 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Update session and user state
       setSession(initialSession);
       setUser(initialSession?.user || null);
-
-      // If we have a session, update the user verification status
+      
+      // Check if email is verified
       if (initialSession?.user) {
+        setIsEmailVerified(initialSession.user.email_confirmed_at !== null);
+        
         // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
         await updateUserVerificationStatus();
       }
@@ -108,11 +111,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Update session and user state
     setSession(session);
     setUser(session?.user || null);
-
-    // If we have a session, update the user verification status
+    
+    // Update email verification status
     if (session?.user) {
+      setIsEmailVerified(session.user.email_confirmed_at !== null);
+      
       // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
       updateUserVerificationStatus();
+    } else {
+      setIsEmailVerified(false);
     }
     
     // Update the auth state
@@ -127,6 +134,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const currentSession = await getCurrentSession();
       setSession(currentSession);
       setUser(currentSession?.user || null);
+      
+      // Update email verification status
+      if (currentSession?.user) {
+        setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
+      } else {
+        setIsEmailVerified(false);
+      }
+      
       setAuthStatus(currentSession ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
     } catch (error) {
       console.error("Error checking session:", error);
@@ -147,10 +162,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authStatus,
     globalLoading,
     checkSession,
-    // Include derived properties
     isAuthenticated,
     isLoading,
     profile,
+    isEmailVerified,
   };
 
   return (

@@ -29,6 +29,13 @@ export const checkIfEmailExists = async (email: string): Promise<boolean> => {
       return false;
     }
     
+    // Extract domain for basic validation
+    const domain = email.split('@')[1];
+    if (!domain || domain.indexOf('.') === -1) {
+      console.log("Invalid domain format:", email);
+      return false;
+    }
+    
     // Use signInWithOtp to check if email exists
     const { error } = await supabase.auth.signInWithOtp({
       email,

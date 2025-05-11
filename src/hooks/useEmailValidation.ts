@@ -24,7 +24,21 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
       }
 
       try {
-        // Check cache first to avoid unnecessary API calls
+        // Validate email format first
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          form.setError("email", {
+            type: "manual",
+            message: "Please enter a valid email address."
+          });
+          setCheckingEmail(false);
+          return;
+        }
+        
+        // Check if the domain is valid (has MX records)
+        // This is handled on the backend side via checkIfEmailExists
+
+        // Check if email exists in our system
         const exists = await checkIfEmailExists(email);
         
         if (exists) {
@@ -52,7 +66,6 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
     if (!email) return;
     
     // Only check if there are no validation errors from the form schema
-    // Don't do the check if there are already validation errors like "invalid email format"
     if (form.formState.errors.email && form.formState.errors.email.type !== "manual") {
       return;
     }

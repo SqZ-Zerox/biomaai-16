@@ -7,6 +7,7 @@ import { DemoModeProvider } from "./contexts/DemoModeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "./components/ui/toaster";
 import { initializeAPIKeys } from "./services/apiKeyInitializer";
+import { useAuth } from "./contexts/AuthContext";
 
 // Pages
 import Index from "./pages/Index";
@@ -21,6 +22,27 @@ import ChatPage from "./pages/ChatPage";
 import RecipeSuggestionsPage from "./pages/RecipeSuggestionsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LabDetailsPage from "./pages/LabDetailsPage";
+
+// Protected route component that requires authentication and email verification
+const ProtectedRoute = () => {
+  const { isAuthenticated, isLoading, isEmailVerified } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isEmailVerified) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
 
 // Dashboard layout wrapper component
 const DashboardLayout = ({ toggleDarkMode, isDarkMode }: { toggleDarkMode: () => void; isDarkMode: boolean }) => {
@@ -67,30 +89,32 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             
-            {/* Dashboard Routes */}
-            <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
-              <Route index element={<Index />} />
+            {/* Dashboard Routes - Protected */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
+                <Route index element={<Index />} />
+              </Route>
+              
+              {/* Top level routes that use layout */}
+              <Route element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
+                <Route path="/upload" element={<UploadPage />} />
+                <Route path="/fitness" element={<FitnessPage />} />
+                <Route path="/nutrition" element={<NutritionPage />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/progress" element={<Index />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/lab-details" element={<LabDetailsPage />} />
+                <Route path="/lab-details/:reportId" element={<LabDetailsPage />} />
+                <Route path="/lab-details/:category" element={<LabDetailsPage />} />
+              </Route>
+              
+              {/* Recipe suggestions page - Protected */}
+              <Route path="/recipes" element={
+                <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
+                  <RecipeSuggestionsPage />
+                </Layout>
+              } />
             </Route>
-            
-            {/* Top level routes that use layout */}
-            <Route element={<DashboardLayout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />}>
-              <Route path="/upload" element={<UploadPage />} />
-              <Route path="/fitness" element={<FitnessPage />} />
-              <Route path="/nutrition" element={<NutritionPage />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/progress" element={<Index />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/lab-details" element={<LabDetailsPage />} />
-              <Route path="/lab-details/:reportId" element={<LabDetailsPage />} />
-              <Route path="/lab-details/:category" element={<LabDetailsPage />} />
-            </Route>
-            
-            {/* Add the new route for recipe suggestions - now with proper props passed to Layout */}
-            <Route path="/recipes" element={
-              <Layout toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode}>
-                <RecipeSuggestionsPage />
-              </Layout>
-            } />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -28,6 +28,18 @@ export const signUp = async (signupData: any) => {
       };
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(signupData.email)) {
+      return {
+        data: null,
+        error: {
+          message: "Please enter a valid email address.",
+          status: 400
+        }
+      };
+    }
+    
     // Format health goals correctly - ensure we have an array of objects with 'value' property
     const formattedHealthGoals = Array.isArray(signupData.health_goals) && signupData.health_goals.length > 0
       ? signupData.health_goals.map((goal: string) => ({
@@ -91,7 +103,9 @@ export const signUp = async (signupData: any) => {
           dietary_restrictions: formattedDietaryRestrictions,
           ...signupData.user_metadata
         },
-        emailRedirectTo: window.location.origin + "/auth/callback"
+        emailRedirectTo: window.location.origin + "/auth/callback",
+        // Force email verification to be required - regardless of Supabase settings
+        emailConfirm: true
       }
     });
     
