@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -30,6 +31,10 @@ interface AuthContextType {
   authStatus: AuthStatus;
   globalLoading: boolean;
   checkSession: () => Promise<void>;
+  // Add missing properties to fix TypeScript errors
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  profile: any | null;
 }
 
 // Create the AuthContext with a default value
@@ -39,6 +44,10 @@ const AuthContext = createContext<AuthContextType>({
   authStatus: AuthStatus.PENDING,
   globalLoading: false,
   checkSession: async () => {},
+  // Add default values for missing properties
+  isAuthenticated: false,
+  isLoading: true,
+  profile: null,
 });
 
 // AuthProvider component
@@ -51,6 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authStatus, setAuthStatus] = useState<AuthStatus>(AuthStatus.PENDING);
   const [globalLoading, setGlobalLoading] = useState<boolean>(true);
+  const [profile, setProfile] = useState<any | null>(null);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -66,7 +76,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // If we have a session, update the user verification status
       if (initialSession?.user) {
-        updateUserVerificationStatus(initialSession.user);
+        // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
+        await updateUserVerificationStatus();
       }
       
       // Update the auth state
@@ -100,7 +111,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // If we have a session, update the user verification status
     if (session?.user) {
-      updateUserVerificationStatus(session.user);
+      // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
+      updateUserVerificationStatus();
     }
     
     // Update the auth state
@@ -124,6 +136,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // Compute isAuthenticated and isLoading from authStatus and globalLoading
+  const isAuthenticated = authStatus === AuthStatus.AUTHENTICATED;
+  const isLoading = globalLoading || authStatus === AuthStatus.PENDING;
+
   // Provide the auth context value
   const value: AuthContextType = {
     session,
@@ -131,6 +147,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authStatus,
     globalLoading,
     checkSession,
+    // Include derived properties
+    isAuthenticated,
+    isLoading,
+    profile,
   };
 
   return (
