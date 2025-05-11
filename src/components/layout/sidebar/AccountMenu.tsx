@@ -1,88 +1,68 @@
 
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  Bell,
-  HelpCircle,
-  Award,
-  User,
-  Settings
-} from "lucide-react";
-
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar";
-
-import { useSidebar } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { NavLink } from "react-router-dom";
+import { User, Settings, LogOut } from "lucide-react";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AccountMenu = () => {
-  const { setOpenMobile } = useSidebar();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const { signOut } = useAuth();
   
-  const menuItems = [
-    {
-      title: "Notifications",
-      path: "/notifications",
-      icon: Bell,
-    },
-    {
-      title: "Achievements",
-      path: "/achievements",
-      icon: Award,
-    },
-    {
-      title: "Help & Support",
-      path: "/help",
-      icon: HelpCircle,
-    },
-    {
-      title: "Profile",
-      path: "/profile",
-      icon: User,
-    },
-    {
-      title: "Settings",
-      path: "/settings",
-      icon: Settings,
-    }
-  ];
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+  const handleSignOut = async () => {
+    await signOut();
   };
-
+  
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Account</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
-              <SidebarMenuButton 
-                tooltip={item.title}
-                isActive={location.pathname === item.path} 
-                onClick={() => handleNavigation(item.path)}
-                className="transition-all duration-300 hover:bg-primary/10"
-              >
-                <item.icon className="text-primary" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <div className="px-2">
+      <p className="text-xs uppercase font-medium text-muted-foreground tracking-wider mb-2 px-2">
+        Account
+      </p>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/profile" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/settings" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <button 
+              onClick={handleSignOut}
+              className="group flex w-full items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-destructive/10 text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign out</span>
+            </button>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </div>
   );
 };
 

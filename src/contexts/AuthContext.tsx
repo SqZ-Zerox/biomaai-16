@@ -1,239 +1,159 @@
-
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useCallback,
-  useRef,
-} from "react";
-import {
-  AuthChangeEvent,
-  Session,
-  User as SupabaseUser,
-} from "@supabase/supabase-js";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  getCurrentSession,
-  updateUserVerificationStatus,
+import { 
+  getCurrentSession, 
+  getUserProfile, 
+  cleanupAuthState,
+  updateUserVerificationStatus
 } from "@/services/auth";
-import { useToast } from "@/components/ui/use-toast";
 
-// Define the authentication status enum
-export enum AuthStatus {
-  PENDING = "pending",
-  AUTHENTICATED = "authenticated",
-  UNAUTHENTICATED = "unauthenticated",
+export interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  birth_date: string | null;
+  phone_number: string | null;
+  profession: string | null;
+  gender: string | null;
+  height: string | null;
+  weight: string | null;
+  activity_level: string | null;
+  created_at: string;
 }
 
-// Define the AuthContext type
 interface AuthContextType {
-  session: Session | null;
-  user: SupabaseUser | null;
-  authStatus: AuthStatus;
-  globalLoading: boolean;
-  checkSession: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
-  profile: any | null;
   isEmailVerified: boolean;
+  user: User | null;
+  profile: UserProfile | null;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
-// Create the AuthContext with a default value
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  authStatus: AuthStatus.PENDING,
-  globalLoading: false,
-  checkSession: async () => {},
+export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
-  profile: null,
   isEmailVerified: false,
+  user: null,
+  profile: null,
+  signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
-// AuthProvider component
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [authStatus, setAuthStatus] = useState<AuthStatus>(AuthStatus.PENDING);
-  const [globalLoading, setGlobalLoading] = useState<boolean>(true);
-  const [profile, setProfile] = useState<any | null>(null);
-  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
-  const { toast } = useToast();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   
-  // Use refs to track state between renders and debounce operations
-  const checkSessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastCheckSessionTime = useRef<number>(0);
-  const sessionCheckInProgress = useRef<boolean>(false);
-  const authStateChangeCount = useRef<number>(0);
-
-  // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = async () => {
-      setGlobalLoading(true);
-      
-      // Fetch initial session
-      const initialSession = await getCurrentSession();
-      
-      // Update session and user state
-      setSession(initialSession);
-      setUser(initialSession?.user || null);
-      
-      // Check if email is verified
-      if (initialSession?.user) {
-        setIsEmailVerified(initialSession.user.email_confirmed_at !== null);
+    const loadSession = async () => {
+      try {
+        setLoading(true);
         
-        // Don't call updateUserVerificationStatus here as it will be done by the auth state change listener
+        // Get current session
+        const session: Session | null = await getCurrentSession();
+        
+        if (session) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+          
+          // Fetch user profile
+          const profileResult = await getUserProfile();
+          if (profileResult.profile) {
+            setProfile(profileResult.profile);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error("Error loading session:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      // Update the auth state
-      setAuthStatus(initialSession ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
-      setGlobalLoading(false);
     };
     
-    initializeAuth();
+    loadSession();
     
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // Use setTimeout to prevent supabase auth deadlocks
-        setTimeout(() => {
-          processAuthStateChange(event, session);
-        }, 0);
+      async (event, session) => {
+        console.log("Auth state change:", event);
+        
+        if (event === 'INITIAL_SESSION') {
+          await loadSession();
+          return;
+        }
+        
+        if (session) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+          
+          // Fetch user profile
+          const profileResult = await getUserProfile();
+          if (profileResult.profile) {
+            setProfile(profileResult.profile);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        // Update email verification status on login
+        if (event === 'SIGNED_IN') {
+          await updateUserVerificationStatus();
+        }
+        
+        setLoading(false);
       }
     );
-
+    
     return () => {
       subscription?.unsubscribe();
-      
-      // Clear any pending timeouts
-      if (checkSessionTimeoutRef.current) {
-        clearTimeout(checkSessionTimeoutRef.current);
-      }
     };
   }, []);
-
-  // Process auth state change events
-  const processAuthStateChange = (event: AuthChangeEvent, session: Session | null) => {
-    // Don't set loading state for frequent auth events
-    const isFrequentEvent = (authStateChangeCount.current++ > 5);
-    
-    if (!isFrequentEvent) {
-      setGlobalLoading(true);
-    }
-    
-    console.log("Auth state change:", event, session ? "Session exists" : "No session");
-    
-    // Update session and user state
-    setSession(session);
-    setUser(session?.user || null);
-    
-    // Update email verification status
-    if (session?.user) {
-      setIsEmailVerified(session.user.email_confirmed_at !== null);
-      
-      // Don't update verification status on every auth state change
-      // Only do it for specific events
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Debounced verification check
-        const now = Date.now();
-        if (now - lastCheckSessionTime.current > 30000) { // 30 seconds minimum between checks
-          lastCheckSessionTime.current = now;
-          updateUserVerificationStatus().catch(console.error);
+  
+  // Add refresh profile method
+  const refreshProfile = async () => {
+    try {
+      if (user && isAuthenticated) {
+        const profileResult = await getUserProfile();
+        if (profileResult.profile) {
+          setProfile(profileResult.profile);
         }
       }
-    } else {
-      setIsEmailVerified(false);
-    }
-    
-    // Update the auth state
-    setAuthStatus(session ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
-    
-    if (!isFrequentEvent) {
-      setGlobalLoading(false);
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
     }
   };
 
-  // Function to manually check and refresh the session with debouncing
-  const checkSession = useCallback(async () => {
-    // Prevent concurrent checks
-    if (sessionCheckInProgress.current) {
-      console.log("Session check already in progress, skipping");
-      return;
-    }
-    
-    // Implement debouncing - only allow one check every 5 seconds
-    const now = Date.now();
-    if (now - lastCheckSessionTime.current < 5000) { // 5 seconds
-      console.log("Session check on cooldown, debouncing...");
-      
-      // Clear any existing timeout
-      if (checkSessionTimeoutRef.current) {
-        clearTimeout(checkSessionTimeoutRef.current);
-      }
-      
-      // Set a timeout for the debounced call
-      checkSessionTimeoutRef.current = setTimeout(() => {
-        checkSession();
-      }, 5000);
-      
-      return;
-    }
-    
+  const signOut = async () => {
     try {
-      sessionCheckInProgress.current = true;
-      lastCheckSessionTime.current = now;
-      setGlobalLoading(true);
-      
-      const currentSession = await getCurrentSession();
-      setSession(currentSession);
-      setUser(currentSession?.user || null);
-      
-      // Update email verification status
-      if (currentSession?.user) {
-        setIsEmailVerified(currentSession.user.email_confirmed_at !== null);
-      } else {
-        setIsEmailVerified(false);
-      }
-      
-      setAuthStatus(currentSession ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
+      await supabase.auth.signOut();
+      setIsAuthenticated(false);
+      setUser(null);
+      setProfile(null);
+      cleanupAuthState();
+      console.log("Signed out successfully");
     } catch (error) {
-      console.error("Error checking session:", error);
-      
-      // Show a toast for auth errors
-      toast({
-        title: "Authentication Error",
-        description: "There was a problem verifying your session. Please try refreshing the page.",
-        variant: "destructive",
-      });
-      
-      setAuthStatus(AuthStatus.UNAUTHENTICATED);
-    } finally {
-      setGlobalLoading(false);
-      sessionCheckInProgress.current = false;
+      console.error("Error signing out:", error);
     }
-  }, [toast]);
+  };
 
-  // Compute isAuthenticated and isLoading from authStatus and globalLoading
-  const isAuthenticated = authStatus === AuthStatus.AUTHENTICATED;
-  const isLoading = globalLoading || authStatus === AuthStatus.PENDING;
-
-  // Provide the auth context value
-  const value: AuthContextType = {
-    session,
-    user,
-    authStatus,
-    globalLoading,
-    checkSession,
+  const value = {
     isAuthenticated,
-    isLoading,
+    isLoading: loading,
+    isEmailVerified: user?.email_confirmed_at ? true : false,
+    user,
     profile,
-    isEmailVerified,
+    signOut,
+    refreshProfile,
   };
 
   return (
@@ -243,11 +163,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  return useContext(AuthContext);
 };

@@ -1,94 +1,114 @@
 
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  Home, 
-  MessageCircle, 
-  FileText,
-  HeartPulse,
-  Apple,
-  Dumbbell
-} from "lucide-react";
-
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar";
-
-import { useSidebar } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { NavLink } from "react-router-dom";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Home, Upload, ActivitySquare, Utensils, MessageCircle, TrendingUp } from "lucide-react";
 
 const CoreMenu = () => {
-  const { setOpenMobile } = useSidebar();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  
-  const menuItems = [
-    {
-      title: "Dashboard",
-      path: "/dashboard",
-      icon: Home,
-    },
-    {
-      title: "Lab Reports",
-      path: "/upload",
-      icon: FileText,
-    },
-    {
-      title: "Nutrition Plan",
-      path: "/nutrition",
-      icon: Apple,
-    },
-    {
-      title: "Fitness Routine",
-      path: "/fitness",
-      icon: Dumbbell,
-    },
-    {
-      title: "Health Progress",
-      path: "/progress",
-      icon: HeartPulse,
-    },
-    {
-      title: "Bioma Chat",
-      path: "/chat",
-      icon: MessageCircle,
-    }
-  ];
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Core Features</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
-              <SidebarMenuButton 
-                tooltip={item.title}
-                isActive={location.pathname === item.path} 
-                onClick={() => handleNavigation(item.path)}
-                className="transition-all duration-300 hover:bg-primary/10"
-              >
-                <item.icon className="text-primary" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <div className="px-2">
+      <p className="text-xs uppercase font-medium text-muted-foreground tracking-wider mb-2 px-2">
+        Core
+      </p>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/dashboard" 
+              end  
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/upload" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/fitness" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <ActivitySquare className="h-4 w-4" />
+              <span>Fitness</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/nutrition" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Utensils className="h-4 w-4" />
+              <span>Nutrition</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/chat" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Chat</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/progress" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span>Progress Tracking</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </div>
   );
 };
 

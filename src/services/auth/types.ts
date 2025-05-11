@@ -1,76 +1,32 @@
-
-import { SupabaseClient, Session } from '@supabase/supabase-js';
-
-export interface AuthResult {
-  data: {
-    session: Session | null;
-    user: any | null;
-  } | null;
-  error: Error | null;
-}
-
 export interface SignupData {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  birth_date: string;
-  phone_number: string | null;
-  gender: string;
-  height: string;
-  weight: string;
-  activity_level: string;
-  health_goals: string[];
-  dietary_restrictions: string[];
-  profession?: string; // Add profession as optional property
-  user_metadata: {
-    existing_conditions: string[];
-    allergies: string;
-    medications: string;
-    family_history: string[];
-    recent_lab_work: string;
-  };
-}
-
-// Alias for backward compatibility with existing code
-export type SignUpData = SignupData;
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface ResetPasswordData {
-  accessToken: string;
-  password: string;
-}
-
-export interface RequestPasswordResetData {
-  email: string;
-}
-
-// Session result interface
-export interface SessionResult {
-  session: Session | null;
-  error: Error | null;
-}
-
-// User profile interfaces
-export interface UserProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
+  first_name?: string;
+  last_name?: string;
   birth_date?: string;
-  gender?: string;
-  avatar_url?: string;
   phone_number?: string;
+  profession?: string;
+  gender?: string;
   height?: string;
   weight?: string;
   activity_level?: string;
-  created_at?: string;
-  updated_at?: string;
-  profession?: string;
+  health_goals?: string[];
+  dietary_restrictions?: string[];
+  email_verified?: boolean;
+  user_metadata?: any;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  birth_date: string | null;
+  phone_number: string | null;
+  profession: string | null;
+  gender: string | null;
+  height: string | null;
+  weight: string | null;
+  activity_level: string | null;
+  created_at: string;
 }
 
 export interface ProfileResult {
@@ -78,19 +34,33 @@ export interface ProfileResult {
   error: Error | null;
 }
 
+export interface SupabaseUser {
+  id: string;
+  aud: string;
+  role: string;
+  email: string | null;
+  email_confirmed_at: string | null;
+  phone: string | null;
+  app_metadata: {
+    provider: string;
+    providers: string[];
+  };
+  user_metadata: {
+    [key: string]: any;
+  };
+  identities: any[];
+  created_at: string;
+  updated_at: string;
+}
+
+import { Session, User } from "@supabase/supabase-js";
+
 export interface AuthContextType {
-  session: Session | null;
-  user: UserProfile | null;
-  supabase: SupabaseClient | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  isDemoMode: boolean;
-  signIn: (data: LoginData) => Promise<AuthResult>;
-  signUp: (data: SignupData) => Promise<AuthResult>;
+  isEmailVerified: boolean;
+  user: User | null;
+  profile: UserProfile | null;
   signOut: () => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<{ error: Error | null }>;
-  resetPassword: (data: ResetPasswordData) => Promise<{ error: Error | null }>;
-  checkSession: () => Promise<void>;
-  updateProfile: (profile: Partial<UserProfile>) => Promise<ProfileResult>;
-  enterDemoMode: () => void;
-  exitDemoMode: () => void;
+  refreshProfile: () => Promise<void>;
 }
