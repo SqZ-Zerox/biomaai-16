@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FormField, FormItem, FormControl, FormDescription } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,13 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
   onBack,
   onSubmit
 }) => {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  const handleSubmit = () => {
+    setIsSubmitted(true);
+    onSubmit();
+  };
+
   return (
     <motion.div
       key="terms-step"
@@ -65,6 +72,7 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  disabled={isLoading || isSubmitted}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -82,7 +90,7 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
           type="button"
           variant="outline"
           onClick={onBack}
-          disabled={isLoading}
+          disabled={isLoading || isSubmitted}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -90,13 +98,13 @@ const SignupTermsStep: React.FC<SignupTermsStepProps> = ({
         
         <Button
           type="button"
-          onClick={onSubmit}
-          disabled={isLoading || !form.getValues().terms_accepted}
+          onClick={handleSubmit}
+          disabled={isLoading || !form.getValues().terms_accepted || isSubmitted}
         >
-          {isLoading ? (
+          {isLoading || isSubmitted ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Account...
+              {isSubmitted ? "Processing..." : "Creating Account..."}
             </>
           ) : (
             "Complete Registration"
