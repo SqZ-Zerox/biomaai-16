@@ -43,7 +43,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   } = useEmailValidation({ form });
 
   // Determine if Next button should be disabled
-  const isNextDisabled = isLoading || isEmailInvalid;
+  const isNextDisabled = isLoading || isEmailInvalid || !!form.formState.errors.email;
 
   return (
     <motion.div

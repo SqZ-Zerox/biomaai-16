@@ -49,7 +49,7 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   const handleEmailBlur = async () => {
     setIsEmailFocused(false);
     const email = form.getValues("email");
-    if (!email || form.formState.errors.email) return;
+    if (!email || form.formState.errors.email?.type !== "manual") return;
     
     setEmailTouched(true);
     setCheckingEmail(true);
@@ -61,6 +61,11 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   // Handle email focus
   const handleEmailFocus = () => {
     setIsEmailFocused(true);
+    
+    // Clear email exists error when focused
+    if (emailExists) {
+      form.clearErrors("email");
+    }
   };
 
   // Clear email error and emailExists state when user starts typing again
@@ -70,6 +75,7 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
     // Always clear manual errors when typing
     if (currentErrors.email && currentErrors.email.type === "manual") {
       form.clearErrors("email");
+      setEmailExists(false);
     }
     
     // Reset the emailExists state when the user changes the input
@@ -92,8 +98,7 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
 
   // Determine if Next button should be disabled due to email issues
   const isEmailInvalid = checkingEmail || 
-    (emailExists && !isEmailFocused) || 
-    (emailTouched && !!form.formState.errors.email && !isEmailFocused);
+    (emailExists && !isEmailFocused);
 
   return {
     checkingEmail,
