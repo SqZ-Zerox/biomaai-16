@@ -37,6 +37,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailExists, setEmailExists] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
 
   // Create a debounced email check function that only runs after 500ms of inactivity
   const debouncedEmailCheck = useRef(
@@ -88,6 +89,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
 
   // Handle email blur to check if email exists
   const handleEmailBlur = async () => {
+    setIsEmailFocused(false);
     const email = form.getValues("email");
     if (!email || form.formState.errors.email) return;
     
@@ -96,6 +98,11 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
     
     // Use debounced function to avoid too many API calls
     debouncedEmailCheck(email);
+  };
+
+  // Handle email focus
+  const handleEmailFocus = () => {
+    setIsEmailFocused(true);
   };
 
   // Clear email error and emailExists state when user starts typing again
@@ -126,7 +133,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   }, [debouncedEmailCheck]);
 
   // Determine if Next button should be disabled
-  const isNextDisabled = isLoading || checkingEmail || emailExists || (emailTouched && !!form.formState.errors.email);
+  const isNextDisabled = isLoading || checkingEmail || (emailExists && !isEmailFocused) || (emailTouched && !!form.formState.errors.email && !isEmailFocused);
 
   return (
     <motion.div
@@ -142,7 +149,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         <h3 className="text-lg font-medium">Account Credentials</h3>
       </div>
       
-      {emailExists && (
+      {emailExists && !isEmailFocused && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -162,8 +169,9 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
                   placeholder="you@example.com" 
-                  className={`pl-10 bg-background ${emailExists ? 'border-destructive' : ''}`} 
+                  className={`pl-10 bg-background ${emailExists && !isEmailFocused ? 'border-destructive' : ''}`} 
                   disabled={isLoading || checkingEmail}
+                  onFocus={handleEmailFocus}
                   onBlur={handleEmailBlur}
                   onChange={(e) => {
                     field.onChange(e);
@@ -174,7 +182,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                 {checkingEmail && (
                   <Loader2 className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground animate-spin" />
                 )}
-                {emailExists && !checkingEmail && (
+                {emailExists && !isEmailFocused && !checkingEmail && (
                   <AlertCircle className="absolute right-3 top-2.5 h-5 w-5 text-destructive" />
                 )}
               </div>
@@ -264,7 +272,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         onClick={onNext}
         disabled={isNextDisabled}
       >
-        {emailExists ? (
+        {emailExists && !isEmailFocused ? (
           "Email already in use"
         ) : (
           <>
