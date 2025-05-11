@@ -103,9 +103,8 @@ export const signUp = async (signupData: any) => {
           dietary_restrictions: formattedDietaryRestrictions,
           ...signupData.user_metadata
         },
-        emailRedirectTo: window.location.origin + "/auth/callback",
-        // Force email verification to be required - regardless of Supabase settings
-        emailConfirm: true
+        emailRedirectTo: window.location.origin + "/auth/callback"
+        // Removed the invalid 'emailConfirm: true' property
       }
     });
     

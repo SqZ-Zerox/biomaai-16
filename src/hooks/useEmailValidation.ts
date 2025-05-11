@@ -1,8 +1,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { debounce } from "lodash";
-import { checkIfEmailExists } from "@/services/auth/emailUtils";
+import { checkIfEmailExists, validateEmailFormat } from "@/services/auth/emailUtils";
 import { UseFormReturn } from "react-hook-form";
+
+// Cache for emails that have already been checked - now properly defined at module level
+const emailCheckCache = new Map<string, boolean>();
 
 type UseEmailValidationProps = {
   form: UseFormReturn<any>;
@@ -17,16 +20,15 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   // Create a debounced email check function that runs after 500ms of inactivity
   const debouncedEmailCheck = useRef(
     debounce(async (email: string) => {
-      if (!email || form.formState.errors.email?.type !== "manual") {
+      if (!email) {
         setCheckingEmail(false);
         setEmailExists(false);
         return;
       }
-
+      
       try {
-        // Validate email format first
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        // Validate email format first using our enhanced validation
+        if (!validateEmailFormat(email)) {
           form.setError("email", {
             type: "manual",
             message: "Please enter a valid email address."
@@ -35,9 +37,6 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
           return;
         }
         
-        // Check if the domain is valid (has MX records)
-        // This is handled on the backend side via checkIfEmailExists
-
         // Check if email exists in our system
         const exists = await checkIfEmailExists(email);
         
@@ -132,6 +131,3 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
     handleEmailChange
   };
 }
-
-// Cache for emails that have already been checked - moved from component
-const emailCheckCache = new Map<string, boolean>();

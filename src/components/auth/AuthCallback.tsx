@@ -53,41 +53,41 @@ const AuthCallback: React.FC = () => {
   }, [checkSession, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md bg-card p-6 rounded-xl shadow-lg border border-border">
-        <h1 className="text-2xl font-bold mb-4 text-center">Account Verification</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 overflow-auto">
+      <div className="w-full max-w-xl bg-card p-6 md:p-8 rounded-xl shadow-lg border border-border mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-center">Account Verification</h1>
         
         {isVerifying && (
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p>Verifying your account...</p>
+          <div className="text-center p-6">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <p className="text-lg">Verifying your account...</p>
           </div>
         )}
         
         {!isVerifying && isSuccess && (
-          <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
-              <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+          <div className="flex flex-col items-center p-6">
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
+              <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Verification Successful!</h2>
-            <p className="text-muted-foreground text-center">
+            <h2 className="text-xl font-semibold mb-4">Verification Successful!</h2>
+            <p className="text-muted-foreground text-center text-lg max-w-md">
               Your account has been verified successfully. Redirecting you to the dashboard...
             </p>
           </div>
         )}
         
         {!isVerifying && !isSuccess && (
-          <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-              <X className="w-8 h-8 text-red-600 dark:text-red-400" />
+          <div className="flex flex-col items-center p-6">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
+              <X className="w-10 h-10 text-red-600 dark:text-red-400" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Verification Failed</h2>
-            <p className="text-muted-foreground text-center mb-4">
+            <h2 className="text-xl font-semibold mb-4">Verification Failed</h2>
+            <p className="text-muted-foreground text-center text-lg mb-6 max-w-md">
               {errorMessage || "Something went wrong during verification."}
             </p>
             <button 
               onClick={() => navigate('/login')}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
+              className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90 transition-colors"
             >
               Return to Login
             </button>

@@ -6,10 +6,31 @@ const emailExistsCache = new Map<string, boolean>();
 
 /**
  * Validates an email format using regex
+ * This is a more thorough email validation than before
  */
 export const validateEmailFormat = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  // More comprehensive email regex that checks for:
+  // 1. Local part (before @) has valid characters
+  // 2. Domain part has valid characters
+  // 3. TLD is at least 2 characters
+  // 4. No consecutive dots
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  
+  if (!email || !emailRegex.test(email)) {
+    return false;
+  }
+  
+  // Additional validation: domain must have at least one dot and TLD must be at least 2 chars
+  const parts = email.split('@');
+  if (parts.length !== 2) return false;
+  
+  const domain = parts[1];
+  if (domain.indexOf('.') === -1) return false;
+  
+  const tld = domain.split('.').pop();
+  if (!tld || tld.length < 2) return false;
+  
+  return true;
 };
 
 /**
