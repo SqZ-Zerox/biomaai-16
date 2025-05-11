@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signUp } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { signupSchema, SignupFormValues } from "@/components/auth/form/signup/types";
-import { clearEmailExistsCache } from "@/services/auth/emailUtils";
+import { checkIfEmailExists, clearEmailExistsCache } from "@/services/auth/emailUtils";
 
 export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   const navigate = useNavigate();
@@ -55,7 +54,7 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
   });
 
   // Step navigation functions
-  const proceedToPersonalStep = () => {
+  const proceedToPersonalStep = async () => {
     const { email, password, confirmPassword } = form.getValues();
     
     // Validate current fields before proceeding
@@ -69,7 +68,26 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       return;
     }
     
-    setCurrentStep('personal');
+    // Double check if email exists before proceeding to next step
+    try {
+      setIsLoading(true);
+      const emailExists = await checkIfEmailExists(email);
+      
+      if (emailExists) {
+        form.setError('email', {
+          type: 'manual',
+          message: 'This email is already registered. Please try logging in or use a different email.'
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(false);
+      setCurrentStep('personal');
+    } catch (error) {
+      console.error("Error checking email:", error);
+      setIsLoading(false);
+    }
   };
 
   const proceedToHealthStep = () => {
@@ -140,6 +158,19 @@ export function useSignupForm(onRegistrationSuccess: (email: string) => void) {
       setIsLoading(true);
       
       const values = form.getValues();
+      
+      // Final check to ensure email doesn't exist before submission
+      const emailExists = await checkIfEmailExists(values.email);
+      if (emailExists) {
+        toast({
+          title: "Email already registered",
+          description: "This email is already registered. Please try logging in or use a different email.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        setCurrentStep('credentials'); // Take user back to email input
+        return;
+      }
       
       // Ensure terms are accepted
       if (!values.terms_accepted) {

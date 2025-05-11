@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { SignupFormValues } from "./types";
 import { slideVariants } from "./animations";
 import { checkIfEmailExists } from "@/services/auth";
 import { debounce } from "lodash";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SignupCredentialsStepProps {
   form: UseFormReturn<SignupFormValues>;
@@ -35,12 +36,14 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
 
   // Create a debounced email check function that only runs after 500ms of inactivity
   const debouncedEmailCheck = useRef(
     debounce(async (email: string) => {
       if (!email || form.formState.errors.email) {
         setCheckingEmail(false);
+        setEmailExists(false);
         return;
       }
 
@@ -53,6 +56,9 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
               type: "manual",
               message: "This email is already registered. Please try logging in or use a different email."
             });
+            setEmailExists(true);
+          } else {
+            setEmailExists(false);
           }
           setCheckingEmail(false);
           return;
@@ -67,9 +73,13 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
             type: "manual",
             message: "This email is already registered. Please try logging in or use a different email."
           });
+          setEmailExists(true);
+        } else {
+          setEmailExists(false);
         }
       } catch (error) {
         console.error("Error checking email:", error);
+        setEmailExists(false);
       } finally {
         setCheckingEmail(false);
       }
@@ -88,11 +98,12 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
     debouncedEmailCheck(email);
   };
 
-  // Clear email error when user starts typing again
+  // Clear email error and emailExists state when user starts typing again
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const currentErrors = form.formState.errors;
     if (currentErrors.email && currentErrors.email.type === "manual") {
       form.clearErrors("email");
+      setEmailExists(false);
     }
   };
 
@@ -102,6 +113,9 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
       debouncedEmailCheck.cancel();
     };
   }, [debouncedEmailCheck]);
+
+  // Determine if Next button should be disabled
+  const isNextDisabled = isLoading || checkingEmail || emailExists || (emailTouched && !!form.formState.errors.email);
 
   return (
     <motion.div
@@ -117,6 +131,15 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         <h3 className="text-lg font-medium">Account Credentials</h3>
       </div>
       
+      {emailExists && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            This email is already registered. Please try logging in or use a different email.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <FormField
         control={form.control}
         name="email"
@@ -128,7 +151,7 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
                   placeholder="you@example.com" 
-                  className="pl-10 bg-background" 
+                  className={`pl-10 bg-background ${emailExists ? 'border-destructive' : ''}`} 
                   disabled={isLoading || checkingEmail}
                   onBlur={handleEmailBlur}
                   onChange={(e) => {
@@ -139,6 +162,9 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
                 />
                 {checkingEmail && (
                   <Loader2 className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground animate-spin" />
+                )}
+                {emailExists && !checkingEmail && (
+                  <AlertCircle className="absolute right-3 top-2.5 h-5 w-5 text-destructive" />
                 )}
               </div>
             </FormControl>
@@ -225,10 +251,16 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
         type="button" 
         className="w-full mt-6" 
         onClick={onNext}
-        disabled={isLoading || checkingEmail || (emailTouched && !!form.formState.errors.email)}
+        disabled={isNextDisabled}
       >
-        Next: Personal Information
-        <ArrowRight className="ml-2 h-4 w-4" />
+        {emailExists ? (
+          "Email already in use"
+        ) : (
+          <>
+            Next: Personal Information
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </>
+        )}
       </Button>
     </motion.div>
   );
