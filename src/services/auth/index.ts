@@ -11,7 +11,8 @@ export {
   updateUserVerificationStatus,
   processProfileData,
   extractSupabaseUser,
-  cleanupAuthState
+  cleanupAuthState,
+  clearAuthCache
 } from "./authCore";
 
 // Export profile management
@@ -20,6 +21,7 @@ export {
   completeUserProfile,
   getUserProfile,
   updateUserProfile,
+  forceProfileRefresh,
   extractHealthGoals,
   extractDietaryRestrictions
 } from "./profileManager";

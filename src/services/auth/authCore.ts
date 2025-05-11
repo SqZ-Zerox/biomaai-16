@@ -17,13 +17,20 @@ import {
 import {
   getCurrentSession,
   updateUserVerificationStatus,
-  cleanupAuthState
+  cleanupAuthState,
+  clearAuthCache
 } from "./sessionManagement";
 
 import {
   checkIfEmailExists,
-  validateEmailFormat
+  validateEmailFormat,
+  resendVerificationEmail
 } from "./emailUtils";
+
+import {
+  forceProfileRefresh,
+  getUserProfile
+} from "./profileManager";
 
 // Re-export all functionality
 export {
@@ -34,6 +41,7 @@ export {
   getCurrentSession,
   updateUserVerificationStatus,
   cleanupAuthState,
+  clearAuthCache,
   
   // User data processors
   processProfileData,
@@ -42,6 +50,11 @@ export {
   // Email utilities
   checkIfEmailExists,
   validateEmailFormat,
+  resendVerificationEmail,
+  
+  // Profile management
+  forceProfileRefresh,
+  getUserProfile,
   
   // Type definitions
   type UserProfileData

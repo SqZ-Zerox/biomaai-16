@@ -1,11 +1,15 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SignupData } from "./types";
 import { processHealthGoals, processDietaryRestrictions } from "./dataProcessor";
 import { ProfileResult, UserProfile } from "./types";
+import { AppError } from "@/lib/error";
 
 // Ensure user profile exists in the database
 export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
   try {
+    console.log("Ensuring profile exists for user:", userId);
+    
     // Check if profile exists
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
@@ -13,9 +17,13 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       .eq('id', userId)
       .single();
     
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error("Error checking profile:", checkError);
-      return false;
+    if (checkError) {
+      if (checkError.code !== 'PGRST116') { // Not found error is expected
+        console.error("Error checking profile:", checkError);
+        return false;
+      } else {
+        console.log("Profile not found, will create new one");
+      }
     }
     
     // If profile exists, we're done
@@ -27,7 +35,7 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     // Check if user has been email verified
     // Only create profile if verified or if we're in a local development environment
     const isVerified = userData.email_verified === true || 
-                       window.location.hostname === "localhost";
+                      window.location.hostname === "localhost";
     
     if (!isVerified) {
       console.log("User not verified yet, skipping profile creation");
@@ -74,7 +82,7 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
     console.error("Error in ensureUserProfile:", error);
     return false;
   }
-}
+};
 
 // Handle social auth profile completion
 export async function completeUserProfile(userData: Partial<SignupData>): Promise<boolean> {
@@ -142,7 +150,9 @@ export async function completeUserProfile(userData: Partial<SignupData>): Promis
 // Get user profile - moved from profileService.ts
 export async function getUserProfile(): Promise<ProfileResult> {
   try {
+    console.log("Starting getUserProfile");
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
     if (sessionError) {
       console.error("Session error:", sessionError);
       throw sessionError;
@@ -155,19 +165,61 @@ export async function getUserProfile(): Promise<ProfileResult> {
 
     console.log("Fetching profile for user:", session.user.id);
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        console.error("Profile not found for user:", session.user.id);
-      } else {
-        console.error("Error fetching profile:", error);
+    // Add retry logic for fetching the profile
+    let retries = 0;
+    const maxRetries = 2;
+    let data = null;
+    let error = null;
+    
+    while (retries <= maxRetries) {
+      try {
+        const result = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        data = result.data;
+        error = result.error;
+        
+        if (error) {
+          if (error.code === 'PGRST116') {
+            console.warn(`Profile not found for user (retry ${retries}):`, session.user.id);
+            // If profile not found, try to create it
+            if (retries === maxRetries) {
+              console.log("Max retries reached, attempting to create profile");
+              await ensureUserProfile(session.user.id, session.user.user_metadata);
+            }
+          } else {
+            console.error(`Error fetching profile (retry ${retries}):`, error);
+          }
+          retries++;
+          
+          // Wait before retry
+          if (retries <= maxRetries) {
+            console.log(`Waiting before retry ${retries}...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+          }
+        } else {
+          // Success!
+          console.log("Profile data retrieved:", data);
+          break;
+        }
+      } catch (fetchError) {
+        console.error(`Exception during fetch (retry ${retries}):`, fetchError);
+        error = fetchError;
+        retries++;
+        
+        if (retries <= maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
       }
-      throw error;
+    }
+    
+    // Final check - if still no profile and all retries exhausted
+    if (!data && retries > maxRetries) {
+      console.error("All retries exhausted, unable to fetch profile");
+      throw new AppError("Could not fetch user profile after multiple attempts", 404);
     }
     
     // Get user email from auth session
@@ -175,11 +227,11 @@ export async function getUserProfile(): Promise<ProfileResult> {
     
     // Combine profile data with email from session to create complete UserProfile
     const userProfile: UserProfile = {
-      ...data,
+      ...(data as any),
       email: userEmail
     };
     
-    console.log("Profile retrieved:", userProfile);
+    console.log("Profile successfully retrieved:", userProfile);
     return { profile: userProfile, error: null };
   } catch (error: any) {
     console.error("Error in getUserProfile:", error.message);
@@ -190,7 +242,9 @@ export async function getUserProfile(): Promise<ProfileResult> {
 // Update user profile
 export async function updateUserProfile(profile: Partial<UserProfile>): Promise<ProfileResult> {
   try {
+    console.log("Starting updateUserProfile with data:", profile);
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
     if (sessionError) {
       console.error("Session error:", sessionError);
       throw sessionError;
@@ -227,6 +281,32 @@ export async function updateUserProfile(profile: Partial<UserProfile>): Promise<
     return { profile: updatedProfile, error: null };
   } catch (error: any) {
     console.error("Error in updateUserProfile:", error.message);
+    return { profile: null, error };
+  }
+}
+
+// Force refresh of profile
+export async function forceProfileRefresh(): Promise<ProfileResult> {
+  try {
+    // Clear any cached session data
+    localStorage.removeItem('bioma_auth_session_cache');
+    console.log("Forcing profile refresh with cleared cache");
+    
+    // Force a new session fetch
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.warn("No valid session found during force refresh");
+      return { profile: null, error: new Error("No valid session") };
+    }
+    
+    // Try to explicitly create the profile if it doesn't exist
+    await ensureUserProfile(session.user.id, session.user.user_metadata);
+    
+    // Now fetch the profile
+    return await getUserProfile();
+  } catch (error: any) {
+    console.error("Error in forceProfileRefresh:", error);
     return { profile: null, error };
   }
 }

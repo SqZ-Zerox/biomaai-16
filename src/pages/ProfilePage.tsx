@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +20,7 @@ import { extractHealthGoals, extractDietaryRestrictions, updateUserProfile } fro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/services/auth/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RefreshCcw } from "lucide-react";
 
 const formSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -36,13 +36,22 @@ const formSchema = z.object({
 });
 
 const ProfilePage = () => {
-  const { profile, refreshProfile, isLoading: authLoading } = useAuth();
+  const { 
+    profile, 
+    refreshProfile, 
+    forceRefreshProfile,
+    resetAuthState, 
+    isLoading: authLoading,
+    user 
+  } = useAuth();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [healthGoals, setHealthGoals] = useState<string[]>([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
-
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,11 +69,22 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
+    let isActive = true; // To prevent state updates after unmount
+    
     const loadProfileData = async () => {
       try {
+        console.log("ProfilePage: Loading profile data, auth loading:", authLoading);
         setIsLoadingData(true);
 
+        // If we're not loading and still don't have a profile, try to refresh it
+        if (!authLoading && !profile && user && retryAttempts < 2) {
+          console.log("ProfilePage: No profile but have user, refreshing...");
+          await refreshProfile();
+          if (isActive) setRetryAttempts(prev => prev + 1);
+        }
+
         if (profile) {
+          console.log("ProfilePage: Setting form data from profile");
           // Fill form with profile data
           form.reset({
             first_name: profile.first_name || "",
@@ -81,33 +101,74 @@ const ProfilePage = () => {
           
           // Fetch health goals and dietary restrictions
           if (profile.id) {
+            console.log("ProfilePage: Fetching health goals and dietary restrictions");
             const [goals, restrictions] = await Promise.all([
               extractHealthGoals(profile.id),
               extractDietaryRestrictions(profile.id)
             ]);
-            setHealthGoals(goals);
-            setDietaryRestrictions(restrictions);
+            if (isActive) {
+              setHealthGoals(goals);
+              setDietaryRestrictions(restrictions);
+            }
           }
           
-          setProfileError(null);
-        } else if (!authLoading) {
-          setProfileError("Could not load profile data. Please try again later.");
+          if (isActive) setProfileError(null);
+        } else if (!authLoading && retryAttempts >= 2) {
+          console.error("ProfilePage: Could not load profile after retries");
+          if (isActive) {
+            setProfileError("We're having trouble loading your profile data. Please use the refresh button below.");
+          }
         }
       } catch (error) {
-        console.error("Error loading profile data:", error);
-        setProfileError("Failed to load profile data. Please try refreshing the page.");
+        console.error("ProfilePage: Error loading profile data:", error);
+        if (isActive) {
+          setProfileError("Failed to load profile data. Please try refreshing the page.");
+        }
       } finally {
-        setIsLoadingData(false);
+        if (isActive) {
+          setIsLoadingData(false);
+        }
       }
     };
     
     loadProfileData();
-  }, [profile, form, authLoading]);
+    
+    return () => {
+      isActive = false;
+    };
+  }, [profile, form, authLoading, refreshProfile, user, retryAttempts]);
 
-  // Function to retry loading profile if it failed
+  // Function to retry loading profile with force refresh
   const retryLoadProfile = async () => {
+    if (isLoading) return;
+    
     setProfileError(null);
-    await refreshProfile();
+    setIsLoading(true);
+    try {
+      await forceRefreshProfile();
+      setRetryAttempts(0);
+    } catch (error) {
+      console.error("Error force refreshing profile:", error);
+      setProfileError("Failed to refresh profile. Please try again or reload the page.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Function to completely reset auth state
+  const handleResetAuth = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      await resetAuthState();
+      toast.success("Auth state reset. Please reload the page if issues persist.");
+    } catch (error) {
+      console.error("Error resetting auth state:", error);
+      toast.error("Failed to reset auth state");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -157,12 +218,40 @@ const ProfilePage = () => {
           <div className="flex flex-col items-center justify-center text-center">
             <h2 className="text-2xl font-bold text-destructive">Error Loading Profile</h2>
             <p className="mt-2 text-muted-foreground">{profileError}</p>
-            <Button 
-              onClick={retryLoadProfile} 
-              className="mt-4"
-            >
-              Retry
-            </Button>
+            
+            <div className="mt-6 space-y-4">
+              <Button 
+                onClick={retryLoadProfile} 
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCcw className="mr-2 h-4 w-4" />
+                    Refresh Profile
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleResetAuth} 
+                variant="outline" 
+                className="w-full"
+                disabled={isLoading}
+              >
+                Reset Auth State
+              </Button>
+            </div>
+            
+            <div className="mt-8 text-sm text-muted-foreground">
+              <p>Debug info: User ID: {user?.id || 'Not logged in'}</p>
+              <p>Email verified: {user?.email_confirmed_at ? 'Yes' : 'No'}</p>
+            </div>
           </div>
         </Card>
       </div>
@@ -176,12 +265,39 @@ const ProfilePage = () => {
           <div className="flex flex-col items-center justify-center text-center">
             <h2 className="text-2xl font-bold">Profile Not Found</h2>
             <p className="mt-2 text-muted-foreground">We couldn't find your profile information.</p>
-            <Button 
-              onClick={retryLoadProfile} 
-              className="mt-4"
-            >
-              Refresh Profile
-            </Button>
+            <div className="mt-6 space-y-4">
+              <Button 
+                onClick={retryLoadProfile} 
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCcw className="mr-2 h-4 w-4" />
+                    Refresh Profile
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={handleResetAuth} 
+                variant="outline" 
+                className="w-full"
+                disabled={isLoading}
+              >
+                Reset Auth State
+              </Button>
+            </div>
+            
+            <div className="mt-8 text-sm text-muted-foreground">
+              <p>Debug info: User ID: {user?.id || 'Not logged in'}</p>
+              <p>Email verified: {user?.email_confirmed_at ? 'Yes' : 'No'}</p>
+            </div>
           </div>
         </Card>
       </div>
@@ -190,7 +306,18 @@ const ProfilePage = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Your Profile</h1>
+        <Button 
+          variant="outline" 
+          onClick={retryLoadProfile}
+          disabled={isLoading}
+          size="sm"
+        >
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
 
       <div className="grid gap-6 mb-8">
         <Card>

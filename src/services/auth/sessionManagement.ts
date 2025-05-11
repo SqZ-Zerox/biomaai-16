@@ -11,30 +11,39 @@ const SESSION_CACHE_TTL = 60000; // 1 minute cache TTL
 
 /**
  * Get the current session from Supabase with caching to reduce API calls
+ * @param {boolean} bypassCache - Set to true to bypass the cache and force a fresh session fetch
  */
-export const getCurrentSession = async () => {
+export const getCurrentSession = async (bypassCache = false) => {
   try {
     // Check if we have a cached session that's still valid
-    const cachedSessionData = localStorage.getItem(SESSION_CACHE_KEY);
-    
-    if (cachedSessionData) {
-      try {
-        const { session, timestamp } = JSON.parse(cachedSessionData);
-        const now = Date.now();
-        
-        // Use cached session if it's still within TTL
-        if (now - timestamp < SESSION_CACHE_TTL && session) {
-          return session;
+    if (!bypassCache) {
+      const cachedSessionData = localStorage.getItem(SESSION_CACHE_KEY);
+      
+      if (cachedSessionData) {
+        try {
+          const { session, timestamp } = JSON.parse(cachedSessionData);
+          const now = Date.now();
+          
+          // Use cached session if it's still within TTL
+          if (now - timestamp < SESSION_CACHE_TTL && session) {
+            console.log("Using cached session");
+            return session;
+          }
+        } catch (e) {
+          // Invalid cache data, ignore and proceed with fresh fetch
+          console.warn("Invalid cache data, fetching fresh session");
+          localStorage.removeItem(SESSION_CACHE_KEY);
         }
-      } catch (e) {
-        // Invalid cache data, ignore and proceed with fresh fetch
-        localStorage.removeItem(SESSION_CACHE_KEY);
       }
+    } else {
+      console.log("Bypassing cache for fresh session");
     }
     
+    console.log("Fetching fresh session from Supabase");
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
+      console.error("Error getting fresh session:", error);
       throw error;
     }
     
@@ -44,6 +53,9 @@ export const getCurrentSession = async () => {
         session: data.session,
         timestamp: Date.now()
       }));
+      console.log("Fresh session cached");
+    } else {
+      console.warn("No session returned from Supabase");
     }
     
     return data.session;
@@ -78,7 +90,7 @@ export const updateUserVerificationStatus = async () => {
     // Update last refresh time and increment attempts counter
     lastRefreshTime = now;
     
-    const session = await getCurrentSession();
+    const session = await getCurrentSession(true); // Always get fresh session here
     
     if (!session) {
       return { updated: false, verified: false };
@@ -123,6 +135,14 @@ export const updateUserVerificationStatus = async () => {
 };
 
 /**
+ * Clear all auth related cache data
+ */
+export const clearAuthCache = () => {
+  localStorage.removeItem(SESSION_CACHE_KEY);
+  console.log("Auth cache cleared");
+};
+
+/**
  * Clean up auth state in localStorage
  * Only cleans specific Supabase keys to avoid performance issues
  */
@@ -133,13 +153,15 @@ export const cleanupAuthState = () => {
       'supabase.auth.token',
       'supabase.auth.refreshToken',
       'sb-refresh-token',
-      'sb-access-token'
+      'sb-access-token',
+      SESSION_CACHE_KEY
     ];
     
     // Only remove specific keys instead of iterating through all localStorage
     supabaseKeysToClean.forEach(key => {
       if (localStorage.getItem(key)) {
         localStorage.removeItem(key);
+        console.log(`Cleaned up key: ${key}`);
       }
     });
   } catch (error) {
