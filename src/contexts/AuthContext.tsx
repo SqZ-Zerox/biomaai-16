@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useContext,
   useCallback,
+  useRef,
 } from "react";
 import {
   AuthChangeEvent,
@@ -16,6 +17,7 @@ import {
   getCurrentSession,
   updateUserVerificationStatus,
 } from "@/services/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 // Define the authentication status enum
 export enum AuthStatus {
@@ -62,6 +64,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [globalLoading, setGlobalLoading] = useState<boolean>(true);
   const [profile, setProfile] = useState<any | null>(null);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
+  const { toast } = useToast();
+  
+  // Use refs to track state between renders and debounce operations
+  const checkSessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCheckSessionTime = useRef<number>(0);
+  const sessionCheckInProgress = useRef<boolean>(false);
+  const authStateChangeCount = useRef<number>(0);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -79,8 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (initialSession?.user) {
         setIsEmailVerified(initialSession.user.email_confirmed_at !== null);
         
-        // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
-        await updateUserVerificationStatus();
+        // Don't call updateUserVerificationStatus here as it will be done by the auth state change listener
       }
       
       // Update the auth state
@@ -93,18 +101,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Subscribe to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        processAuthStateChange(event, session);
+        // Use setTimeout to prevent supabase auth deadlocks
+        setTimeout(() => {
+          processAuthStateChange(event, session);
+        }, 0);
       }
     );
 
     return () => {
       subscription?.unsubscribe();
+      
+      // Clear any pending timeouts
+      if (checkSessionTimeoutRef.current) {
+        clearTimeout(checkSessionTimeoutRef.current);
+      }
     };
   }, []);
 
   // Process auth state change events
   const processAuthStateChange = (event: AuthChangeEvent, session: Session | null) => {
-    setGlobalLoading(true);
+    // Don't set loading state for frequent auth events
+    const isFrequentEvent = (authStateChangeCount.current++ > 5);
+    
+    if (!isFrequentEvent) {
+      setGlobalLoading(true);
+    }
     
     console.log("Auth state change:", event, session ? "Session exists" : "No session");
     
@@ -116,21 +137,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (session?.user) {
       setIsEmailVerified(session.user.email_confirmed_at !== null);
       
-      // Fix: Remove argument since updateUserVerificationStatus doesn't need parameters
-      updateUserVerificationStatus();
+      // Don't update verification status on every auth state change
+      // Only do it for specific events
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Debounced verification check
+        const now = Date.now();
+        if (now - lastCheckSessionTime.current > 30000) { // 30 seconds minimum between checks
+          lastCheckSessionTime.current = now;
+          updateUserVerificationStatus().catch(console.error);
+        }
+      }
     } else {
       setIsEmailVerified(false);
     }
     
     // Update the auth state
     setAuthStatus(session ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
-    setGlobalLoading(false);
+    
+    if (!isFrequentEvent) {
+      setGlobalLoading(false);
+    }
   };
 
-  // Function to manually check and refresh the session
+  // Function to manually check and refresh the session with debouncing
   const checkSession = useCallback(async () => {
-    setGlobalLoading(true);
+    // Prevent concurrent checks
+    if (sessionCheckInProgress.current) {
+      console.log("Session check already in progress, skipping");
+      return;
+    }
+    
+    // Implement debouncing - only allow one check every 5 seconds
+    const now = Date.now();
+    if (now - lastCheckSessionTime.current < 5000) { // 5 seconds
+      console.log("Session check on cooldown, debouncing...");
+      
+      // Clear any existing timeout
+      if (checkSessionTimeoutRef.current) {
+        clearTimeout(checkSessionTimeoutRef.current);
+      }
+      
+      // Set a timeout for the debounced call
+      checkSessionTimeoutRef.current = setTimeout(() => {
+        checkSession();
+      }, 5000);
+      
+      return;
+    }
+    
     try {
+      sessionCheckInProgress.current = true;
+      lastCheckSessionTime.current = now;
+      setGlobalLoading(true);
+      
       const currentSession = await getCurrentSession();
       setSession(currentSession);
       setUser(currentSession?.user || null);
@@ -145,11 +204,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthStatus(currentSession ? AuthStatus.AUTHENTICATED : AuthStatus.UNAUTHENTICATED);
     } catch (error) {
       console.error("Error checking session:", error);
+      
+      // Show a toast for auth errors
+      toast({
+        title: "Authentication Error",
+        description: "There was a problem verifying your session. Please try refreshing the page.",
+        variant: "destructive",
+      });
+      
       setAuthStatus(AuthStatus.UNAUTHENTICATED);
     } finally {
       setGlobalLoading(false);
+      sessionCheckInProgress.current = false;
     }
-  }, []);
+  }, [toast]);
 
   // Compute isAuthenticated and isLoading from authStatus and globalLoading
   const isAuthenticated = authStatus === AuthStatus.AUTHENTICATED;

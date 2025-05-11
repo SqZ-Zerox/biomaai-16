@@ -1,13 +1,42 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import LoginPageLayout from "@/components/auth/LoginPage";
 import { Dna } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage: React.FC = () => {
   const isMobile = useIsMobile();
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated - with debounce to prevent rapid redirects
+  useEffect(() => {
+    let redirectTimeout: NodeJS.Timeout;
+    
+    if (isAuthenticated && !isLoading) {
+      // Add small delay to prevent flickering during auth state changes
+      redirectTimeout = setTimeout(() => {
+        navigate("/dashboard");
+      }, 300);
+    }
+    
+    return () => {
+      if (redirectTimeout) clearTimeout(redirectTimeout);
+    };
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // If still loading, show a loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-muted-foreground">Checking authentication status...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 bg-gradient-to-br from-background via-background to-primary/5">

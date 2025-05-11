@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { updateUserVerificationStatus } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { Check, X } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const AuthCallback: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -11,27 +12,72 @@ const AuthCallback: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const { checkSession } = useAuth();
+  const { toast } = useToast();
+  
+  // Track verification attempts to prevent infinite loops
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const maxAttempts = 3;
 
   useEffect(() => {
     const handleVerification = async () => {
+      // If we've exceeded max attempts, bail out
+      if (verificationAttempts >= maxAttempts) {
+        setIsVerifying(false);
+        setIsSuccess(false);
+        setErrorMessage(`Verification failed after ${maxAttempts} attempts. Please try logging in again.`);
+        return;
+      }
+      
       try {
         console.log("Starting verification process...");
         setIsVerifying(true);
 
         // Process the verification
-        const verified = await updateUserVerificationStatus();
-        console.log("Verification result:", verified);
+        const { updated, verified } = await updateUserVerificationStatus();
+        console.log("Verification result:", { updated, verified });
 
         if (verified) {
           setIsSuccess(true);
           // Refresh auth session
           await checkSession();
           
+          // Show success toast
+          toast({
+            title: "Verification successful",
+            description: "Your account has been verified. Redirecting to dashboard...",
+          });
+          
           // Navigate to dashboard after a short delay
           setTimeout(() => {
             navigate("/dashboard");
           }, 2000);
+        } else if (updated) {
+          // If the update happened but verification failed, the user might not be verified yet
+          setIsSuccess(false);
+          setErrorMessage("Your account verification is still pending. Please check your email.");
+          
+          // Navigate back to login after a short delay
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
         } else {
+          // Try again if we're within the attempt limit
+          const nextAttempt = verificationAttempts + 1;
+          setVerificationAttempts(nextAttempt);
+          
+          if (nextAttempt < maxAttempts) {
+            // Wait with exponential backoff before trying again
+            const backoffTime = Math.min(5000, Math.pow(2, nextAttempt) * 1000);
+            
+            console.log(`Verification attempt ${nextAttempt}/${maxAttempts} failed, retrying in ${backoffTime/1000}s`);
+            
+            setTimeout(() => {
+              handleVerification();
+            }, backoffTime);
+            return;
+          }
+          
+          // Max attempts reached
           setIsSuccess(false);
           setErrorMessage("Verification failed. The link may have expired or is invalid.");
           
@@ -42,15 +88,38 @@ const AuthCallback: React.FC = () => {
         }
       } catch (error) {
         console.error("Error during verification:", error);
+        
+        // Try to extract a meaningful error message
+        let errorMsg = "An error occurred during verification.";
+        if (error instanceof Error) {
+          // Check for rate limiting errors
+          if (error.message.includes('429') || error.message.includes('rate limit')) {
+            errorMsg = "Too many verification attempts. Please wait a moment and try again.";
+            
+            // For rate limit errors, try again with exponential backoff
+            const nextAttempt = verificationAttempts + 1;
+            if (nextAttempt < maxAttempts) {
+              setVerificationAttempts(nextAttempt);
+              const backoffTime = Math.min(10000, Math.pow(2, nextAttempt) * 2000);
+              setTimeout(() => {
+                handleVerification();
+              }, backoffTime);
+              return;
+            }
+          } else {
+            errorMsg = `Verification error: ${error.message}`;
+          }
+        }
+        
         setIsSuccess(false);
-        setErrorMessage("An error occurred during verification.");
+        setErrorMessage(errorMsg);
       } finally {
         setIsVerifying(false);
       }
     };
 
     handleVerification();
-  }, [checkSession, navigate]);
+  }, [checkSession, navigate, toast, verificationAttempts]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 overflow-auto">
