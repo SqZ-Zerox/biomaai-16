@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 // Track token refresh attempts to implement backoff
 let refreshAttempts = 0;
 let lastRefreshTime = 0;
-const COOLDOWN_PERIOD = 5000; // 5 seconds minimum between refresh attempts
-const MAX_REFRESH_ATTEMPTS = 5;
+const COOLDOWN_PERIOD = 10000; // 10 seconds minimum between refresh attempts (increased from 5s)
+const MAX_REFRESH_ATTEMPTS = 3; // Reduced from 5 to be more conservative
 const SESSION_CACHE_KEY = 'bioma_auth_session_cache';
-const SESSION_CACHE_TTL = 60000; // 1 minute cache TTL
+const SESSION_CACHE_TTL = 120000; // 2 minutes cache TTL (increased from 1 min)
 
 /**
  * Get the current session from Supabase with caching to reduce API calls
@@ -80,17 +80,17 @@ export const updateUserVerificationStatus = async () => {
     
     // Implement exponential backoff if we've had multiple attempts
     if (refreshAttempts > 0) {
-      const backoffTime = Math.min(30000, Math.pow(2, refreshAttempts) * 1000); // Max 30 seconds
+      const backoffTime = Math.min(60000, Math.pow(2, refreshAttempts) * 1000); // Max 60 seconds (increased)
       if (now - lastRefreshTime < backoffTime) {
         console.log(`Backing off token refresh for ${backoffTime}ms`);
         return { updated: false, verified: false };
       }
     }
     
-    // Update last refresh time and increment attempts counter
+    // Update last refresh time
     lastRefreshTime = now;
     
-    const session = await getCurrentSession(true); // Always get fresh session here
+    const session = await getCurrentSession(false); // Use cached session when possible
     
     if (!session) {
       return { updated: false, verified: false };
@@ -105,6 +105,14 @@ export const updateUserVerificationStatus = async () => {
         return { updated: false, verified };
       }
       
+      // Only attempt refresh if needed - check if email is already verified
+      if (session?.user?.email_confirmed_at) {
+        console.log("Email already verified, no need to refresh");
+        refreshAttempts = 0; // Reset attempts since we're good
+        return { updated: false, verified: true };
+      }
+      
+      console.log("Attempting session refresh for verification status update");
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {

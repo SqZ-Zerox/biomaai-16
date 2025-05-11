@@ -59,6 +59,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoadAttempts, setProfileLoadAttempts] = useState(0);
+  const [authInitialized, setAuthInitialized] = useState(false);
+  
+  // Function to load profile data separately from session
+  const loadProfileData = async (userId: string, skipCache = false) => {
+    try {
+      console.log("Loading profile data for user:", userId);
+      const profileResult = await getUserProfile();
+      
+      if (profileResult.profile) {
+        console.log("Profile loaded successfully");
+        setProfile(profileResult.profile);
+        return true;
+      } else {
+        console.error("Failed to load profile:", profileResult.error);
+        if (!skipCache) {
+          // Try one more time with force refresh
+          const forceResult = await forceProfileRefresh();
+          if (forceResult.profile) {
+            console.log("Profile loaded successfully after force refresh");
+            setProfile(forceResult.profile);
+            return true;
+          }
+        }
+        setProfileLoadAttempts(prev => prev + 1);
+        return false;
+      }
+    } catch (profileError) {
+      console.error("Error during profile fetch:", profileError);
+      setProfileLoadAttempts(prev => prev + 1);
+      return false;
+    }
+  };
   
   const loadSession = async (bypassCache = false) => {
     try {
@@ -73,28 +105,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session.user);
         setIsAuthenticated(true);
         
-        // Fetch user profile
-        try {
-          const profileResult = await getUserProfile();
-          if (profileResult.profile) {
-            console.log("Profile loaded successfully");
-            setProfile(profileResult.profile);
-          } else {
-            console.error("Failed to load profile:", profileResult.error);
-            // Only show toast if we've tried a few times
-            if (profileLoadAttempts > 1) {
-              toast.error("Error loading profile. Please reload the page.");
-            }
-            setProfileLoadAttempts(prev => prev + 1);
-          }
-        } catch (profileError) {
-          console.error("Error during profile fetch:", profileError);
-          // Only show profile errors if we've tried multiple times
-          if (profileLoadAttempts > 1) {
-            toast.error("Error loading your profile data");
-          }
-          setProfileLoadAttempts(prev => prev + 1);
-        }
+        // Fetch user profile as a separate operation
+        await loadProfileData(session.user.id);
       } else {
         console.log("No active session found");
         setIsAuthenticated(false);
@@ -123,17 +135,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   useEffect(() => {
+    let isMounted = true; // Flag to avoid state updates after unmount
+    
     const setupAuth = async () => {
       console.log("Setting up auth provider");
       
+      if (authInitialized) return; // Prevent duplicate initialization
+      
       try {
-        // Subscribe to auth state changes
+        // First set up the auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
+          (event, session) => {
+            if (!isMounted) return; // Prevent updates after unmount
+            
             console.log("Auth state change:", event);
             
-            if (event === 'INITIAL_SESSION') {
-              // Skip handling here as we've already loaded the session below
+            if (event === 'SIGNED_OUT') {
+              setIsAuthenticated(false);
+              setUser(null);
+              setProfile(null);
               return;
             }
             
@@ -141,31 +161,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUser(session.user);
               setIsAuthenticated(true);
               
-              // Fetch user profile with a small delay to avoid Supabase conflict
-              setTimeout(async () => {
-                try {
-                  const profileResult = await getUserProfile();
-                  if (profileResult.profile) {
-                    setProfile(profileResult.profile);
-                  } else {
-                    console.warn("No profile found after auth state change");
-                  }
-                } catch (profileError) {
-                  console.error("Error fetching profile after auth state change:", profileError);
-                }
-              }, 300);
-            } else {
-              setIsAuthenticated(false);
-              setUser(null);
-              setProfile(null);
-            }
-            
-            // Update email verification status on login
-            if (event === 'SIGNED_IN') {
-              try {
-                await updateUserVerificationStatus();
-              } catch (updateError) {
-                console.error("Error updating verification status:", updateError);
+              // Fetch user profile but use setTimeout to avoid Supabase conflicts
+              if (event === 'SIGNED_IN') {
+                setTimeout(async () => {
+                  if (!isMounted) return;
+                  await loadProfileData(session.user.id);
+                }, 500);
               }
             }
             
@@ -173,40 +174,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         );
         
-        // Initial session check
+        // Now that the listener is set up, check for existing session
         await loadSession();
         
+        if (isMounted) {
+          setAuthInitialized(true);
+        }
+        
         return () => {
+          isMounted = false;
           subscription?.unsubscribe();
         };
       } catch (setupError) {
         console.error("Error in auth setup:", setupError);
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setAuthInitialized(true);
+        }
       }
     };
     
     setupAuth();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [authInitialized]);
   
   // Add refresh profile method
   const refreshProfile = async () => {
     try {
       console.log("Refreshing profile");
       if (user && isAuthenticated) {
-        const profileResult = await getUserProfile();
-        if (profileResult.profile) {
-          setProfile(profileResult.profile);
-          console.log("Profile refreshed successfully");
-          return;
-        }
-        console.warn("Profile refresh found no profile");
+        return await loadProfileData(user.id);
       }
+      return false;
     } catch (error) {
       console.error("Error refreshing profile:", error);
+      return false;
     }
   };
   
-  // Add force refresh method that tries to recreate profile if needed
+  // Force refresh method that tries to recreate profile if needed
   const forceRefreshProfile = async () => {
     try {
       console.log("Forcing profile refresh");
@@ -217,19 +226,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (result.profile) {
         setProfile(result.profile);
         toast.success("Profile refreshed successfully");
+        return true;
       } else {
         toast.error("Could not refresh profile");
         console.error("Force refresh failed:", result.error);
+        return false;
       }
     } catch (error) {
       console.error("Error in force profile refresh:", error);
       toast.error("Error refreshing your profile");
+      return false;
     } finally {
       setLoading(false);
     }
   };
   
-  // Full auth reset
+  // Full auth reset - this function completely resets the auth state
   const resetAuthState = async () => {
     try {
       console.log("Resetting auth state");
@@ -238,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear cache first
       clearAuthCache();
       
-      // Sign out and get a fresh session
+      // Sign out without actually redirecting
       await supabase.auth.signOut({ scope: 'local' });
       
       // Clear state
@@ -248,12 +260,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Check for session again after a brief delay
       setTimeout(async () => {
-        await loadSession(true);
-        setLoading(false);
-      }, 500);
+        if (isMounted) {
+          await loadSession(true);
+          setLoading(false);
+          // After reset, try to reauthorize
+          const { data } = await supabase.auth.getSession();
+          if (data?.session) {
+            setUser(data.session.user);
+            setIsAuthenticated(true);
+            await loadProfileData(data.session.user.id, true);
+          }
+        }
+      }, 1000);
+      
+      return true;
     } catch (error) {
       console.error("Error resetting auth state:", error);
       setLoading(false);
+      return false;
     }
   };
 
@@ -267,8 +291,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearAuthCache();
       cleanupAuthState();
       console.log("Signed out successfully");
+      return true;
     } catch (error) {
       console.error("Error signing out:", error);
+      return false;
     } finally {
       setLoading(false);
     }

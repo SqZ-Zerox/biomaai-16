@@ -32,21 +32,11 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return true;
     }
     
-    // Check if user has been email verified
-    // Only create profile if verified or if we're in a local development environment
-    const isVerified = userData.email_verified === true || 
-                      window.location.hostname === "localhost";
-    
-    if (!isVerified) {
-      console.log("User not verified yet, skipping profile creation");
-      return false;
-    }
-    
     // Get registration data from user metadata
     const registrationData = userData.registration_data || {};
     
-    // If profile doesn't exist AND user is verified, create it
-    console.log("Creating verified profile for user:", userId);
+    // Create profile regardless of verification status - will rely on RLS
+    console.log("Creating profile for user:", userId);
     const { error: insertError } = await supabase
       .from('profiles')
       .insert([{
@@ -151,6 +141,8 @@ export async function completeUserProfile(userData: Partial<SignupData>): Promis
 export async function getUserProfile(): Promise<ProfileResult> {
   try {
     console.log("Starting getUserProfile");
+    
+    // First check if we're logged in
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -171,7 +163,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
     let data = null;
     let error = null;
     
-    while (retries <= maxRetries) {
+    while (retries <= maxRetries && !data) {
       try {
         const result = await supabase
           .from('profiles')
@@ -186,9 +178,12 @@ export async function getUserProfile(): Promise<ProfileResult> {
           if (error.code === 'PGRST116') {
             console.warn(`Profile not found for user (retry ${retries}):`, session.user.id);
             // If profile not found, try to create it
-            if (retries === maxRetries) {
-              console.log("Max retries reached, attempting to create profile");
-              await ensureUserProfile(session.user.id, session.user.user_metadata);
+            const created = await ensureUserProfile(session.user.id, session.user.user_metadata);
+            if (created) {
+              console.log("Profile created successfully on retry");
+              // If profile was created, try fetching again after a small delay
+              await new Promise(resolve => setTimeout(resolve, 500));
+              continue; // Skip incrementing retries since we just created the profile
             }
           } else {
             console.error(`Error fetching profile (retry ${retries}):`, error);
@@ -200,7 +195,7 @@ export async function getUserProfile(): Promise<ProfileResult> {
             console.log(`Waiting before retry ${retries}...`);
             await new Promise(resolve => setTimeout(resolve, 1000 * retries));
           }
-        } else {
+        } else if (data) {
           // Success!
           console.log("Profile data retrieved:", data);
           break;
@@ -219,7 +214,25 @@ export async function getUserProfile(): Promise<ProfileResult> {
     // Final check - if still no profile and all retries exhausted
     if (!data && retries > maxRetries) {
       console.error("All retries exhausted, unable to fetch profile");
-      throw new AppError("Could not fetch user profile after multiple attempts", 404);
+      // Try one last attempt to create the profile
+      const created = await ensureUserProfile(session.user.id, session.user.user_metadata);
+      if (!created) {
+        throw new AppError("Could not fetch or create user profile after multiple attempts", 404);
+      } else {
+        // Fetch the newly created profile
+        const { data: freshData, error: freshError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (freshError || !freshData) {
+          console.error("Error fetching newly created profile:", freshError);
+          throw new AppError("Created profile but failed to retrieve it", 404);
+        }
+        
+        data = freshData;
+      }
     }
     
     // Get user email from auth session
