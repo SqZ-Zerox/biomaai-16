@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  checkSession: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -41,6 +43,7 @@ export const AuthContext = createContext<AuthContextType>({
   profile: null,
   signOut: async () => {},
   refreshProfile: async () => {},
+  checkSession: async () => false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,74 +52,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   
+  const loadSession = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current session
+      const session: Session | null = await getCurrentSession();
+      
+      if (session) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        
+        // Fetch user profile
+        const profileResult = await getUserProfile();
+        if (profileResult.profile) {
+          setProfile(profileResult.profile);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        setProfile(null);
+      }
+      
+      return session !== null;
+    } catch (error) {
+      console.error("Error loading session:", error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const checkSession = async (): Promise<boolean> => {
+    try {
+      // Get current session
+      const session: Session | null = await getCurrentSession();
+      return session !== null;
+    } catch (error) {
+      console.error("Error checking session:", error);
+      return false;
+    }
+  };
+  
   useEffect(() => {
-    const loadSession = async () => {
-      try {
-        setLoading(true);
-        
-        // Get current session
-        const session: Session | null = await getCurrentSession();
-        
-        if (session) {
-          setUser(session.user);
-          setIsAuthenticated(true);
+    const setupAuth = async () => {
+      await loadSession();
+      
+      // Subscribe to auth state changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log("Auth state change:", event);
           
-          // Fetch user profile
-          const profileResult = await getUserProfile();
-          if (profileResult.profile) {
-            setProfile(profileResult.profile);
+          if (event === 'INITIAL_SESSION') {
+            // Skip handling here as we've already loaded the session above
+            return;
           }
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-          setProfile(null);
+          
+          if (session) {
+            setUser(session.user);
+            setIsAuthenticated(true);
+            
+            // Fetch user profile
+            const profileResult = await getUserProfile();
+            if (profileResult.profile) {
+              setProfile(profileResult.profile);
+            }
+          } else {
+            setIsAuthenticated(false);
+            setUser(null);
+            setProfile(null);
+          }
+          
+          // Update email verification status on login
+          if (event === 'SIGNED_IN') {
+            await updateUserVerificationStatus();
+          }
+          
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Error loading session:", error);
-      } finally {
-        setLoading(false);
-      }
+      );
+      
+      return () => {
+        subscription?.unsubscribe();
+      };
     };
     
-    loadSession();
-    
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state change:", event);
-        
-        if (event === 'INITIAL_SESSION') {
-          await loadSession();
-          return;
-        }
-        
-        if (session) {
-          setUser(session.user);
-          setIsAuthenticated(true);
-          
-          // Fetch user profile
-          const profileResult = await getUserProfile();
-          if (profileResult.profile) {
-            setProfile(profileResult.profile);
-          }
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-          setProfile(null);
-        }
-        
-        // Update email verification status on login
-        if (event === 'SIGNED_IN') {
-          await updateUserVerificationStatus();
-        }
-        
-        setLoading(false);
-      }
-    );
-    
-    return () => {
-      subscription?.unsubscribe();
-    };
+    setupAuth();
   }, []);
   
   // Add refresh profile method
@@ -154,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profile,
     signOut,
     refreshProfile,
+    checkSession,
   };
 
   return (

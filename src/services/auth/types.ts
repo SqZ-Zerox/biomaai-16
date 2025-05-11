@@ -1,3 +1,4 @@
+
 export interface SignupData {
   first_name?: string;
   last_name?: string;
@@ -63,4 +64,5 @@ export interface AuthContextType {
   profile: UserProfile | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  checkSession?: () => Promise<boolean>;
 }

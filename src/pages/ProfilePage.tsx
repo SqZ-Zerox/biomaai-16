@@ -36,10 +36,12 @@ const formSchema = z.object({
 });
 
 const ProfilePage = () => {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [healthGoals, setHealthGoals] = useState<string[]>([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,34 +60,55 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (profile) {
-      // Fill form with profile data
-      form.reset({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
-        email: profile.email || "",
-        phone_number: profile.phone_number || "",
-        profession: profile.profession || "",
-        birth_date: profile.birth_date || "",
-        gender: profile.gender || "",
-        height: profile.height || "",
-        weight: profile.weight || "",
-        activity_level: profile.activity_level || "",
-      });
-      
-      // Fetch health goals and dietary restrictions
-      const fetchGoalsAndRestrictions = async () => {
-        if (profile.id) {
-          const goals = await extractHealthGoals(profile.id);
-          const restrictions = await extractDietaryRestrictions(profile.id);
-          setHealthGoals(goals);
-          setDietaryRestrictions(restrictions);
+    const loadProfileData = async () => {
+      try {
+        setIsLoadingData(true);
+
+        if (profile) {
+          // Fill form with profile data
+          form.reset({
+            first_name: profile.first_name || "",
+            last_name: profile.last_name || "",
+            email: profile.email || "",
+            phone_number: profile.phone_number || "",
+            profession: profile.profession || "",
+            birth_date: profile.birth_date || "",
+            gender: profile.gender || "",
+            height: profile.height || "",
+            weight: profile.weight || "",
+            activity_level: profile.activity_level || "",
+          });
+          
+          // Fetch health goals and dietary restrictions
+          if (profile.id) {
+            const [goals, restrictions] = await Promise.all([
+              extractHealthGoals(profile.id),
+              extractDietaryRestrictions(profile.id)
+            ]);
+            setHealthGoals(goals);
+            setDietaryRestrictions(restrictions);
+          }
+          
+          setProfileError(null);
+        } else if (!authLoading) {
+          setProfileError("Could not load profile data. Please try again later.");
         }
-      };
-      
-      fetchGoalsAndRestrictions();
-    }
-  }, [profile, form]);
+      } catch (error) {
+        console.error("Error loading profile data:", error);
+        setProfileError("Failed to load profile data. Please try refreshing the page.");
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    
+    loadProfileData();
+  }, [profile, form, authLoading]);
+
+  // Function to retry loading profile if it failed
+  const retryLoadProfile = async () => {
+    setProfileError(null);
+    await refreshProfile();
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
@@ -116,11 +139,51 @@ const ProfilePage = () => {
     }
   };
 
+  if (authLoading || isLoadingData) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="container max-w-4xl mx-auto py-6">
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center text-center">
+            <h2 className="text-2xl font-bold text-destructive">Error Loading Profile</h2>
+            <p className="mt-2 text-muted-foreground">{profileError}</p>
+            <Button 
+              onClick={retryLoadProfile} 
+              className="mt-4"
+            >
+              Retry
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="ml-4 text-muted-foreground">Loading profile...</p>
+      <div className="container max-w-4xl mx-auto py-6">
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center text-center">
+            <h2 className="text-2xl font-bold">Profile Not Found</h2>
+            <p className="mt-2 text-muted-foreground">We couldn't find your profile information.</p>
+            <Button 
+              onClick={retryLoadProfile} 
+              className="mt-4"
+            >
+              Refresh Profile
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
