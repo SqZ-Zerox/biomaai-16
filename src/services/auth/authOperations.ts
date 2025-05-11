@@ -104,7 +104,6 @@ export const signUp = async (signupData: any) => {
           ...signupData.user_metadata
         },
         emailRedirectTo: window.location.origin + "/auth/callback"
-        // Removed the invalid 'emailConfirm: true' property
       }
     });
     
@@ -149,6 +148,57 @@ export const signUp = async (signupData: any) => {
   } catch (error: any) {
     console.error("Sign up error:", error);
     return { data: null, error };
+  }
+};
+
+/**
+ * Resend verification email to unverified user
+ */
+export const resendVerificationEmail = async (email: string) => {
+  try {
+    console.log("Resending verification email to:", email);
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        data: null,
+        error: {
+          message: "Please enter a valid email address.",
+          status: 400
+        }
+      };
+    }
+    
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + "/auth/callback"
+      }
+    });
+    
+    if (error) {
+      console.error("Resend verification error:", error);
+      return { 
+        data: null, 
+        error: {
+          message: error.message || "Failed to resend verification email.",
+          status: error.status || 500
+        }
+      };
+    }
+    
+    return { data, error: null };
+  } catch (error: any) {
+    console.error("Resend verification error:", error);
+    return { 
+      data: null, 
+      error: {
+        message: error.message || "An unexpected error occurred.",
+        status: 500
+      }
+    };
   }
 };
 

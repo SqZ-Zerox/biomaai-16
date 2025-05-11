@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, Mail, Lock, Loader2, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { signIn } from "@/services/authService";
+import { signIn, resendVerificationEmail } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -33,6 +35,8 @@ const LoginForm: React.FC = () => {
   const { checkSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState<string | null>(null);
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   // Login form
   const form = useForm<LoginFormValues>({
@@ -43,8 +47,41 @@ const LoginForm: React.FC = () => {
     },
   });
 
+  const handleResendVerification = async () => {
+    if (!emailNotVerified) return;
+    
+    setResendingVerification(true);
+    try {
+      const { data, error } = await resendVerificationEmail(emailNotVerified);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to resend verification email. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Verification Email Sent",
+          description: "Please check your inbox and verify your email address.",
+        });
+        setEmailNotVerified(null);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend verification email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
+    setEmailNotVerified(null);
+    
     try {
       console.log("Attempting login with:", values.email);
       
@@ -59,6 +96,15 @@ const LoginForm: React.FC = () => {
         let errorMessage = "Failed to login. Please try again.";
         if (error.message) {
           errorMessage = error.message;
+        }
+        
+        // Check for email verification error
+        if (
+          error.message?.includes("not confirmed") || 
+          error.message?.includes("not verified") ||
+          error.message?.includes("email_not_confirmed")
+        ) {
+          setEmailNotVerified(values.email);
         }
         
         toast({
@@ -96,6 +142,42 @@ const LoginForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-6">
+        {emailNotVerified && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 mb-4">
+              <AlertDescription className="text-sm">
+                <p className="font-medium text-amber-800 dark:text-amber-300 mb-2">
+                  Your email address has not been verified
+                </p>
+                <p className="text-muted-foreground mb-3">
+                  Please check your inbox for a verification link or click the button below to resend the verification email.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/40"
+                  onClick={handleResendVerification}
+                  disabled={resendingVerification}
+                >
+                  {resendingVerification ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Resend Verification Email"
+                  )}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

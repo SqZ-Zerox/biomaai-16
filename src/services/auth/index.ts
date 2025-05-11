@@ -36,5 +36,6 @@ export {
 // Export email utilities (new addition)
 export {
   checkIfEmailExists,
-  validateEmailFormat
+  validateEmailFormat,
+  resendVerificationEmail
 } from "./emailUtils";

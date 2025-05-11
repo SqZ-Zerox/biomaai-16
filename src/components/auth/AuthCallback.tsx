@@ -54,8 +54,8 @@ const AuthCallback: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 overflow-auto">
-      <div className="w-full max-w-3xl bg-card p-6 md:p-8 rounded-xl shadow-lg border border-border mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-center">Account Verification</h1>
+      <div className="w-full max-w-4xl bg-card p-6 md:p-8 rounded-xl shadow-lg border border-border mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center">Account Verification</h1>
         
         {isVerifying && (
           <div className="text-center p-6">
@@ -65,7 +65,7 @@ const AuthCallback: React.FC = () => {
         )}
         
         {!isVerifying && isSuccess && (
-          <div className="flex flex-col items-center p-6">
+          <div className="flex flex-col items-center p-6 max-w-2xl mx-auto">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
               <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
@@ -77,7 +77,7 @@ const AuthCallback: React.FC = () => {
         )}
         
         {!isVerifying && !isSuccess && (
-          <div className="flex flex-col items-center p-6">
+          <div className="flex flex-col items-center p-6 max-w-2xl mx-auto">
             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-6">
               <X className="w-10 h-10 text-red-600 dark:text-red-400" />
             </div>

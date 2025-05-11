@@ -21,78 +21,76 @@ const RegistrationSuccessAlert: React.FC<RegistrationSuccessAlertProps> = ({
       className="mb-6"
     >
       <Alert className="bg-primary/10 border-primary text-foreground">
-        <div className="flex flex-col md:flex-row md:items-start gap-4">
-          <div className="flex items-start">
-            <MailOpen className="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0" />
-            <div>
-              <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
-              <AlertDescription className="mt-2">
-                <p className="mb-2">We've sent a verification email to <span className="font-bold">{email}</span></p>
-                <p className="font-medium text-foreground">Please check your inbox and click the verification link to activate your account.</p>
-              </AlertDescription>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-3">
+            <div className="flex items-start">
+              <MailOpen className="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0" />
+              <div>
+                <AlertTitle className="text-primary font-bold text-lg">Verification Email Sent!</AlertTitle>
+                <AlertDescription className="mt-2">
+                  <p className="mb-1">We've sent a verification email to <span className="font-bold">{email}</span></p>
+                  <p className="text-sm text-muted-foreground">Please check your inbox and click the verification link to activate your account.</p>
+                </AlertDescription>
+              </div>
             </div>
           </div>
           
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-            {/* Left column */}
-            <div className="p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-amber-600 text-sm">Important: Verification Required</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  You <strong>must verify your email</strong> before you can log in.
-                </p>
-              </div>
+          <div className="p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-medium text-amber-600 dark:text-amber-400 text-sm">Verification Required</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                You <strong>must verify your email</strong> before you can log in.
+              </p>
             </div>
+          </div>
 
-            {/* Right column */}
-            <div className="p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-2">
-              <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-sm">Next Steps</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  1. Open the verification email<br />
-                  2. Click the verification link<br />
-                  3. Return to login and sign in
-                </p>
-              </div>
+          <div className="p-3 bg-background/60 rounded-lg border border-primary/20 flex items-start gap-2">
+            <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-medium text-sm">Next Steps</h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                1. Open the verification email<br />
+                2. Click the verification link<br />
+                3. Return to login and sign in
+              </p>
             </div>
+          </div>
+          
+          <div className="flex justify-center">
+            <Button 
+              variant="default"
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+              onClick={() => {
+                onDismiss();
+                // Navigate to login page
+                window.location.href = '/login';
+              }}
+            >
+              Go to Login
+            </Button>
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-2 mt-4 justify-between">
-          <div className="flex gap-2 flex-wrap">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={() => window.open(`https://mail.google.com`, '_blank')}
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Gmail
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={() => window.open(`https://outlook.live.com`, '_blank')}
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Outlook
-            </Button>
-          </div>
-          
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
           <Button 
-            variant="default"
+            variant="outline" 
             size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() => {
-              onDismiss();
-              // Navigate to login page
-              window.location.href = '/login';
-            }}
+            className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
+            onClick={() => window.open(`https://mail.google.com`, '_blank')}
           >
-            Go to Login
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Gmail
+          </Button>
+          <Button 
+            variant="outline"
+            size="sm"
+            className="bg-background border-primary text-primary hover:bg-primary hover:text-white"
+            onClick={() => window.open(`https://outlook.live.com`, '_blank')}
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Outlook
           </Button>
         </div>
       </Alert>
