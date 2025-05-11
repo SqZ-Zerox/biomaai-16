@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 bg-gradient-to-br from-background via-background to-primary/5">
-      <div className={`w-full ${isMobile ? 'px-2' : 'max-w-md'}`}>
+      <div className={`w-full ${isMobile ? 'px-2' : 'max-w-xl'}`}>
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
