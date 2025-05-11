@@ -101,9 +101,20 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
   // Clear email error and emailExists state when user starts typing again
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const currentErrors = form.formState.errors;
+    
+    // Always clear manual errors when typing
     if (currentErrors.email && currentErrors.email.type === "manual") {
       form.clearErrors("email");
+    }
+    
+    // Reset the emailExists state when the user changes the input
+    if (emailExists) {
       setEmailExists(false);
+    }
+    
+    // Remove the email from cache to force a fresh check
+    if (emailCheckCache.has(e.target.value)) {
+      emailCheckCache.delete(e.target.value);
     }
   };
 
