@@ -42,8 +42,13 @@ const SignupCredentialsStep: React.FC<SignupCredentialsStepProps> = ({
     handleEmailChange
   } = useEmailValidation({ form });
 
-  // Determine if Next button should be disabled
-  const isNextDisabled = isLoading || isEmailInvalid || !!form.formState.errors.email;
+  // Only disable the Next button if:
+  // - Currently loading
+  // - Email is being checked
+  // - Email exists error is shown (and field is not focused)
+  // - Any other form errors from validation schema (not manual errors)
+  const hasSchemaErrors = !!form.formState.errors.email && form.formState.errors.email.type !== "manual";
+  const isNextDisabled = isLoading || isEmailInvalid || hasSchemaErrors;
 
   return (
     <motion.div

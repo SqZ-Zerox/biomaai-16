@@ -17,7 +17,7 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   // Create a debounced email check function that runs after 500ms of inactivity
   const debouncedEmailCheck = useRef(
     debounce(async (email: string) => {
-      if (!email || form.formState.errors.email) {
+      if (!email || form.formState.errors.email?.type !== "manual") {
         setCheckingEmail(false);
         setEmailExists(false);
         return;
@@ -49,7 +49,13 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   const handleEmailBlur = async () => {
     setIsEmailFocused(false);
     const email = form.getValues("email");
-    if (!email || form.formState.errors.email?.type !== "manual") return;
+    if (!email) return;
+    
+    // Only check if there are no validation errors from the form schema
+    // Don't do the check if there are already validation errors like "invalid email format"
+    if (form.formState.errors.email && form.formState.errors.email.type !== "manual") {
+      return;
+    }
     
     setEmailTouched(true);
     setCheckingEmail(true);
@@ -62,9 +68,13 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   const handleEmailFocus = () => {
     setIsEmailFocused(true);
     
-    // Clear email exists error when focused
-    if (emailExists) {
+    // Always clear email exists error when focused
+    if (form.formState.errors.email?.type === "manual") {
       form.clearErrors("email");
+    }
+    
+    if (emailExists) {
+      setEmailExists(false);
     }
   };
 
@@ -75,7 +85,6 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
     // Always clear manual errors when typing
     if (currentErrors.email && currentErrors.email.type === "manual") {
       form.clearErrors("email");
-      setEmailExists(false);
     }
     
     // Reset the emailExists state when the user changes the input
@@ -97,8 +106,8 @@ export function useEmailValidation({ form }: UseEmailValidationProps) {
   }, [debouncedEmailCheck]);
 
   // Determine if Next button should be disabled due to email issues
-  const isEmailInvalid = checkingEmail || 
-    (emailExists && !isEmailFocused);
+  // Only disable if checking email or if email exists and not focused
+  const isEmailInvalid = checkingEmail || (emailExists && !isEmailFocused);
 
   return {
     checkingEmail,
