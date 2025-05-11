@@ -54,7 +54,7 @@ const AuthCallback: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 overflow-auto">
-      <div className="w-full max-w-xl bg-card p-6 md:p-8 rounded-xl shadow-lg border border-border mx-auto">
+      <div className="w-full max-w-3xl bg-card p-6 md:p-8 rounded-xl shadow-lg border border-border mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-center">Account Verification</h1>
         
         {isVerifying && (
