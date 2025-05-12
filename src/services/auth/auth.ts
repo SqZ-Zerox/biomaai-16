@@ -104,6 +104,9 @@ export const signUp = async (signupData: any) => {
       // Continue with signup even if sign out fails
     }
 
+    // Create an object with all the profile data directly in data field
+    // This is CRITICAL - all profile data must be in the user_metadata.data object
+    // for the database trigger to properly extract it
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
       password: signupData.password,
@@ -119,7 +122,11 @@ export const signUp = async (signupData: any) => {
           activity_level: signupData.activity_level,
           health_goals: formattedHealthGoals,
           dietary_restrictions: formattedDietaryRestrictions,
-          ...signupData.user_metadata
+          existing_conditions: signupData.existing_conditions || [],
+          allergies: signupData.allergies || "",
+          medications: signupData.medications || "",
+          family_history: signupData.family_history || [],
+          recent_lab_work: signupData.recent_lab_work
         },
         emailRedirectTo: window.location.origin + "/auth/callback"
       }

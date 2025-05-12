@@ -9,6 +9,7 @@ import { AppError } from "@/lib/error";
 export async function ensureUserProfile(userId: string, userData: any): Promise<boolean> {
   try {
     console.log("Ensuring profile exists for user:", userId);
+    console.log("User metadata received:", userData);
     
     // Check if profile exists
     const { data: existingProfile, error: checkError } = await supabase
@@ -32,38 +33,45 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return true;
     }
     
-    // Get registration data from user metadata
-    const registrationData = userData.registration_data || {};
+    // Extract data directly from userData (flattened structure)
+    // This is more reliable than depending on specific nested properties
+    const profileData = {
+      id: userId,
+      first_name: userData.first_name || null,
+      last_name: userData.last_name || null,
+      birth_date: userData.birth_date || null,
+      phone_number: userData.phone_number || null,
+      profession: userData.profession || null,
+      gender: userData.gender || null,
+      height: userData.height || null,
+      weight: userData.weight || null,
+      activity_level: userData.activity_level || null
+    };
+    
+    console.log("Creating profile with data:", profileData);
     
     // Create profile regardless of verification status - will rely on RLS
-    console.log("Creating profile for user:", userId);
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert([{
-        id: userId,
-        first_name: userData.first_name || registrationData.first_name || null,
-        last_name: userData.last_name || registrationData.last_name || null,
-        birth_date: registrationData.birth_date || null,
-        phone_number: registrationData.phone_number || null,
-        profession: registrationData.profession || null,
-        gender: registrationData.gender || null,
-        height: registrationData.height || null,
-        weight: registrationData.weight || null,
-        activity_level: registrationData.activity_level || null
-      }]);
+      .insert([profileData]);
     
     if (insertError) {
       console.error("Error creating profile:", insertError);
       return false;
     }
     
-    // Process health goals and dietary restrictions
-    if (registrationData.health_goals && Array.isArray(registrationData.health_goals)) {
-      await processHealthGoals(userId, registrationData.health_goals);
+    // Process health goals if available in any format
+    const healthGoals = userData.health_goals || [];
+    if (healthGoals.length > 0) {
+      console.log("Processing health goals:", healthGoals);
+      await processHealthGoals(userId, healthGoals);
     }
     
-    if (registrationData.dietary_restrictions && Array.isArray(registrationData.dietary_restrictions)) {
-      await processDietaryRestrictions(userId, registrationData.dietary_restrictions);
+    // Process dietary restrictions if available in any format
+    const dietaryRestrictions = userData.dietary_restrictions || [];
+    if (dietaryRestrictions.length > 0) {
+      console.log("Processing dietary restrictions:", dietaryRestrictions);
+      await processDietaryRestrictions(userId, dietaryRestrictions);
     }
     
     console.log("Profile created successfully for user:", userId);
@@ -313,8 +321,17 @@ export async function forceProfileRefresh(): Promise<ProfileResult> {
       return { profile: null, error: new Error("No valid session") };
     }
     
+    console.log("Force refresh with user metadata:", session.user.user_metadata);
+    
     // Try to explicitly create the profile if it doesn't exist
-    await ensureUserProfile(session.user.id, session.user.user_metadata);
+    // This is crucial for recovering profiles that might have been incorrectly created
+    await ensureUserProfile(session.user.id, {
+      ...session.user.user_metadata,  // Try metadata first
+      // Fallbacks for critical fields - attempt to create a valid profile
+      first_name: session.user.user_metadata?.first_name || null,
+      last_name: session.user.user_metadata?.last_name || null,
+      email: session.user.email
+    });
     
     // Now fetch the profile
     return await getUserProfile();
