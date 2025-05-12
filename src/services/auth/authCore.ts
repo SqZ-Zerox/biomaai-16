@@ -18,7 +18,8 @@ import {
   getCurrentSession,
   updateUserVerificationStatus,
   cleanupAuthState,
-  clearAuthCache
+  clearAuthCache,
+  resetRefreshAttempts
 } from "./sessionManagement";
 
 import {
@@ -42,6 +43,7 @@ export {
   updateUserVerificationStatus,
   cleanupAuthState,
   clearAuthCache,
+  resetRefreshAttempts,
   
   // User data processors
   processProfileData,

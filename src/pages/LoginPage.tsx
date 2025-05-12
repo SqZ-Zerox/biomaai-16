@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
       // Add small delay to prevent flickering during auth state changes
       redirectTimeout = setTimeout(() => {
         navigate("/dashboard");
-      }, 300);
+      }, 500);
     }
     
     return () => {
@@ -32,8 +32,11 @@ const LoginPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-muted-foreground">Checking authentication status...</p>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Checking authentication status...</p>
+          <p className="text-sm text-muted-foreground/70 mt-2">This may take a moment...</p>
+        </div>
       </div>
     );
   }
@@ -79,6 +82,6 @@ const LoginPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default LoginPage;

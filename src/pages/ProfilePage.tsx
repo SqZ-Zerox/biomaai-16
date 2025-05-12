@@ -1,767 +1,550 @@
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { 
-  extractHealthGoals, 
-  extractDietaryRestrictions, 
-  updateUserProfile,
-  updateHealthGoals,
-  updateDietaryRestrictions 
-} from "@/services/auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserProfile } from "@/services/auth/types";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCcw, PlusCircle, X, Edit2, Save } from "lucide-react";
 
-const formSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address").optional(),
-  phone_number: z.string().optional(),
-  profession: z.string().optional(),
-  birth_date: z.string().optional(),
-  gender: z.string().optional(),
-  height: z.string().optional(),
-  weight: z.string().optional(),
-  activity_level: z.string().optional(),
-});
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { 
+  updateUserProfile, 
+  extractDietaryRestrictions, 
+  extractHealthGoals,
+  updateHealthGoals,
+  updateDietaryRestrictions
+} from "@/services/auth";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
+import { Loader2, UserCircle2, Shield, CircleUserRound, CalendarDays, Phone, GraduationCap, RulerIcon, Weight, ActivityIcon, AppleIcon, Dumbbell } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Health goals and dietary restrictions options
+const healthGoalOptions = [
+  { id: "weight-loss", label: "Weight Loss" },
+  { id: "muscle-gain", label: "Build Muscle" },
+  { id: "better-sleep", label: "Improve Sleep" },
+  { id: "reduce-stress", label: "Reduce Stress" },
+  { id: "improve-energy", label: "Increase Energy" },
+  { id: "lower-blood-pressure", label: "Lower Blood Pressure" },
+  { id: "manage-diabetes", label: "Manage Diabetes" },
+  { id: "heart-health", label: "Improve Heart Health" },
+  { id: "general-health", label: "Maintain General Health" },
+  { id: "injury-recovery", label: "Recover from Injury" },
+  { id: "mental-health", label: "Improve Mental Health" }
+];
+
+const dietaryRestrictionOptions = [
+  { id: "vegetarian", label: "Vegetarian" },
+  { id: "vegan", label: "Vegan" },
+  { id: "gluten-free", label: "Gluten-Free" },
+  { id: "dairy-free", label: "Dairy-Free" },
+  { id: "nut-allergy", label: "Nut Allergy" },
+  { id: "shellfish-allergy", label: "Shellfish Allergy" },
+  { id: "pescatarian", label: "Pescatarian" },
+  { id: "keto", label: "Ketogenic" },
+  { id: "paleo", label: "Paleo" },
+  { id: "low-fodmap", label: "Low FODMAP" },
+  { id: "low-sodium", label: "Low Sodium" },
+  { id: "halal", label: "Halal" },
+  { id: "kosher", label: "Kosher" }
+];
 
 const ProfilePage = () => {
-  const { 
-    profile, 
-    refreshProfile, 
-    forceRefreshProfile,
-    resetAuthState, 
-    isLoading: authLoading,
-    user 
-  } = useAuth();
+  const { user, profile, isLoading, refreshProfile } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadingHealthGoals, setLoadingHealthGoals] = useState(true);
+  const [loadingDietaryRestrictions, setLoadingDietaryRestrictions] = useState(true);
+  const [currentHealthGoals, setCurrentHealthGoals] = useState<string[]>([]);
+  const [currentDietaryRestrictions, setCurrentDietaryRestrictions] = useState<string[]>([]);
   
-  const [isLoading, setIsLoading] = useState(false);
-  const [healthGoals, setHealthGoals] = useState<string[]>([]);
-  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-  const [retryAttempts, setRetryAttempts] = useState(0);
-  
-  // New state for editing health goals and dietary restrictions
-  const [editingGoals, setEditingGoals] = useState(false);
-  const [editingRestrictions, setEditingRestrictions] = useState(false);
-  const [newGoal, setNewGoal] = useState('');
-  const [newRestriction, setNewRestriction] = useState('');
-  const [editedHealthGoals, setEditedHealthGoals] = useState<string[]>([]);
-  const [editedDietaryRestrictions, setEditedDietaryRestrictions] = useState<string[]>([]);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone_number: "",
-      profession: "",
-      birth_date: "",
-      gender: "",
-      height: "",
-      weight: "",
-      activity_level: "",
-    },
+  // Form State
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    birth_date: '',
+    phone_number: '',
+    profession: '',
+    gender: '',
+    height: '',
+    weight: '',
+    activity_level: ''
   });
-
+  
+  // Fetch health goals and dietary restrictions
   useEffect(() => {
-    let isActive = true; // To prevent state updates after unmount
-    
-    const loadProfileData = async () => {
-      try {
-        console.log("ProfilePage: Loading profile data, auth loading:", authLoading);
-        setIsLoadingData(true);
-
-        // If we're not loading and still don't have a profile, try to refresh it
-        if (!authLoading && !profile && user && retryAttempts < 2) {
-          console.log("ProfilePage: No profile but have user, refreshing...");
-          await refreshProfile();
-          if (isActive) setRetryAttempts(prev => prev + 1);
+    const fetchAdditionalData = async () => {
+      if (user?.id) {
+        try {
+          setLoadingHealthGoals(true);
+          const goals = await extractHealthGoals(user.id);
+          setCurrentHealthGoals(goals);
+        } catch (error) {
+          console.error("Error fetching health goals:", error);
+        } finally {
+          setLoadingHealthGoals(false);
         }
-
-        if (profile) {
-          console.log("ProfilePage: Setting form data from profile");
-          // Fill form with profile data
-          form.reset({
-            first_name: profile.first_name || "",
-            last_name: profile.last_name || "",
-            email: profile.email || "",
-            phone_number: profile.phone_number || "",
-            profession: profile.profession || "",
-            birth_date: profile.birth_date || "",
-            gender: profile.gender || "",
-            height: profile.height || "",
-            weight: profile.weight || "",
-            activity_level: profile.activity_level || "",
-          });
-          
-          // Fetch health goals and dietary restrictions
-          if (profile.id) {
-            console.log("ProfilePage: Fetching health goals and dietary restrictions");
-            const [goals, restrictions] = await Promise.all([
-              extractHealthGoals(profile.id),
-              extractDietaryRestrictions(profile.id)
-            ]);
-            if (isActive) {
-              setHealthGoals(goals);
-              setDietaryRestrictions(restrictions);
-            }
-          }
-          
-          if (isActive) setProfileError(null);
-        } else if (!authLoading && retryAttempts >= 2) {
-          console.error("ProfilePage: Could not load profile after retries");
-          if (isActive) {
-            setProfileError("We're having trouble loading your profile data. Please use the refresh button below.");
-          }
-        }
-      } catch (error) {
-        console.error("ProfilePage: Error loading profile data:", error);
-        if (isActive) {
-          setProfileError("Failed to load profile data. Please try refreshing the page.");
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingData(false);
+        
+        try {
+          setLoadingDietaryRestrictions(true);
+          const restrictions = await extractDietaryRestrictions(user.id);
+          setCurrentDietaryRestrictions(restrictions);
+        } catch (error) {
+          console.error("Error fetching dietary restrictions:", error);
+        } finally {
+          setLoadingDietaryRestrictions(false);
         }
       }
     };
     
-    loadProfileData();
-    
-    return () => {
-      isActive = false;
-    };
-  }, [profile, form, authLoading, refreshProfile, user, retryAttempts]);
-
-  // Initialize the edited arrays when the original data loads
+    fetchAdditionalData();
+  }, [user?.id]);
+  
+  // Initialize form data when profile loads
   useEffect(() => {
-    setEditedHealthGoals([...healthGoals]);
-    setEditedDietaryRestrictions([...dietaryRestrictions]);
-  }, [healthGoals, dietaryRestrictions]);
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        birth_date: profile.birth_date || '',
+        phone_number: profile.phone_number || '',
+        profession: profile.profession || '',
+        gender: profile.gender || '',
+        height: profile.height || '',
+        weight: profile.weight || '',
+        activity_level: profile.activity_level || ''
+      });
+    }
+  }, [profile]);
   
-  // Function to retry loading profile with force refresh
-  const retryLoadProfile = async () => {
-    if (isLoading) return;
-    
-    setProfileError(null);
-    setIsLoading(true);
-    try {
-      await forceRefreshProfile();
-      setRetryAttempts(0);
-    } catch (error) {
-      console.error("Error force refreshing profile:", error);
-      setProfileError("Failed to refresh profile. Please try again or reload the page.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Function to completely reset auth state
-  const handleResetAuth = async () => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      await resetAuthState();
-      toast.success("Auth state reset. Please reload the page if issues persist.");
-    } catch (error) {
-      console.error("Error resetting auth state:", error);
-      toast.error("Failed to reset auth state");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      setIsLoading(true);
-      
-      // Prepare profile update data
-      const profileUpdate: Partial<UserProfile> = {
-        ...data,
-        // Ensure we don't include email as it's not part of the profiles table
-        email: undefined
-      };
-      
-      const result = await updateUserProfile(profileUpdate);
-      
-      if (result.error) {
-        throw result.error;
-      }
-      
-      // Refresh auth context to reflect changes
-      await refreshProfile();
-      
-      toast.success("Profile updated successfully");
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast.error(`Error updating profile: ${error.message || "Unknown error"}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // New functions for managing health goals
-  const handleAddGoal = () => {
-    if (newGoal.trim() && !editedHealthGoals.includes(newGoal.trim())) {
-      setEditedHealthGoals([...editedHealthGoals, newGoal.trim()]);
-      setNewGoal('');
-    }
-  };
-
-  const handleRemoveGoal = (goalToRemove: string) => {
-    setEditedHealthGoals(editedHealthGoals.filter(goal => goal !== goalToRemove));
-  };
-
-  const handleSaveGoals = async () => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      const result = await updateHealthGoals(editedHealthGoals);
-      if (result.success) {
-        setHealthGoals([...editedHealthGoals]);
-        toast.success("Health goals updated successfully");
-      } else {
-        toast.error("Failed to update health goals");
-      }
-      setEditingGoals(false);
-    } catch (error) {
-      toast.error("An error occurred while updating health goals");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // New functions for managing dietary restrictions
-  const handleAddRestriction = () => {
-    if (newRestriction.trim() && !editedDietaryRestrictions.includes(newRestriction.trim())) {
-      setEditedDietaryRestrictions([...editedDietaryRestrictions, newRestriction.trim()]);
-      setNewRestriction('');
-    }
-  };
-
-  const handleRemoveRestriction = (restrictionToRemove: string) => {
-    setEditedDietaryRestrictions(editedDietaryRestrictions.filter(restriction => restriction !== restrictionToRemove));
-  };
-
-  const handleSaveRestrictions = async () => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      const result = await updateDietaryRestrictions(editedDietaryRestrictions);
-      if (result.success) {
-        setDietaryRestrictions([...editedDietaryRestrictions]);
-        toast.success("Dietary restrictions updated successfully");
-      } else {
-        toast.error("Failed to update dietary restrictions");
-      }
-      setEditingRestrictions(false);
-    } catch (error) {
-      toast.error("An error occurred while updating dietary restrictions");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (authLoading || isLoadingData) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
+      <div className="flex justify-center items-center h-full">
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-muted-foreground">Loading profile...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
     );
   }
-
-  if (profileError) {
+  
+  if (!user || !profile) {
     return (
-      <div className="container max-w-4xl mx-auto py-6">
-        <Card className="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <h2 className="text-2xl font-bold text-destructive">Error Loading Profile</h2>
-            <p className="mt-2 text-muted-foreground">{profileError}</p>
-            
-            <div className="mt-6 space-y-4">
-              <Button 
-                onClick={retryLoadProfile} 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCcw className="mr-2 h-4 w-4" />
-                    Refresh Profile
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                onClick={handleResetAuth} 
-                variant="outline" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                Reset Auth State
-              </Button>
-            </div>
-            
-            <div className="mt-8 text-sm text-muted-foreground">
-              <p>Debug info: User ID: {user?.id || 'Not logged in'}</p>
-              <p>Email verified: {user?.email_confirmed_at ? 'Yes' : 'No'}</p>
-            </div>
-          </div>
-        </Card>
+      <div className="flex flex-col items-center justify-center h-full">
+        <Shield className="h-16 w-16 mb-4 text-muted-foreground" />
+        <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+        <p className="text-muted-foreground mb-6">Please sign in to view your profile.</p>
+        <Button onClick={() => navigate('/login')}>Sign In</Button>
       </div>
     );
   }
-
-  if (!profile) {
-    return (
-      <div className="container max-w-4xl mx-auto py-6">
-        <Card className="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <h2 className="text-2xl font-bold">Profile Not Found</h2>
-            <p className="mt-2 text-muted-foreground">We couldn't find your profile information.</p>
-            <div className="mt-6 space-y-4">
-              <Button 
-                onClick={retryLoadProfile} 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCcw className="mr-2 h-4 w-4" />
-                    Refresh Profile
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                onClick={handleResetAuth} 
-                variant="outline" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                Reset Auth State
-              </Button>
-            </div>
-            
-            <div className="mt-8 text-sm text-muted-foreground">
-              <p>Debug info: User ID: {user?.id || 'Not logged in'}</p>
-              <p>Email verified: {user?.email_confirmed_at ? 'Yes' : 'No'}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const toggleHealthGoal = (goal: string) => {
+    setCurrentHealthGoals(prev => 
+      prev.includes(goal)
+        ? prev.filter(g => g !== goal)
+        : [...prev, goal]
     );
-  }
-
+  };
+  
+  const toggleDietaryRestriction = (restriction: string) => {
+    setCurrentDietaryRestrictions(prev => 
+      prev.includes(restriction)
+        ? prev.filter(r => r !== restriction)
+        : [...prev, restriction]
+    );
+  };
+  
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      // Save profile information
+      const { profile: updatedProfile, error } = await updateUserProfile(formData);
+      
+      if (error) throw error;
+      
+      // Save health goals
+      const healthGoalsResult = await updateHealthGoals(currentHealthGoals);
+      if (!healthGoalsResult.success) throw healthGoalsResult.error;
+      
+      // Save dietary restrictions
+      const dietaryRestrictionsResult = await updateDietaryRestrictions(currentDietaryRestrictions);
+      if (!dietaryRestrictionsResult.success) throw dietaryRestrictionsResult.error;
+      
+      // Refresh profile data
+      await refreshProfile();
+      
+      toast.success("Profile updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   return (
-    <div className="container max-w-4xl mx-auto py-6">
+    <div className="container py-8 max-w-5xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Your Profile</h1>
-        <Button 
-          variant="outline" 
-          onClick={retryLoadProfile}
-          disabled={isLoading}
-          size="sm"
-        >
-          <RefreshCcw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <h1 className="text-3xl font-bold">User Profile</h1>
+        {!isEditing ? (
+          <Button variant="secondary" onClick={() => setIsEditing(true)}>
+            Edit Profile
+          </Button>
+        ) : (
+          <div className="space-x-2">
+            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </div>
+        )}
       </div>
-
-      <div className="grid gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Update your personal details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="first_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="First name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+      
+      <Tabs defaultValue="personal">
+        <TabsList className="mb-6">
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
+          <TabsTrigger value="health">Health & Diet</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="personal">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Account Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <CircleUserRound className="h-5 w-5 mr-2" />
+                  Account Information
+                </CardTitle>
+                <CardDescription>Your account details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Email</Label>
+                  <p className="font-medium">{user.email}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Account Created</Label>
+                  <p className="font-medium">
+                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Email Verified</Label>
+                  <p className="font-medium">
+                    {user.email_confirmed_at ? (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Verified</Badge>
+                    ) : (
+                      <Badge variant="destructive">Not Verified</Badge>
                     )}
-                  />
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Personal Information */}
+            <Card className="col-span-1 md:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <UserCircle2 className="h-5 w-5 mr-2" />
+                  Personal Information
+                </CardTitle>
+                <CardDescription>Your personal details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name">First Name</Label>
+                    {isEditing ? (
+                      <Input
+                        id="first_name"
+                        name="first_name"
+                        value={formData.first_name || ''}
+                        onChange={handleInputChange}
+                        placeholder="Enter your first name"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted/40 rounded-md">{profile.first_name || 'Not provided'}</p>
+                    )}
+                  </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="last_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Last name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name">Last Name</Label>
+                    {isEditing ? (
+                      <Input
+                        id="last_name"
+                        name="last_name"
+                        value={formData.last_name || ''}
+                        onChange={handleInputChange}
+                        placeholder="Enter your last name"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted/40 rounded-md">{profile.last_name || 'Not provided'}</p>
                     )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input disabled placeholder="Email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="profession"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Profession</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Profession" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="birth_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Birth date</FormLabel>
-                        <FormControl>
-                          <Input type="date" placeholder="Birth date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  </div>
                 </div>
-
-                <Separator />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                            <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                  <div className="space-y-2">
+                    <Label htmlFor="birth_date" className="flex items-center">
+                      <CalendarDays className="h-4 w-4 mr-1" /> Birth Date
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        id="birth_date"
+                        name="birth_date"
+                        type="date"
+                        value={formData.birth_date || ''}
+                        onChange={handleInputChange}
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted/40 rounded-md">
+                        {profile.birth_date ? new Date(profile.birth_date).toLocaleDateString() : 'Not provided'}
+                      </p>
                     )}
-                  />
-                
-                  <FormField
-                    control={form.control}
-                    name="activity_level"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Activity Level</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select activity level" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sedentary">Sedentary</SelectItem>
-                            <SelectItem value="lightly_active">Lightly Active</SelectItem>
-                            <SelectItem value="moderately_active">Moderately Active</SelectItem>
-                            <SelectItem value="very_active">Very Active</SelectItem>
-                            <SelectItem value="extremely_active">Extremely Active</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone_number" className="flex items-center">
+                      <Phone className="h-4 w-4 mr-1" /> Phone Number
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        id="phone_number"
+                        name="phone_number"
+                        value={formData.phone_number || ''}
+                        onChange={handleInputChange}
+                        placeholder="Enter your phone number"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted/40 rounded-md">{profile.phone_number || 'Not provided'}</p>
                     )}
-                  />
-                
-                  <FormField
-                    control={form.control}
-                    name="height"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Height (cm)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Height" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                
-                  <FormField
-                    control={form.control}
-                    name="weight"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Weight (kg)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="Weight" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  </div>
                 </div>
                 
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Health Goals</CardTitle>
-              <CardDescription>Your current health objectives</CardDescription>
-            </div>
-            {!editingGoals ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setEditingGoals(true)}
-                disabled={isLoading}
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            ) : (
-              <Button 
-                variant="primary" 
-                size="sm" 
-                onClick={handleSaveGoals}
-                disabled={isLoading}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            {!editingGoals ? (
-              healthGoals.length > 0 ? (
-                <ul className="space-y-2">
-                  {healthGoals.map((goal, index) => (
-                    <li key={index} className="flex items-center">
-                      <Checkbox id={`goal-${index}`} defaultChecked disabled className="mr-3" />
-                      <label htmlFor={`goal-${index}`} className="text-sm font-medium">
-                        {goal}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">No health goals set</p>
-              )
-            ) : (
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input 
-                    value={newGoal} 
-                    onChange={(e) => setNewGoal(e.target.value)}
-                    placeholder="Add new health goal"
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleAddGoal} 
-                    variant="outline"
-                    disabled={!newGoal.trim()}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {editedHealthGoals.map((goal, index) => (
-                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center">
-                      {goal}
-                      <button 
-                        onClick={() => handleRemoveGoal(goal)} 
-                        className="ml-2 text-primary/70 hover:text-primary"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {editedHealthGoals.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No health goals added</p>
+                <div className="space-y-2">
+                  <Label htmlFor="profession" className="flex items-center">
+                    <GraduationCap className="h-4 w-4 mr-1" /> Profession
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="profession"
+                      name="profession"
+                      value={formData.profession || ''}
+                      onChange={handleInputChange}
+                      placeholder="Enter your profession"
+                    />
+                  ) : (
+                    <p className="p-2 bg-muted/40 rounded-md">{profile.profession || 'Not provided'}</p>
                   )}
                 </div>
-              </div>
-            )}
-          </CardContent>
-          {!editingGoals && (
-            <CardFooter>
-              <p className="text-xs text-muted-foreground">You can update these goals using the edit button</p>
-            </CardFooter>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Dietary Restrictions</CardTitle>
-              <CardDescription>Your dietary preferences and restrictions</CardDescription>
-            </div>
-            {!editingRestrictions ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setEditingRestrictions(true)}
-                disabled={isLoading}
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            ) : (
-              <Button 
-                variant="primary" 
-                size="sm" 
-                onClick={handleSaveRestrictions}
-                disabled={isLoading}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            {!editingRestrictions ? (
-              dietaryRestrictions.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {dietaryRestrictions.map((restriction, index) => (
-                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
-                      {restriction}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No dietary restrictions set</p>
-              )
-            ) : (
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input 
-                    value={newRestriction} 
-                    onChange={(e) => setNewRestriction(e.target.value)}
-                    placeholder="Add new dietary restriction"
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleAddRestriction} 
-                    variant="outline"
-                    disabled={!newRestriction.trim()}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
                 
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {editedDietaryRestrictions.map((restriction, index) => (
-                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center">
-                      {restriction}
-                      <button 
-                        onClick={() => handleRemoveRestriction(restriction)} 
-                        className="ml-2 text-primary/70 hover:text-primary"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {editedDietaryRestrictions.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No dietary restrictions added</p>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  {isEditing ? (
+                    <Select value={formData.gender || ''} onValueChange={(value) => handleSelectChange('gender', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="non-binary">Non-binary</SelectItem>
+                        <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="p-2 bg-muted/40 rounded-md capitalize">{profile.gender || 'Not provided'}</p>
                   )}
                 </div>
-              </div>
-            )}
-          </CardContent>
-          {!editingRestrictions && dietaryRestrictions.length > 0 && (
-            <CardFooter>
-              <p className="text-xs text-muted-foreground">You can update your dietary restrictions using the edit button</p>
-            </CardFooter>
-          )}
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="health">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Physical Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ActivityIcon className="h-5 w-5 mr-2" />
+                  Physical Information
+                </CardTitle>
+                <CardDescription>Your physical metrics and activity</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="height" className="flex items-center">
+                    <RulerIcon className="h-4 w-4 mr-1" /> Height
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="height"
+                      name="height"
+                      value={formData.height || ''}
+                      onChange={handleInputChange}
+                      placeholder="Enter your height (e.g., 5'10\" or 178cm)"
+                    />
+                  ) : (
+                    <p className="p-2 bg-muted/40 rounded-md">{profile.height || 'Not provided'}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="weight" className="flex items-center">
+                    <Weight className="h-4 w-4 mr-1" /> Weight
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="weight"
+                      name="weight"
+                      value={formData.weight || ''}
+                      onChange={handleInputChange}
+                      placeholder="Enter your weight (e.g., 160lbs or 72kg)"
+                    />
+                  ) : (
+                    <p className="p-2 bg-muted/40 rounded-md">{profile.weight || 'Not provided'}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="activity_level">Activity Level</Label>
+                  {isEditing ? (
+                    <Select value={formData.activity_level || ''} onValueChange={(value) => handleSelectChange('activity_level', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select activity level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sedentary">Sedentary (little or no exercise)</SelectItem>
+                        <SelectItem value="lightly-active">Lightly active (light exercise 1-3 days/week)</SelectItem>
+                        <SelectItem value="moderately-active">Moderately active (moderate exercise 3-5 days/week)</SelectItem>
+                        <SelectItem value="very-active">Very active (hard exercise 6-7 days/week)</SelectItem>
+                        <SelectItem value="extra-active">Extra active (very hard exercise & physical job)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="p-2 bg-muted/40 rounded-md capitalize">
+                      {profile.activity_level?.replace('-', ' ') || 'Not provided'}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Health Goals & Dietary Restrictions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <div className="flex items-center">
+                    <Dumbbell className="h-5 w-5 mr-2" />
+                    Health Goals
+                  </div>
+                </CardTitle>
+                <CardDescription>Your health objectives and goals</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loadingHealthGoals ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : isEditing ? (
+                  <ScrollArea className="h-48 rounded-md border p-4">
+                    <div className="space-y-3">
+                      {healthGoalOptions.map((goal) => (
+                        <div key={goal.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`goal-${goal.id}`} 
+                            checked={currentHealthGoals.includes(goal.label)}
+                            onCheckedChange={() => toggleHealthGoal(goal.label)}
+                          />
+                          <Label htmlFor={`goal-${goal.id}`} className="cursor-pointer">{goal.label}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div>
+                    {currentHealthGoals.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {currentHealthGoals.map((goal) => (
+                          <Badge key={goal} variant="secondary">{goal}</Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No health goals set</p>
+                    )}
+                  </div>
+                )}
+                
+                <Separator className="my-4" />
+                
+                <div className="space-y-2">
+                  <Label className="flex items-center">
+                    <AppleIcon className="h-4 w-4 mr-1" />
+                    Dietary Restrictions
+                  </Label>
+                  {loadingDietaryRestrictions ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : isEditing ? (
+                    <ScrollArea className="h-48 rounded-md border p-4">
+                      <div className="space-y-3">
+                        {dietaryRestrictionOptions.map((restriction) => (
+                          <div key={restriction.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`restriction-${restriction.id}`} 
+                              checked={currentDietaryRestrictions.includes(restriction.label)}
+                              onCheckedChange={() => toggleDietaryRestriction(restriction.label)}
+                            />
+                            <Label htmlFor={`restriction-${restriction.id}`} className="cursor-pointer">{restriction.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div>
+                      {currentDietaryRestrictions.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {currentDietaryRestrictions.map((restriction) => (
+                            <Badge key={restriction} variant="outline">{restriction}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No dietary restrictions set</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

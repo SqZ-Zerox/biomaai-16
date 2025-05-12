@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoadAttempts, setProfileLoadAttempts] = useState(0);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [sessionRefreshing, setSessionRefreshing] = useState(false);
   
   // Function to load profile data separately from session
   const loadProfileData = async (userId: string, skipCache = false) => {
@@ -94,6 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const loadSession = async (bypassCache = false) => {
     try {
+      if (sessionRefreshing) {
+        console.log("Session refresh already in progress, skipping");
+        return false;
+      }
+      
+      setSessionRefreshing(true);
       setLoading(true);
       console.log("Loading auth session", bypassCache ? "(bypass cache)" : "");
       
@@ -114,9 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
       }
       
+      setSessionRefreshing(false);
       return session !== null;
     } catch (error) {
       console.error("Error loading session:", error);
+      setSessionRefreshing(false);
       return false;
     } finally {
       setLoading(false);
@@ -135,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   useEffect(() => {
-    let mounted = true; // Flag to avoid state updates after unmount
+    let isMounted = true; // Flag to avoid state updates after unmount
     
     const setupAuth = async () => {
       console.log("Setting up auth provider");
@@ -146,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // First set up the auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           (event, session) => {
-            if (!mounted) return; // Prevent updates after unmount
+            if (!isMounted) return; // Prevent updates after unmount
             
             console.log("Auth state change:", event);
             
@@ -164,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // Fetch user profile but use setTimeout to avoid Supabase conflicts
               if (event === 'SIGNED_IN') {
                 setTimeout(async () => {
-                  if (!mounted) return;
+                  if (!isMounted) return;
                   await loadProfileData(session.user.id);
                 }, 500);
               }
@@ -177,17 +186,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Now that the listener is set up, check for existing session
         await loadSession();
         
-        if (mounted) {
+        if (isMounted) {
           setAuthInitialized(true);
         }
         
         return () => {
-          mounted = false;
           subscription?.unsubscribe();
         };
       } catch (setupError) {
         console.error("Error in auth setup:", setupError);
-        if (mounted) {
+        if (isMounted) {
           setLoading(false);
           setAuthInitialized(true);
         }
@@ -197,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAuth();
     
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [authInitialized]);
   
@@ -245,7 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear cache first
       clearAuthCache();
       
-      // Sign out without actually redirecting
+      // Sign out without actually redirecting - local scope only
       await supabase.auth.signOut({ scope: 'local' });
       
       // Clear state
@@ -255,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Check for session again after a brief delay
       setTimeout(async () => {
-        if (mounted) {
+        if (isMounted) {
           await loadSession(true);
           setLoading(false);
           // After reset, try to reauthorize
@@ -276,15 +284,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
+      // First clean up local storage to prevent conflicts
+      clearAuthCache();
+      
+      // Then do a local sign out first
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear state immediately to improve UI responsiveness
       setIsAuthenticated(false);
       setUser(null);
       setProfile(null);
-      clearAuthCache();
+      
+      // Then try a global sign out for security
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (globalError) {
+        console.error("Global sign out failed (non-critical):", globalError);
+      }
+
       cleanupAuthState();
       console.log("Signed out successfully");
-      // Redirect to login page after successful sign out
-      window.location.href = '/login';
+      
+      // Delay the redirect to allow state to update
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 300);
     } catch (error) {
       console.error("Error signing out:", error);
       toast.error("Failed to sign out. Please try again.");

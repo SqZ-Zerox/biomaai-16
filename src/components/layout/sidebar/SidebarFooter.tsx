@@ -1,13 +1,11 @@
 
 import React from "react";
 import { LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const SidebarFooter = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut } = useAuth();
   const { setIsDemoMode } = useDemoMode();
@@ -17,15 +15,16 @@ const SidebarFooter = () => {
       // Reset demo mode when signing out
       setIsDemoMode(false);
       
+      // Show a loading toast
+      toast({
+        title: "Signing out...",
+        description: "Please wait while we log you out.",
+      });
+      
       // Use the signOut function from AuthContext
       await signOut();
       
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      
-      // Note: We don't need to navigate here since the signOut function now handles redirection
+      // Note: We don't need additional navigation here as signOut now handles redirection
     } catch (error) {
       toast({
         title: "Sign out failed",

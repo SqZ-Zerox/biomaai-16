@@ -12,7 +12,8 @@ export {
   processProfileData,
   extractSupabaseUser,
   cleanupAuthState,
-  clearAuthCache
+  clearAuthCache,
+  resetRefreshAttempts
 } from "./authCore";
 
 // Export profile management

@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 // Track token refresh attempts to implement backoff
 let refreshAttempts = 0;
 let lastRefreshTime = 0;
-const COOLDOWN_PERIOD = 10000; // 10 seconds minimum between refresh attempts (increased from 5s)
-const MAX_REFRESH_ATTEMPTS = 3; // Reduced from 5 to be more conservative
+const COOLDOWN_PERIOD = 30000; // 30 seconds minimum between refresh attempts (increased from 10s)
+const MAX_REFRESH_ATTEMPTS = 2; // Reduced from 3 to be more conservative
 const SESSION_CACHE_KEY = 'bioma_auth_session_cache';
-const SESSION_CACHE_TTL = 120000; // 2 minutes cache TTL (increased from 1 min)
+const SESSION_CACHE_TTL = 300000; // 5 minutes cache TTL (increased from 2 min)
 
 /**
  * Get the current session from Supabase with caching to reduce API calls
@@ -80,7 +80,7 @@ export const updateUserVerificationStatus = async () => {
     
     // Implement exponential backoff if we've had multiple attempts
     if (refreshAttempts > 0) {
-      const backoffTime = Math.min(60000, Math.pow(2, refreshAttempts) * 1000); // Max 60 seconds (increased)
+      const backoffTime = Math.min(120000, Math.pow(2, refreshAttempts) * 5000); // Max 2 minutes (increased)
       if (now - lastRefreshTime < backoffTime) {
         console.log(`Backing off token refresh for ${backoffTime}ms`);
         return { updated: false, verified: false };
@@ -143,6 +143,15 @@ export const updateUserVerificationStatus = async () => {
 };
 
 /**
+ * Reset refresh attempts counter - useful when manually triggering refreshes
+ */
+export const resetRefreshAttempts = () => {
+  refreshAttempts = 0;
+  lastRefreshTime = 0;
+  console.log("Auth refresh attempts reset");
+};
+
+/**
  * Clear all auth related cache data
  */
 export const clearAuthCache = () => {
@@ -158,6 +167,7 @@ export const cleanupAuthState = () => {
   try {
     // Define the keys we want to clean up instead of iterating through all localStorage
     const supabaseKeysToClean = [
+      'sb:token',
       'supabase.auth.token',
       'supabase.auth.refreshToken',
       'sb-refresh-token',
