@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   useEffect(() => {
-    let isMounted = true; // Flag to avoid state updates after unmount
+    let mounted = true; // Flag to avoid state updates after unmount
     
     const setupAuth = async () => {
       console.log("Setting up auth provider");
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // First set up the auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           (event, session) => {
-            if (!isMounted) return; // Prevent updates after unmount
+            if (!mounted) return; // Prevent updates after unmount
             
             console.log("Auth state change:", event);
             
@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // Fetch user profile but use setTimeout to avoid Supabase conflicts
               if (event === 'SIGNED_IN') {
                 setTimeout(async () => {
-                  if (!isMounted) return;
+                  if (!mounted) return;
                   await loadProfileData(session.user.id);
                 }, 500);
               }
@@ -177,17 +177,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Now that the listener is set up, check for existing session
         await loadSession();
         
-        if (isMounted) {
+        if (mounted) {
           setAuthInitialized(true);
         }
         
         return () => {
-          isMounted = false;
+          mounted = false;
           subscription?.unsubscribe();
         };
       } catch (setupError) {
         console.error("Error in auth setup:", setupError);
-        if (isMounted) {
+        if (mounted) {
           setLoading(false);
           setAuthInitialized(true);
         }
@@ -197,26 +197,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAuth();
     
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [authInitialized]);
   
   // Add refresh profile method
-  const refreshProfile = async () => {
+  const refreshProfile = async (): Promise<void> => {
     try {
       console.log("Refreshing profile");
       if (user && isAuthenticated) {
-        return await loadProfileData(user.id);
+        await loadProfileData(user.id);
       }
-      return false;
     } catch (error) {
       console.error("Error refreshing profile:", error);
-      return false;
     }
   };
   
   // Force refresh method that tries to recreate profile if needed
-  const forceRefreshProfile = async () => {
+  const forceRefreshProfile = async (): Promise<void> => {
     try {
       console.log("Forcing profile refresh");
       setLoading(true);
@@ -226,23 +224,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (result.profile) {
         setProfile(result.profile);
         toast.success("Profile refreshed successfully");
-        return true;
       } else {
         toast.error("Could not refresh profile");
         console.error("Force refresh failed:", result.error);
-        return false;
       }
     } catch (error) {
       console.error("Error in force profile refresh:", error);
       toast.error("Error refreshing your profile");
-      return false;
     } finally {
       setLoading(false);
     }
   };
   
   // Full auth reset - this function completely resets the auth state
-  const resetAuthState = async () => {
+  const resetAuthState = async (): Promise<void> => {
     try {
       console.log("Resetting auth state");
       setLoading(true);
@@ -260,7 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Check for session again after a brief delay
       setTimeout(async () => {
-        if (isMounted) {
+        if (mounted) {
           await loadSession(true);
           setLoading(false);
           // After reset, try to reauthorize
@@ -272,16 +267,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       }, 1000);
-      
-      return true;
     } catch (error) {
       console.error("Error resetting auth state:", error);
       setLoading(false);
-      return false;
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
@@ -291,10 +283,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearAuthCache();
       cleanupAuthState();
       console.log("Signed out successfully");
-      return true;
     } catch (error) {
       console.error("Error signing out:", error);
-      return false;
     } finally {
       setLoading(false);
     }
