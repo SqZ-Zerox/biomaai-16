@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,7 +9,8 @@ import {
   cleanupAuthState,
   updateUserVerificationStatus,
   forceProfileRefresh,
-  clearAuthCache
+  clearAuthCache,
+  resetRefreshAttempts
 } from "@/services/auth";
 
 export interface UserProfile {
@@ -62,11 +63,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authInitialized, setAuthInitialized] = useState(false);
   const [sessionRefreshing, setSessionRefreshing] = useState(false);
   
+  // Using a ref to track mounted state to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  
   // Function to load profile data separately from session
   const loadProfileData = async (userId: string, skipCache = false) => {
     try {
       console.log("Loading profile data for user:", userId);
       const profileResult = await getUserProfile();
+      
+      // Check if the component is still mounted before updating state
+      if (!isMountedRef.current) return false;
       
       if (profileResult.profile) {
         console.log("Profile loaded successfully");
@@ -77,6 +84,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!skipCache) {
           // Try one more time with force refresh
           const forceResult = await forceProfileRefresh();
+          
+          // Check if component is still mounted
+          if (!isMountedRef.current) return false;
+          
           if (forceResult.profile) {
             console.log("Profile loaded successfully after force refresh");
             setProfile(forceResult.profile);
@@ -88,7 +99,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (profileError) {
       console.error("Error during profile fetch:", profileError);
-      setProfileLoadAttempts(prev => prev + 1);
+      
+      // Only update state if still mounted
+      if (isMountedRef.current) {
+        setProfileLoadAttempts(prev => prev + 1);
+      }
       return false;
     }
   };
@@ -104,8 +119,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       console.log("Loading auth session", bypassCache ? "(bypass cache)" : "");
       
+      // Reset refresh attempts when explicitly loading a session
+      resetRefreshAttempts();
+      
       // Get current session
       const session: Session | null = await getCurrentSession(bypassCache);
+      
+      // Check if component is still mounted before updating state
+      if (!isMountedRef.current) {
+        console.log("Component unmounted during session load, aborting state updates");
+        return false;
+      }
       
       if (session) {
         console.log("Session found, user authenticated");
@@ -121,14 +145,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
       }
       
-      setSessionRefreshing(false);
+      // Only update state if still mounted
+      if (isMountedRef.current) {
+        setSessionRefreshing(false);
+        setLoading(false);
+      }
+      
       return session !== null;
     } catch (error) {
       console.error("Error loading session:", error);
-      setSessionRefreshing(false);
+      
+      // Only update state if still mounted
+      if (isMountedRef.current) {
+        setSessionRefreshing(false);
+        setLoading(false);
+      }
+      
       return false;
-    } finally {
-      setLoading(false);
     }
   };
   
@@ -144,18 +177,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   useEffect(() => {
-    let isMounted = true; // Flag to avoid state updates after unmount
+    console.log("Setting up auth provider");
+    
+    // Set the mounted ref to true when component mounts
+    isMountedRef.current = true;
     
     const setupAuth = async () => {
-      console.log("Setting up auth provider");
-      
       if (authInitialized) return; // Prevent duplicate initialization
       
       try {
         // First set up the auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           (event, session) => {
-            if (!isMounted) return; // Prevent updates after unmount
+            // Check if still mounted before updating state
+            if (!isMountedRef.current) return;
             
             console.log("Auth state change:", event);
             
@@ -163,39 +198,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setIsAuthenticated(false);
               setUser(null);
               setProfile(null);
+              setLoading(false);
               return;
             }
             
             if (session) {
               setUser(session.user);
               setIsAuthenticated(true);
+              setLoading(false);
               
               // Fetch user profile but use setTimeout to avoid Supabase conflicts
               if (event === 'SIGNED_IN') {
+                // Defer profile loading to prevent auth deadlocks
                 setTimeout(async () => {
-                  if (!isMounted) return;
+                  if (!isMountedRef.current) return;
                   await loadProfileData(session.user.id);
                 }, 500);
               }
             }
-            
-            setLoading(false);
           }
         );
         
         // Now that the listener is set up, check for existing session
         await loadSession();
         
-        if (isMounted) {
+        if (isMountedRef.current) {
           setAuthInitialized(true);
         }
         
         return () => {
-          subscription?.unsubscribe();
+          if (subscription) {
+            subscription.unsubscribe();
+          }
         };
       } catch (setupError) {
         console.error("Error in auth setup:", setupError);
-        if (isMounted) {
+        if (isMountedRef.current) {
           setLoading(false);
           setAuthInitialized(true);
         }
@@ -204,8 +242,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setupAuth();
     
+    // Cleanup function to update the mounted ref
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
   }, [authInitialized]);
   
@@ -229,6 +268,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const result = await forceProfileRefresh();
       
+      // Only update state if still mounted
+      if (!isMountedRef.current) return;
+      
       if (result.profile) {
         setProfile(result.profile);
         toast.success("Profile refreshed successfully");
@@ -238,9 +280,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error("Error in force profile refresh:", error);
-      toast.error("Error refreshing your profile");
+      
+      // Only show toast if still mounted
+      if (isMountedRef.current) {
+        toast.error("Error refreshing your profile");
+      }
     } finally {
-      setLoading(false);
+      // Only update loading state if still mounted
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
   
@@ -263,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Check for session again after a brief delay
       setTimeout(async () => {
-        if (isMounted) {
+        if (isMountedRef.current) {
           await loadSession(true);
           setLoading(false);
           // After reset, try to reauthorize
@@ -277,43 +326,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }, 1000);
     } catch (error) {
       console.error("Error resetting auth state:", error);
-      setLoading(false);
+      // Only update loading if still mounted
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
-      // First clean up local storage to prevent conflicts
-      clearAuthCache();
       
-      // Then do a local sign out first
-      await supabase.auth.signOut({ scope: 'local' });
+      // Save state to restore in case of error
+      const originalIsAuthenticated = isAuthenticated;
+      const originalUser = user;
+      const originalProfile = profile;
       
-      // Clear state immediately to improve UI responsiveness
+      // Optimistically update UI state first for better UX
       setIsAuthenticated(false);
       setUser(null);
       setProfile(null);
       
-      // Then try a global sign out for security
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (globalError) {
-        console.error("Global sign out failed (non-critical):", globalError);
-      }
-
-      cleanupAuthState();
-      console.log("Signed out successfully");
+      // First clean up local storage to prevent conflicts
+      clearAuthCache();
       
-      // Delay the redirect to allow state to update
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 300);
+      // Disable any background refresh attempts
+      resetRefreshAttempts();
+      
+      // Sign out from Supabase with improved error handling
+      try {
+        // Try local signout first for better UX
+        await supabase.auth.signOut({ scope: 'local' });
+        
+        // Then attempt a global sign out (less critical if this fails)
+        try {
+          await supabase.auth.signOut({ scope: 'global' });
+        } catch (globalError) {
+          console.warn("Global sign out failed (non-critical):", globalError);
+          // Continue with the sign out process even if global sign out fails
+        }
+        
+        // Final cleanup of any remnant auth state
+        cleanupAuthState();
+        console.log("Signed out successfully");
+        
+        // Delay the redirect to allow state to update
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            window.location.href = '/login';
+          }
+        }, 300);
+      } catch (signOutError) {
+        console.error("Error during sign out:", signOutError);
+        
+        // Only restore state if still mounted
+        if (isMountedRef.current) {
+          // Restore previous state on error
+          setIsAuthenticated(originalIsAuthenticated);
+          setUser(originalUser);
+          setProfile(originalProfile);
+          
+          toast.error("Failed to sign out. Please try again.");
+        }
+      }
     } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Failed to sign out. Please try again.");
+      console.error("Error in signOut function:", error);
+      
+      // Only show toast if still mounted
+      if (isMountedRef.current) {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      // Only update loading state if still mounted
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 

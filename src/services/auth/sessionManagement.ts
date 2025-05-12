@@ -1,13 +1,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { isRateLimitError, handleRateLimitError, RateLimitErrorTypes } from "./errorHandler";
+import { AppError } from "@/lib/error";
 
 // Track token refresh attempts to implement backoff
 let refreshAttempts = 0;
 let lastRefreshTime = 0;
-const COOLDOWN_PERIOD = 30000; // 30 seconds minimum between refresh attempts (increased from 10s)
-const MAX_REFRESH_ATTEMPTS = 2; // Reduced from 3 to be more conservative
+const COOLDOWN_PERIOD = 30000; // 30 seconds minimum between refresh attempts
+const MAX_REFRESH_ATTEMPTS = 2; // Conservative limit on refresh attempts
 const SESSION_CACHE_KEY = 'bioma_auth_session_cache';
-const SESSION_CACHE_TTL = 300000; // 5 minutes cache TTL (increased from 2 min)
+const SESSION_CACHE_TTL = 300000; // 5 minutes cache TTL
 
 /**
  * Get the current session from Supabase with caching to reduce API calls
@@ -44,16 +46,29 @@ export const getCurrentSession = async (bypassCache = false) => {
     
     if (error) {
       console.error("Error getting fresh session:", error);
+      
+      // Handle rate limiting specifically
+      if (isRateLimitError(error)) {
+        const rateLimitInfo = handleRateLimitError(RateLimitErrorTypes.AUTH_REQUEST);
+        console.warn(`Rate limit hit: ${rateLimitInfo.message}`);
+        throw new AppError("Too many requests. Please try again later.", 429);
+      }
+      
       throw error;
     }
     
     // Cache the session with timestamp
     if (data.session) {
-      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
-        session: data.session,
-        timestamp: Date.now()
-      }));
-      console.log("Fresh session cached");
+      try {
+        localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
+          session: data.session,
+          timestamp: Date.now()
+        }));
+        console.log("Fresh session cached");
+      } catch (cacheError) {
+        // Non-critical error, just log it
+        console.warn("Failed to cache session:", cacheError);
+      }
     } else {
       console.warn("No session returned from Supabase");
     }
@@ -61,6 +76,14 @@ export const getCurrentSession = async (bypassCache = false) => {
     return data.session;
   } catch (error) {
     console.error("Error getting current session:", error);
+    
+    // If this is a storage error (e.g., Safari private mode), we can't use localStorage
+    if (error instanceof DOMException && 
+        (error.name === 'QuotaExceededError' || 
+         error.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+      console.warn("Storage quota exceeded, continuing without cache");
+    }
+    
     return null;
   }
 };
@@ -80,7 +103,7 @@ export const updateUserVerificationStatus = async () => {
     
     // Implement exponential backoff if we've had multiple attempts
     if (refreshAttempts > 0) {
-      const backoffTime = Math.min(120000, Math.pow(2, refreshAttempts) * 5000); // Max 2 minutes (increased)
+      const backoffTime = Math.min(120000, Math.pow(2, refreshAttempts) * 5000); // Max 2 minutes
       if (now - lastRefreshTime < backoffTime) {
         console.log(`Backing off token refresh for ${backoffTime}ms`);
         return { updated: false, verified: false };
@@ -116,10 +139,16 @@ export const updateUserVerificationStatus = async () => {
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
-        // Check specifically for rate limiting error
-        if (error.message?.includes('429') || error.message?.includes('rate limit')) {
+        // Handle rate limiting specifically
+        if (isRateLimitError(error)) {
           console.warn("Rate limit reached for token refresh, backing off");
           refreshAttempts++;
+          const rateLimitInfo = handleRateLimitError(RateLimitErrorTypes.TOKEN_REFRESH);
+          
+          if (rateLimitInfo.isCritical) {
+            console.error("Critical rate limiting detected for token refresh");
+          }
+          
           return { updated: false, verified: session?.user?.email_confirmed_at ? true : false };
         }
         
@@ -155,8 +184,12 @@ export const resetRefreshAttempts = () => {
  * Clear all auth related cache data
  */
 export const clearAuthCache = () => {
-  localStorage.removeItem(SESSION_CACHE_KEY);
-  console.log("Auth cache cleared");
+  try {
+    localStorage.removeItem(SESSION_CACHE_KEY);
+    console.log("Auth cache cleared");
+  } catch (error) {
+    console.warn("Failed to clear auth cache:", error);
+  }
 };
 
 /**
@@ -177,9 +210,14 @@ export const cleanupAuthState = () => {
     
     // Only remove specific keys instead of iterating through all localStorage
     supabaseKeysToClean.forEach(key => {
-      if (localStorage.getItem(key)) {
-        localStorage.removeItem(key);
-        console.log(`Cleaned up key: ${key}`);
+      try {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          console.log(`Cleaned up key: ${key}`);
+        }
+      } catch (keyError) {
+        // Non-critical error for individual key
+        console.warn(`Failed to clean up key ${key}:`, keyError);
       }
     });
   } catch (error) {

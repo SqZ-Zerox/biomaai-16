@@ -7,7 +7,7 @@ import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const SidebarFooter = () => {
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { signOut, isLoading: authLoading } = useAuth();
   const { setIsDemoMode } = useDemoMode();
   
   const handleSignOut = async () => {
@@ -16,7 +16,7 @@ const SidebarFooter = () => {
       setIsDemoMode(false);
       
       // Show a loading toast
-      toast({
+      const toastId = toast({
         title: "Signing out...",
         description: "Please wait while we log you out.",
       });
@@ -26,6 +26,7 @@ const SidebarFooter = () => {
       
       // Note: We don't need additional navigation here as signOut now handles redirection
     } catch (error) {
+      console.error("Sign out error:", error);
       toast({
         title: "Sign out failed",
         description: "Failed to sign out. Please try again.",
@@ -39,9 +40,10 @@ const SidebarFooter = () => {
       <button 
         onClick={handleSignOut}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+        disabled={authLoading}
       >
         <LogOut className="h-4 w-4" />
-        <span>Sign Out</span>
+        <span>{authLoading ? "Signing Out..." : "Sign Out"}</span>
       </button>
       
       <div className="text-xs text-muted-foreground">
