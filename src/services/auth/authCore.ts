@@ -12,7 +12,7 @@ import {
   signUp,
   signIn,
   signOut
-} from "./authOperations";
+} from "./auth";
 
 import {
   getCurrentSession,
