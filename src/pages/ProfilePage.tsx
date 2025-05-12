@@ -407,7 +407,7 @@ const ProfilePage = () => {
                       name="height"
                       value={formData.height || ''}
                       onChange={handleInputChange}
-                      placeholder="Enter your height (e.g., 5'10\" or 178cm)"
+                      placeholder="Enter your height (e.g., 5'10 or 178cm)"
                     />
                   ) : (
                     <p className="p-2 bg-muted/40 rounded-md">{profile.height || 'Not provided'}</p>
