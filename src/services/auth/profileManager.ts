@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { SignupData } from "./types";
 import { processHealthGoals, processDietaryRestrictions } from "./dataProcessor";
+import { attemptUserDataRecovery } from "./dataRecovery";
 import { ProfileResult, UserProfile } from "./types";
 import { AppError } from "@/lib/error";
 
@@ -33,19 +34,43 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return true;
     }
     
-    // Extract data directly from userData (flattened structure)
-    // This is more reliable than depending on specific nested properties
+    // Safeguard against null or undefined userData
+    if (!userData) {
+      console.warn("Warning: userData is null or undefined in ensureUserProfile");
+      userData = {};
+    }
+
+    // Extract data with fallbacks - try multiple possible metadata locations
+    // This is more resilient to different data structures
+    const getMetadataValue = (key) => {
+      // Check in direct properties
+      if (userData[key] !== undefined) return userData[key];
+      // Check in raw_user_meta_data if present
+      if (userData.raw_user_meta_data && userData.raw_user_meta_data[key] !== undefined) {
+        return userData.raw_user_meta_data[key];
+      }
+      // Check in user_metadata if present
+      if (userData.user_metadata && userData.user_metadata[key] !== undefined) {
+        return userData.user_metadata[key];
+      }
+      // Check in data if present
+      if (userData.data && userData.data[key] !== undefined) {
+        return userData.data[key];
+      }
+      return null;
+    };
+    
     const profileData = {
       id: userId,
-      first_name: userData.first_name || null,
-      last_name: userData.last_name || null,
-      birth_date: userData.birth_date || null,
-      phone_number: userData.phone_number || null,
-      profession: userData.profession || null,
-      gender: userData.gender || null,
-      height: userData.height || null,
-      weight: userData.weight || null,
-      activity_level: userData.activity_level || null
+      first_name: getMetadataValue('first_name'),
+      last_name: getMetadataValue('last_name'),
+      birth_date: getMetadataValue('birth_date'),
+      phone_number: getMetadataValue('phone_number'),
+      profession: getMetadataValue('profession'),
+      gender: getMetadataValue('gender'),
+      height: getMetadataValue('height'),
+      weight: getMetadataValue('weight'),
+      activity_level: getMetadataValue('activity_level')
     };
     
     console.log("Creating profile with data:", profileData);
@@ -60,15 +85,15 @@ export async function ensureUserProfile(userId: string, userData: any): Promise<
       return false;
     }
     
-    // Process health goals if available in any format
-    const healthGoals = userData.health_goals || [];
+    // Process health goals from multiple possible locations
+    const healthGoals = getMetadataValue('health_goals') || [];
     if (healthGoals.length > 0) {
       console.log("Processing health goals:", healthGoals);
       await processHealthGoals(userId, healthGoals);
     }
     
-    // Process dietary restrictions if available in any format
-    const dietaryRestrictions = userData.dietary_restrictions || [];
+    // Process dietary restrictions from multiple possible locations
+    const dietaryRestrictions = getMetadataValue('dietary_restrictions') || [];
     if (dietaryRestrictions.length > 0) {
       console.log("Processing dietary restrictions:", dietaryRestrictions);
       await processDietaryRestrictions(userId, dietaryRestrictions);
@@ -221,13 +246,14 @@ export async function getUserProfile(): Promise<ProfileResult> {
     
     // Final check - if still no profile and all retries exhausted
     if (!data && retries > maxRetries) {
-      console.error("All retries exhausted, unable to fetch profile");
-      // Try one last attempt to create the profile
-      const created = await ensureUserProfile(session.user.id, session.user.user_metadata);
-      if (!created) {
-        throw new AppError("Could not fetch or create user profile after multiple attempts", 404);
-      } else {
-        // Fetch the newly created profile
+      console.error("All retries exhausted, attempting data recovery");
+      
+      // Try recovery mechanism for existing users
+      const recovered = await attemptUserDataRecovery(session.user.id);
+      
+      if (recovered) {
+        console.log("Recovery successful, fetching profile again");
+        // Try one more time with the recovered data
         const { data: freshData, error: freshError } = await supabase
           .from('profiles')
           .select('*')
@@ -235,11 +261,32 @@ export async function getUserProfile(): Promise<ProfileResult> {
           .single();
           
         if (freshError || !freshData) {
-          console.error("Error fetching newly created profile:", freshError);
-          throw new AppError("Created profile but failed to retrieve it", 404);
+          console.error("Error fetching newly recovered profile:", freshError);
+          throw new AppError("Recovery attempted but failed to retrieve profile", 404);
         }
         
         data = freshData;
+      } else {
+        // Last ditch effort - create a minimal profile if nothing else worked
+        console.log("Recovery failed, creating minimal profile");
+        await ensureUserProfile(session.user.id, { 
+          id: session.user.id,
+          email: session.user.email
+        });
+        
+        // Fetch the newly created minimal profile
+        const { data: minimalData, error: minError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (minError || !minimalData) {
+          console.error("Error fetching minimal profile:", minError);
+          throw new AppError("Created minimal profile but failed to retrieve it", 404);
+        }
+        
+        data = minimalData;
       }
     }
     

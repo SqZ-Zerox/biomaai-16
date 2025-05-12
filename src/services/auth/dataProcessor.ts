@@ -1,7 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const processHealthGoals = async (userId: string, healthGoals: any[]) => {
+/**
+ * Process health goals with improved format detection and conversion
+ */
+export const processHealthGoals = async (userId: string, healthGoals: any[]): Promise<boolean> => {
   try {
     console.log("Processing health goals for user:", userId, healthGoals);
     
@@ -11,12 +14,19 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
       return false;
     }
     
-    // Format health goals correctly for insertion
+    // Format health goals correctly for insertion with enhanced format detection
     const validGoals = healthGoals
       .filter(goal => {
-        // Handle both string values and objects with 'value' property
-        const isValid = typeof goal === 'string' || 
-                       (typeof goal === 'object' && goal !== null && 'value' in goal);
+        // Handle various possible formats
+        const isValid = 
+          // String format
+          typeof goal === 'string' || 
+          // Object with 'value' property
+          (typeof goal === 'object' && goal !== null && 'value' in goal) ||
+          // Object with 'id' and 'name' properties (UI format)
+          (typeof goal === 'object' && goal !== null && 'id' in goal && 'name' in goal) ||
+          // Object with 'label' property (alt UI format)
+          (typeof goal === 'object' && goal !== null && 'label' in goal);
         
         if (!isValid) {
           console.warn("Invalid health goal format:", goal);
@@ -24,8 +34,21 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
         return isValid;
       })
       .map(goal => {
-        // Extract the goal value
-        const goalValue = typeof goal === 'string' ? goal : goal.value;
+        // Extract the goal value based on format
+        let goalValue;
+        
+        if (typeof goal === 'string') {
+          goalValue = goal;
+        } else if ('value' in goal) {
+          goalValue = goal.value;
+        } else if ('name' in goal) {
+          goalValue = goal.name;
+        } else if ('label' in goal) {
+          goalValue = goal.label;
+        } else {
+          // Default case for unknown format - use string representation
+          goalValue = String(goal);
+        }
         
         return {
           user_id: userId,
@@ -69,7 +92,10 @@ export const processHealthGoals = async (userId: string, healthGoals: any[]) => 
   }
 };
 
-export const processDietaryRestrictions = async (userId: string, dietaryRestrictions: any[]) => {
+/**
+ * Process dietary restrictions with improved format detection and conversion
+ */
+export const processDietaryRestrictions = async (userId: string, dietaryRestrictions: any[]): Promise<boolean> => {
   try {
     console.log("Processing dietary restrictions for user:", userId, dietaryRestrictions);
     
@@ -79,12 +105,19 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
       return true; // Return true as this is not an error condition
     }
     
-    // Format dietary restrictions correctly for insertion
+    // Format dietary restrictions correctly for insertion with enhanced format detection
     const validRestrictions = dietaryRestrictions
       .filter(restriction => {
-        // Handle both string values and objects with 'value' property
-        const isValid = typeof restriction === 'string' || 
-                       (typeof restriction === 'object' && restriction !== null && 'value' in restriction);
+        // Handle various possible formats
+        const isValid = 
+          // String format
+          typeof restriction === 'string' || 
+          // Object with 'value' property
+          (typeof restriction === 'object' && restriction !== null && 'value' in restriction) ||
+          // Object with 'id' and 'name' properties (UI format)
+          (typeof restriction === 'object' && restriction !== null && 'id' in restriction && 'name' in restriction) ||
+          // Object with 'label' property (alt UI format)
+          (typeof restriction === 'object' && restriction !== null && 'label' in restriction);
         
         if (!isValid) {
           console.warn("Invalid dietary restriction format:", restriction);
@@ -92,8 +125,21 @@ export const processDietaryRestrictions = async (userId: string, dietaryRestrict
         return isValid;
       })
       .map(restriction => {
-        // Extract the restriction value
-        const restrictionValue = typeof restriction === 'string' ? restriction : restriction.value;
+        // Extract the restriction value based on format
+        let restrictionValue;
+        
+        if (typeof restriction === 'string') {
+          restrictionValue = restriction;
+        } else if ('value' in restriction) {
+          restrictionValue = restriction.value;
+        } else if ('name' in restriction) {
+          restrictionValue = restriction.name;
+        } else if ('label' in restriction) {
+          restrictionValue = restriction.label;
+        } else {
+          // Default case for unknown format - use string representation
+          restrictionValue = String(restriction);
+        }
         
         return {
           user_id: userId,

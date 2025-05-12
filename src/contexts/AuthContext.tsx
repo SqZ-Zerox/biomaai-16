@@ -14,6 +14,7 @@ import {
   refreshSession,
   resetRefreshState
 } from "@/services/auth";
+import { attemptUserDataRecovery } from "@/services/auth/dataRecovery";
 
 export interface UserProfile {
   id: string;
@@ -41,6 +42,7 @@ interface AuthContextType {
   forceRefreshProfile: () => Promise<void>;
   checkSession: () => Promise<boolean>;
   resetAuthState: () => Promise<void>;
+  recoverUserData: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -54,6 +56,7 @@ export const AuthContext = createContext<AuthContextType>({
   forceRefreshProfile: async () => {},
   checkSession: async () => false,
   resetAuthState: async () => {},
+  recoverUserData: async () => false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -69,6 +72,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isMountedRef = useRef(true);
   // Track auth state changes to prevent loops
   const authStateChangeCount = useRef(0);
+  
+  // Function to attempt recovery of user data
+  const recoverUserData = async (): Promise<boolean> => {
+    try {
+      if (!user?.id) {
+        console.warn("No user ID available for recovery");
+        return false;
+      }
+      
+      setLoading(true);
+      const success = await attemptUserDataRecovery(user.id);
+      
+      if (success) {
+        // Refresh the profile to get the recovered data
+        await refreshProfile();
+        toast.success("Profile data has been recovered");
+        return true;
+      } else {
+        toast.error("Could not recover profile data");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in recoverUserData:", error);
+      toast.error("Error during data recovery");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Function to load profile data separately from session
   const loadProfileData = async (userId: string, skipCache = false) => {
@@ -293,8 +325,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(result.profile);
         toast.success("Profile refreshed successfully");
       } else {
-        toast.error("Could not refresh profile");
-        console.error("Force refresh failed:", result.error);
+        // Try the new recovery mechanism
+        const recovered = await recoverUserData();
+        if (!recovered) {
+          toast.error("Could not refresh profile");
+          console.error("Force refresh failed and recovery failed:", result.error);
+        }
       }
     } catch (error) {
       console.error("Error in force profile refresh:", error);
@@ -442,6 +478,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     forceRefreshProfile,
     checkSession,
     resetAuthState,
+    recoverUserData,
   };
 
   return (

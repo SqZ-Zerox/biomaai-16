@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { Loader2, UserCircle2, Shield, CircleUserRound, CalendarDays, Phone, GraduationCap, RulerIcon, Weight, ActivityIcon, AppleIcon, Dumbbell } from "lucide-react";
+import { Loader2, UserCircle2, Shield, CircleUserRound, CalendarDays, Phone, GraduationCap, RulerIcon, Weight, ActivityIcon, AppleIcon, Dumbbell, RefreshCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -55,10 +54,11 @@ const dietaryRestrictionOptions = [
 ];
 
 const ProfilePage = () => {
-  const { user, profile, isLoading, refreshProfile } = useAuth();
+  const { user, profile, isLoading, refreshProfile, recoverUserData } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
   const [loadingHealthGoals, setLoadingHealthGoals] = useState(true);
   const [loadingDietaryRestrictions, setLoadingDietaryRestrictions] = useState(true);
   const [currentHealthGoals, setCurrentHealthGoals] = useState<string[]>([]);
@@ -199,25 +199,49 @@ const ProfilePage = () => {
     }
   };
   
+  const handleRecoverData = async () => {
+    setIsRecovering(true);
+    try {
+      await recoverUserData();
+    } catch (error) {
+      console.error("Error in handleRecoverData:", error);
+      toast.error("Could not recover profile data");
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+  
   return (
     <div className="container py-8 max-w-5xl">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-wrap justify-between items-center mb-8 gap-2">
         <h1 className="text-3xl font-bold">User Profile</h1>
-        {!isEditing ? (
-          <Button variant="secondary" onClick={() => setIsEditing(true)}>
-            Edit Profile
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRecoverData}
+            disabled={isRecovering}
+            className="flex items-center"
+          >
+            {isRecovering ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCcw className="h-4 w-4 mr-2" />}
+            Recover Data
           </Button>
-        ) : (
-          <div className="space-x-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
-              Cancel
+          {!isEditing ? (
+            <Button variant="secondary" onClick={() => setIsEditing(true)}>
+              Edit Profile
             </Button>
-            <Button onClick={handleSaveProfile} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Save Changes
-            </Button>
-          </div>
-        )}
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveProfile} disabled={isSaving}>
+                {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Save Changes
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       
       <Tabs defaultValue="personal">
