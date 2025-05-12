@@ -283,8 +283,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearAuthCache();
       cleanupAuthState();
       console.log("Signed out successfully");
+      // Redirect to login page after successful sign out
+      window.location.href = '/login';
     } catch (error) {
       console.error("Error signing out:", error);
+      toast.error("Failed to sign out. Please try again.");
     } finally {
       setLoading(false);
     }

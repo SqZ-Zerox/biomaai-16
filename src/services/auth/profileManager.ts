@@ -362,3 +362,94 @@ export async function extractDietaryRestrictions(userId: string): Promise<string
     return [];
   }
 }
+
+// New functions to update health goals and dietary restrictions
+export async function updateHealthGoals(goals: string[]): Promise<{success: boolean, error: Error | null}> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      return { success: false, error: new Error("No user logged in") };
+    }
+    
+    const userId = session.user.id;
+    
+    // First delete existing goals
+    const { error: deleteError } = await supabase
+      .from('user_health_goals')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error("Error deleting existing health goals:", deleteError);
+      return { success: false, error: deleteError };
+    }
+    
+    // Insert new goals if any
+    if (goals.length > 0) {
+      const goalsToInsert = goals.map(goal => ({
+        user_id: userId,
+        goal
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('user_health_goals')
+        .insert(goalsToInsert);
+      
+      if (insertError) {
+        console.error("Error inserting new health goals:", insertError);
+        return { success: false, error: insertError };
+      }
+    }
+    
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error in updateHealthGoals:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateDietaryRestrictions(restrictions: string[]): Promise<{success: boolean, error: Error | null}> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      return { success: false, error: new Error("No user logged in") };
+    }
+    
+    const userId = session.user.id;
+    
+    // First delete existing restrictions
+    const { error: deleteError } = await supabase
+      .from('user_dietary_restrictions')
+      .delete()
+      .eq('user_id', userId);
+    
+    if (deleteError) {
+      console.error("Error deleting existing dietary restrictions:", deleteError);
+      return { success: false, error: deleteError };
+    }
+    
+    // Insert new restrictions if any
+    if (restrictions.length > 0) {
+      const restrictionsToInsert = restrictions.map(restriction => ({
+        user_id: userId,
+        restriction
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('user_dietary_restrictions')
+        .insert(restrictionsToInsert);
+      
+      if (insertError) {
+        console.error("Error inserting new dietary restrictions:", insertError);
+        return { success: false, error: insertError };
+      }
+    }
+    
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error in updateDietaryRestrictions:", error);
+    return { success: false, error };
+  }
+}

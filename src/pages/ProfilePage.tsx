@@ -16,11 +16,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { extractHealthGoals, extractDietaryRestrictions, updateUserProfile } from "@/services/auth";
+import { 
+  extractHealthGoals, 
+  extractDietaryRestrictions, 
+  updateUserProfile,
+  updateHealthGoals,
+  updateDietaryRestrictions 
+} from "@/services/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from "@/services/auth/types";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, PlusCircle, X, Edit2, Save } from "lucide-react";
 
 const formSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -51,6 +57,14 @@ const ProfilePage = () => {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [retryAttempts, setRetryAttempts] = useState(0);
+  
+  // New state for editing health goals and dietary restrictions
+  const [editingGoals, setEditingGoals] = useState(false);
+  const [editingRestrictions, setEditingRestrictions] = useState(false);
+  const [newGoal, setNewGoal] = useState('');
+  const [newRestriction, setNewRestriction] = useState('');
+  const [editedHealthGoals, setEditedHealthGoals] = useState<string[]>([]);
+  const [editedDietaryRestrictions, setEditedDietaryRestrictions] = useState<string[]>([]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -138,6 +152,12 @@ const ProfilePage = () => {
     };
   }, [profile, form, authLoading, refreshProfile, user, retryAttempts]);
 
+  // Initialize the edited arrays when the original data loads
+  useEffect(() => {
+    setEditedHealthGoals([...healthGoals]);
+    setEditedDietaryRestrictions([...dietaryRestrictions]);
+  }, [healthGoals, dietaryRestrictions]);
+  
   // Function to retry loading profile with force refresh
   const retryLoadProfile = async () => {
     if (isLoading) return;
@@ -195,6 +215,70 @@ const ProfilePage = () => {
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(`Error updating profile: ${error.message || "Unknown error"}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // New functions for managing health goals
+  const handleAddGoal = () => {
+    if (newGoal.trim() && !editedHealthGoals.includes(newGoal.trim())) {
+      setEditedHealthGoals([...editedHealthGoals, newGoal.trim()]);
+      setNewGoal('');
+    }
+  };
+
+  const handleRemoveGoal = (goalToRemove: string) => {
+    setEditedHealthGoals(editedHealthGoals.filter(goal => goal !== goalToRemove));
+  };
+
+  const handleSaveGoals = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const result = await updateHealthGoals(editedHealthGoals);
+      if (result.success) {
+        setHealthGoals([...editedHealthGoals]);
+        toast.success("Health goals updated successfully");
+      } else {
+        toast.error("Failed to update health goals");
+      }
+      setEditingGoals(false);
+    } catch (error) {
+      toast.error("An error occurred while updating health goals");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // New functions for managing dietary restrictions
+  const handleAddRestriction = () => {
+    if (newRestriction.trim() && !editedDietaryRestrictions.includes(newRestriction.trim())) {
+      setEditedDietaryRestrictions([...editedDietaryRestrictions, newRestriction.trim()]);
+      setNewRestriction('');
+    }
+  };
+
+  const handleRemoveRestriction = (restrictionToRemove: string) => {
+    setEditedDietaryRestrictions(editedDietaryRestrictions.filter(restriction => restriction !== restrictionToRemove));
+  };
+
+  const handleSaveRestrictions = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const result = await updateDietaryRestrictions(editedDietaryRestrictions);
+      if (result.success) {
+        setDietaryRestrictions([...editedDietaryRestrictions]);
+        toast.success("Dietary restrictions updated successfully");
+      } else {
+        toast.error("Failed to update dietary restrictions");
+      }
+      setEditingRestrictions(false);
+    } catch (error) {
+      toast.error("An error occurred while updating dietary restrictions");
     } finally {
       setIsLoading(false);
     }
@@ -506,49 +590,176 @@ const ProfilePage = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Health Goals</CardTitle>
-            <CardDescription>Your current health objectives</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Health Goals</CardTitle>
+              <CardDescription>Your current health objectives</CardDescription>
+            </div>
+            {!editingGoals ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setEditingGoals(true)}
+                disabled={isLoading}
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={handleSaveGoals}
+                disabled={isLoading}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            {healthGoals.length > 0 ? (
-              <ul className="space-y-2">
-                {healthGoals.map((goal, index) => (
-                  <li key={index} className="flex items-center">
-                    <Checkbox id={`goal-${index}`} defaultChecked disabled className="mr-3" />
-                    <label htmlFor={`goal-${index}`} className="text-sm font-medium">
-                      {goal}
-                    </label>
-                  </li>
-                ))}
-              </ul>
+            {!editingGoals ? (
+              healthGoals.length > 0 ? (
+                <ul className="space-y-2">
+                  {healthGoals.map((goal, index) => (
+                    <li key={index} className="flex items-center">
+                      <Checkbox id={`goal-${index}`} defaultChecked disabled className="mr-3" />
+                      <label htmlFor={`goal-${index}`} className="text-sm font-medium">
+                        {goal}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">No health goals set</p>
+              )
             ) : (
-              <p className="text-muted-foreground">No health goals set</p>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input 
+                    value={newGoal} 
+                    onChange={(e) => setNewGoal(e.target.value)}
+                    placeholder="Add new health goal"
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleAddGoal} 
+                    variant="outline"
+                    disabled={!newGoal.trim()}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {editedHealthGoals.map((goal, index) => (
+                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center">
+                      {goal}
+                      <button 
+                        onClick={() => handleRemoveGoal(goal)} 
+                        className="ml-2 text-primary/70 hover:text-primary"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {editedHealthGoals.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No health goals added</p>
+                  )}
+                </div>
+              </div>
             )}
           </CardContent>
-          <CardFooter>
-            <p className="text-xs text-muted-foreground">You can update these goals during your next wellness assessment</p>
-          </CardFooter>
+          {!editingGoals && (
+            <CardFooter>
+              <p className="text-xs text-muted-foreground">You can update these goals using the edit button</p>
+            </CardFooter>
+          )}
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Dietary Restrictions</CardTitle>
-            <CardDescription>Your dietary preferences and restrictions</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Dietary Restrictions</CardTitle>
+              <CardDescription>Your dietary preferences and restrictions</CardDescription>
+            </div>
+            {!editingRestrictions ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setEditingRestrictions(true)}
+                disabled={isLoading}
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={handleSaveRestrictions}
+                disabled={isLoading}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            {dietaryRestrictions.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {dietaryRestrictions.map((restriction, index) => (
-                  <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
-                    {restriction}
-                  </div>
-                ))}
-              </div>
+            {!editingRestrictions ? (
+              dietaryRestrictions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {dietaryRestrictions.map((restriction, index) => (
+                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                      {restriction}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No dietary restrictions set</p>
+              )
             ) : (
-              <p className="text-muted-foreground">No dietary restrictions set</p>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input 
+                    value={newRestriction} 
+                    onChange={(e) => setNewRestriction(e.target.value)}
+                    placeholder="Add new dietary restriction"
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleAddRestriction} 
+                    variant="outline"
+                    disabled={!newRestriction.trim()}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {editedDietaryRestrictions.map((restriction, index) => (
+                    <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center">
+                      {restriction}
+                      <button 
+                        onClick={() => handleRemoveRestriction(restriction)} 
+                        className="ml-2 text-primary/70 hover:text-primary"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {editedDietaryRestrictions.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No dietary restrictions added</p>
+                  )}
+                </div>
+              </div>
             )}
           </CardContent>
+          {!editingRestrictions && dietaryRestrictions.length > 0 && (
+            <CardFooter>
+              <p className="text-xs text-muted-foreground">You can update your dietary restrictions using the edit button</p>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </div>

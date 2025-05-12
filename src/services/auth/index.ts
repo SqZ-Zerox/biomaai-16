@@ -23,7 +23,9 @@ export {
   updateUserProfile,
   forceProfileRefresh,
   extractHealthGoals,
-  extractDietaryRestrictions
+  extractDietaryRestrictions,
+  updateHealthGoals,
+  updateDietaryRestrictions
 } from "./profileManager";
 
 // Export operations (for backwards compatibility)
