@@ -10,7 +10,9 @@ import {
   updateUserVerificationStatus,
   forceProfileRefresh,
   clearAuthCache,
-  resetRefreshAttempts
+  resetRefreshAttempts,
+  refreshSession,
+  resetRefreshState
 } from "@/services/auth";
 
 export interface UserProfile {
@@ -65,6 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Using a ref to track mounted state to prevent state updates after unmount
   const isMountedRef = useRef(true);
+  // Track auth state changes to prevent loops
+  const authStateChangeCount = useRef(0);
   
   // Function to load profile data separately from session
   const loadProfileData = async (userId: string, skipCache = false) => {
@@ -121,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Reset refresh attempts when explicitly loading a session
       resetRefreshAttempts();
+      resetRefreshState();
       
       // Get current session
       const session: Session | null = await getCurrentSession(bypassCache);
@@ -193,6 +198,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!isMountedRef.current) return;
             
             console.log("Auth state change:", event);
+            authStateChangeCount.current += 1;
+            
+            // Prevent too many auth state changes (potential loop detection)
+            if (authStateChangeCount.current > 10) {
+              console.warn("Detected high frequency of auth state changes - possible loop");
+              // Continue processing but log a warning
+            }
             
             if (event === 'SIGNED_OUT') {
               setIsAuthenticated(false);
@@ -242,9 +254,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setupAuth();
     
+    // Reset the auth state change counter periodically to prevent false positives
+    const resetCounter = setInterval(() => {
+      authStateChangeCount.current = 0;
+    }, 60000); // Reset every minute
+    
     // Cleanup function to update the mounted ref
     return () => {
       isMountedRef.current = false;
+      clearInterval(resetCounter);
     };
   }, [authInitialized]);
   
@@ -299,6 +317,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Resetting auth state");
       setLoading(true);
       
+      // Reset counters and state tracking
+      authStateChangeCount.current = 0;
+      resetRefreshState();
+      
       // Clear cache first
       clearAuthCache();
       
@@ -313,14 +335,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check for session again after a brief delay
       setTimeout(async () => {
         if (isMountedRef.current) {
-          await loadSession(true);
-          setLoading(false);
-          // After reset, try to reauthorize
-          const { data } = await supabase.auth.getSession();
-          if (data?.session) {
-            setUser(data.session.user);
-            setIsAuthenticated(true);
-            await loadProfileData(data.session.user.id, true);
+          const sessionExists = await loadSession(true);
+          
+          // If we still have a valid session after reset, use it
+          if (sessionExists) {
+            console.log("Valid session found after reset");
+            // Session loading already updates the auth state
+          } else {
+            // Explicitly set loading to false if no session found
+            setLoading(false);
           }
         }
       }, 1000);
@@ -336,6 +359,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async (): Promise<void> => {
     try {
       setLoading(true);
+      
+      // Reset counters and state tracking to prevent loops
+      authStateChangeCount.current = 0;
+      resetRefreshState();
       
       // Save state to restore in case of error
       const originalIsAuthenticated = isAuthenticated;

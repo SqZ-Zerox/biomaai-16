@@ -15,17 +15,20 @@ const LoginPage: React.FC = () => {
   const [redirectTimeout, setRedirectTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showSessionError, setShowSessionError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [redirectInProgress, setRedirectInProgress] = useState(false);
 
-  // Handle page refresh and browser back button
+  // Handle page refresh and browser back button without creating loops
   useEffect(() => {
-    // Cleanup auth state if we're returning to login page
-    const pageRefreshed = performance.navigation?.type === 1;
-    const backButtonUsed = window.history.state?.navigationSource === 'back_button';
-    
-    if ((pageRefreshed || backButtonUsed) && retryCount === 0) {
-      console.log("Login page loaded via refresh or back button, cleaning up auth state");
-      resetAuthState();
-      setRetryCount(prev => prev + 1);
+    // Only run once when component mounts
+    if (retryCount === 0) {
+      const pageRefreshed = performance.navigation?.type === 1;
+      const backButtonUsed = window.history.state?.navigationSource === 'back_button';
+      
+      if (pageRefreshed || backButtonUsed) {
+        console.log("Login page loaded via refresh or back button, cleaning up auth state");
+        resetAuthState();
+        setRetryCount(1); // Only increment once
+      }
     }
   }, [resetAuthState, retryCount]);
 
@@ -34,9 +37,18 @@ const LoginPage: React.FC = () => {
     // Clear any existing timeout to prevent race conditions
     if (redirectTimeout) {
       clearTimeout(redirectTimeout);
+      setRedirectTimeout(null);
+    }
+    
+    // Prevent redirect loops
+    if (redirectInProgress) {
+      return;
     }
     
     if (isAuthenticated && !isLoading) {
+      console.log("User authenticated, redirecting to dashboard");
+      setRedirectInProgress(true);
+      
       // Add small delay to prevent flickering during auth state changes
       const timeout = setTimeout(() => {
         navigate("/dashboard");
@@ -44,27 +56,12 @@ const LoginPage: React.FC = () => {
       setRedirectTimeout(timeout);
     }
     
-    // Detect potential auth loop issues (multiple redirects back to login)
-    const detectAuthLoop = () => {
-      const authRedirects = sessionStorage.getItem('auth_redirects');
-      const redirectCount = authRedirects ? parseInt(authRedirects) : 0;
-      
-      if (redirectCount > 3) {
-        console.error("Potential authentication loop detected");
-        setShowSessionError(true);
-        // Reset the counter after showing error
-        sessionStorage.setItem('auth_redirects', '0');
-      } else {
-        sessionStorage.setItem('auth_redirects', (redirectCount + 1).toString());
+    return () => {
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
       }
     };
-    
-    detectAuthLoop();
-    
-    return () => {
-      if (redirectTimeout) clearTimeout(redirectTimeout);
-    };
-  }, [isAuthenticated, isLoading, navigate, redirectTimeout]);
+  }, [isAuthenticated, isLoading, navigate, redirectTimeout, redirectInProgress]);
 
   const handleResetSession = async () => {
     setShowSessionError(false);
