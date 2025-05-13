@@ -1,57 +1,142 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { AppError } from "@/lib/error";
+import { toast } from "@/hooks/use-toast";
 
-// Debounce control for token refreshes
-let isRefreshing = false;
-let refreshTimeout: NodeJS.Timeout | null = null;
-const REFRESH_COOLDOWN = 5000; // 5 seconds minimum between refresh attempts
+// Constants for rate limit handling
+const RATE_LIMIT_ERRORS = [
+  "too many requests",
+  "rate limit",
+  "timeout",
+  "too_many_attempts",
+  "429"
+];
+
+// Track rate limit status
+let isRateLimited = false;
+let rateLimitResetTime = 0;
+let consecutiveErrors = 0;
+let lastErrorTime = 0;
+const ERROR_THRESHOLD = 3; // Number of errors before triggering protection
+const ERROR_WINDOW = 10000; // Time window in ms (10 seconds)
+const DEFAULT_BACKOFF = 30000; // Default backoff time in ms (30 seconds)
 
 /**
- * Optimized token refresh with debounce to prevent refresh loops
+ * Handles token refresh with rate limiting protection
  */
-export const refreshSession = async () => {
-  // Prevent multiple concurrent refresh attempts
-  if (isRefreshing) {
-    console.log("Token refresh already in progress, skipping duplicate request");
-    return null;
-  }
-
+export const refreshToken = async () => {
   try {
-    isRefreshing = true;
-    
-    // Clear any pending refresh attempts
-    if (refreshTimeout) {
-      clearTimeout(refreshTimeout);
+    // Check if we're currently rate limited
+    if (isRateLimited) {
+      const now = Date.now();
+      if (now < rateLimitResetTime) {
+        // Still in backoff period, don't attempt refresh
+        console.log(`Rate limit in effect. Try again in ${Math.ceil((rateLimitResetTime - now) / 1000)}s`);
+        return { error: { message: "Rate limited", isRateLimit: true } };
+      } else {
+        // Backoff period has passed, reset rate limit state
+        isRateLimited = false;
+        consecutiveErrors = 0;
+      }
     }
-    
-    console.log("Starting controlled session refresh");
+
+    // Check for error burst pattern
+    const now = Date.now();
+    if (now - lastErrorTime > ERROR_WINDOW) {
+      // Reset error count if outside window
+      consecutiveErrors = 0;
+    }
+
+    // Attempt to refresh the session
     const { data, error } = await supabase.auth.refreshSession();
     
-    if (error) {
-      console.error("Error refreshing session:", error);
-      throw new AppError("Failed to refresh auth session", 401);
+    // Reset error tracking on success
+    if (!error) {
+      consecutiveErrors = 0;
+      return { data, error: null };
     }
     
-    return data.session;
-  } catch (error) {
-    console.error("Refresh session error:", error);
-    return null;
-  } finally {
-    // Set cooldown period before allowing another refresh
-    refreshTimeout = setTimeout(() => {
-      isRefreshing = false;
-    }, REFRESH_COOLDOWN);
+    // Handle potential rate limit error
+    lastErrorTime = Date.now();
+    consecutiveErrors++;
+    
+    // Check if this is a rate limit error
+    const isRateLimitError = RATE_LIMIT_ERRORS.some(text => 
+      error.message?.toLowerCase().includes(text)
+    );
+    
+    // Implement circuit breaker
+    if (isRateLimitError || consecutiveErrors >= ERROR_THRESHOLD) {
+      // Calculate backoff time - exponential backoff based on consecutive errors
+      const backoffTime = isRateLimitError ? DEFAULT_BACKOFF : Math.min(DEFAULT_BACKOFF * (2 ** (consecutiveErrors - ERROR_THRESHOLD)), 300000);
+      
+      isRateLimited = true;
+      rateLimitResetTime = Date.now() + backoffTime;
+      
+      // Show toast message only once when we hit rate limit
+      if (consecutiveErrors === ERROR_THRESHOLD || isRateLimitError) {
+        toast({ 
+          title: "Rate limit detected", 
+          description: `Too many auth requests. Please wait ${Math.ceil(backoffTime/1000)} seconds.`,
+          variant: "warning"
+        });
+      }
+      
+      console.warn(`Rate limit activated. Backoff for ${backoffTime}ms due to ${isRateLimitError ? 'explicit rate limit' : 'error burst pattern'}`);
+      
+      // Return error with rate limit flag
+      return { 
+        error: { 
+          ...error, 
+          isRateLimit: true,
+          backoffMs: backoffTime,
+          retryAfter: new Date(rateLimitResetTime)
+        } 
+      };
+    }
+    
+    // Return normal error
+    return { error };
+  } catch (unexpectedError) {
+    console.error("Unexpected error in refresh token:", unexpectedError);
+    
+    // Increment consecutive error count
+    lastErrorTime = Date.now();
+    consecutiveErrors++;
+    
+    return { 
+      error: {
+        message: "Unexpected error during token refresh",
+        originalError: unexpectedError
+      }
+    };
   }
 };
 
 /**
- * Reset refresh state - use when manually handling auth operations
+ * Gets information about the current rate limit status
  */
-export const resetRefreshState = () => {
-  isRefreshing = false;
-  if (refreshTimeout) {
-    clearTimeout(refreshTimeout);
-    refreshTimeout = null;
-  }
+export const getRateLimitStatus = () => {
+  if (!isRateLimited) return { isRateLimited: false };
+  
+  const now = Date.now();
+  const remainingMs = Math.max(0, rateLimitResetTime - now);
+  const remainingSec = Math.ceil(remainingMs / 1000);
+  
+  return {
+    isRateLimited,
+    remainingMs,
+    remainingSec,
+    resetTime: new Date(rateLimitResetTime)
+  };
+};
+
+/**
+ * Reset rate limit status manually if needed
+ */
+export const resetRateLimit = () => {
+  isRateLimited = false;
+  consecutiveErrors = 0;
+  rateLimitResetTime = 0;
+  
+  return { success: true };
 };
