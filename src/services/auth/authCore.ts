@@ -1,5 +1,5 @@
 
-// Import and re-export from the new modular files
+// Import from the specific modules rather than circular importing
 import { 
   processProfileData, 
   extractSupabaseUser,
@@ -8,7 +8,8 @@ import {
 // Import the type separately with explicit 'type' keyword
 import type { UserProfileData } from "./userDataProcessor";
 
-// Import auth-related operations from authOperations instead
+// Import auth-related operations directly from their source modules
+// NOT from re-exports that might cause circular dependencies
 import {
   signUp,
   signIn,
@@ -53,7 +54,6 @@ export {
   // Email utilities
   checkIfEmailExists,
   validateEmailFormat,
-  resendVerificationEmail,
   
   // Profile management
   forceProfileRefresh,
@@ -62,3 +62,6 @@ export {
   // Type definitions
   type UserProfileData
 };
+
+// Note: We're intentionally NOT re-exporting resendVerificationEmail
+// It will be exported directly from the main index.ts file

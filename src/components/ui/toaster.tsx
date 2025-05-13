@@ -1,5 +1,6 @@
 
-import { useToast } from "@/hooks/use-toast"
+"use client";
+
 import {
   Toast,
   ToastClose,
@@ -7,20 +8,17 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast"
+} from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToast();
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, className, ...props }) {
-        // Only pass the variant if it's "default" or "destructive"
-        // Custom variants like "success" and "warning" will use "default" with custom className
-        const toastVariant = (variant === "default" || variant === "destructive") ? variant : "default";
-        
+      {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <Toast key={id} {...props} variant={toastVariant} className={className}>
+          <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -30,9 +28,9 @@ export function Toaster() {
             {action}
             <ToastClose />
           </Toast>
-        )
+        );
       })}
       <ToastViewport />
     </ToastProvider>
-  )
+  );
 }

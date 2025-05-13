@@ -1,6 +1,10 @@
 
-// We need to be explicit about what we're exporting to avoid circular dependencies
+// Export specific modules to avoid circular dependencies
+
+// Core authentication exports (excluding the ones that might cause conflicts)
 export * from './authCore';
+
+// Export other modules
 export * from './authOperations';
 export * from './dataProcessor';
 export * from './dataRecovery';
@@ -10,4 +14,5 @@ export * from './types';
 export * from './userDataProcessor';
 export * from './errorHandler';
 
-// Don't re-export emailUtils or resendVerificationEmail here to avoid ambiguity
+// Don't re-export emailUtils or specific functions from there
+// since they'll be exported from the main index.ts
