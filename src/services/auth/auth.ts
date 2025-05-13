@@ -14,5 +14,5 @@ export * from './types';
 export * from './userDataProcessor';
 export * from './errorHandler';
 
-// Don't re-export emailUtils or specific functions from there
-// since they'll be exported from the main index.ts
+// Don't re-export emailUtils or refreshManager from here
+// they'll be exported directly from the main index.ts

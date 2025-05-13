@@ -23,6 +23,8 @@ import {
   clearAuthCache
 } from "./sessionManagement";
 
+// Import these from their specific modules, but don't re-export them
+// to avoid duplicate exports
 import {
   checkIfEmailExists,
   validateEmailFormat,
@@ -34,11 +36,9 @@ import {
   getUserProfile
 } from "./profileManager";
 
-import {
-  resetRefreshAttempts
-} from "./refreshManager";
+// Don't import from refreshManager here to avoid circular dependencies
 
-// Re-export all functionality
+// Re-export core functionality
 export {
   // Auth operations
   signUp,
@@ -48,16 +48,10 @@ export {
   updateUserVerificationStatus,
   cleanupAuthState,
   clearAuthCache,
-  resetRefreshAttempts,
   
   // User data processors
   processProfileData,
   extractSupabaseUser,
-  
-  // Email utilities
-  checkIfEmailExists,
-  validateEmailFormat,
-  resendVerificationEmail,
   
   // Profile management
   forceProfileRefresh,
@@ -66,3 +60,5 @@ export {
   // Type definitions
   type UserProfileData
 };
+
+// Important: Do NOT re-export email utils or refresh manager functions
