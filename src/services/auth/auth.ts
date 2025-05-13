@@ -1,5 +1,5 @@
 
-// Re-export everything from the modular auth services
+// We need to be explicit about what we're exporting to avoid circular dependencies
 export * from './authCore';
 export * from './authOperations';
 export * from './dataProcessor';
@@ -9,5 +9,5 @@ export * from './sessionManagement';
 export * from './types';
 export * from './userDataProcessor';
 export * from './errorHandler';
-// Don't re-export emailUtils here since it's already exported in index.ts
 
+// Don't re-export emailUtils or resendVerificationEmail here to avoid ambiguity
