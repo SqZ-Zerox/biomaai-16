@@ -9,4 +9,5 @@ export * from './sessionManagement';
 export * from './types';
 export * from './userDataProcessor';
 export * from './errorHandler';
-export * from './emailUtils';
+// Don't re-export emailUtils here since it's already exported in index.ts
+

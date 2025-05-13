@@ -8,11 +8,12 @@ import {
 // Import the type separately with explicit 'type' keyword
 import type { UserProfileData } from "./userDataProcessor";
 
+// Import auth-related operations from authOperations instead
 import {
   signUp,
   signIn,
   signOut
-} from "./auth";
+} from "./authOperations";
 
 import {
   getCurrentSession,

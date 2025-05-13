@@ -54,6 +54,12 @@ export const resetRateLimitState = () => {
   rateLimitState.nextAllowedTime = null;
 };
 
+// Export the reset function for the entire refresh state
+export const resetRefreshState = () => {
+  resetRateLimitState();
+  // Add any other refresh state resets here if needed in the future
+};
+
 // Handle a rate limit error
 export const handleRateLimitError = () => {
   const now = Date.now();
