@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { Loader2, UserCircle2, Shield, CircleUserRound, CalendarDays, Phone, GraduationCap, RulerIcon, Weight, ActivityIcon, AppleIcon, Dumbbell, RefreshCcw } from "lucide-react";
+import { Loader2, UserCircle2, Shield, CircleUserRound, CalendarDays, Phone, GraduationCap, RulerIcon, Weight, ActivityIcon, AppleIcon, Dumbbell, RefreshCcw, Mail, Settings, MapPin } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 // Health goals and dietary restrictions options
 const healthGoalOptions = [
@@ -127,7 +129,9 @@ const ProfilePage = () => {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="flex flex-col items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="rounded-full bg-primary/10 p-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
           <p className="mt-4 text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
@@ -137,10 +141,12 @@ const ProfilePage = () => {
   if (!user || !profile) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <Shield className="h-16 w-16 mb-4 text-muted-foreground" />
+        <div className="bg-muted/40 p-8 rounded-full mb-4">
+          <Shield className="h-16 w-16 text-muted-foreground" />
+        </div>
         <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
         <p className="text-muted-foreground mb-6">Please sign in to view your profile.</p>
-        <Button onClick={() => navigate('/login')}>Sign In</Button>
+        <Button onClick={() => navigate('/login')} size="lg" className="px-8">Sign In</Button>
       </div>
     );
   }
@@ -203,6 +209,7 @@ const ProfilePage = () => {
     setIsRecovering(true);
     try {
       await recoverUserData();
+      toast.success("Profile data recovered successfully");
     } catch (error) {
       console.error("Error in handleRecoverData:", error);
       toast.error("Could not recover profile data");
@@ -210,93 +217,146 @@ const ProfilePage = () => {
       setIsRecovering(false);
     }
   };
+
+  const getActivityLevelLabel = (level: string) => {
+    switch(level) {
+      case 'sedentary': return 'Sedentary (little or no exercise)';
+      case 'lightly-active': return 'Lightly active (1-3 days/week)';
+      case 'moderately-active': return 'Moderately active (3-5 days/week)';
+      case 'very-active': return 'Very active (6-7 days/week)';
+      case 'extra-active': return 'Extra active (very demanding)';
+      default: return 'Not provided';
+    }
+  };
   
   return (
-    <div className="container py-8 max-w-5xl">
-      <div className="flex flex-wrap justify-between items-center mb-8 gap-2">
-        <h1 className="text-3xl font-bold">User Profile</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRecoverData}
-            disabled={isRecovering}
-            className="flex items-center"
-          >
-            {isRecovering ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCcw className="h-4 w-4 mr-2" />}
-            Recover Data
-          </Button>
-          {!isEditing ? (
-            <Button variant="secondary" onClick={() => setIsEditing(true)}>
-              Edit Profile
+    <div className="container max-w-6xl py-8">
+      {/* Profile Header */}
+      <div className="relative mb-8">
+        {/* Background banner */}
+        <div className="h-32 rounded-t-xl bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-indigo-950 dark:to-blue-900"></div>
+        
+        {/* Profile content with avatar */}
+        <div className="flex flex-col md:flex-row md:items-end px-6 -mt-12 gap-4">
+          <div className="rounded-full bg-primary/20 w-24 h-24 flex items-center justify-center border-4 border-background shadow-lg">
+            <UserCircle2 className="h-12 w-12 text-primary" />
+          </div>
+          
+          <div className="flex-1 pt-2">
+            <h1 className="text-3xl font-bold">
+              {profile.first_name ? `${profile.first_name} ${profile.last_name || ''}` : 'Your Profile'}
+            </h1>
+            <p className="text-muted-foreground flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5" />
+              {user.email}
+              {user.email_confirmed_at && (
+                <Badge variant="pill" className="ml-1">Verified</Badge>
+              )}
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 pb-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRecoverData}
+              disabled={isRecovering}
+              className="flex items-center gap-1.5 text-sm"
+            >
+              {isRecovering ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCcw className="h-3.5 w-3.5" />}
+              Recover Data
             </Button>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                Cancel
+            {!isEditing ? (
+              <Button onClick={() => setIsEditing(true)} className="flex items-center gap-1.5 text-sm">
+                <Settings className="h-3.5 w-3.5" />
+                Edit Profile
               </Button>
-              <Button onClick={handleSaveProfile} disabled={isSaving}>
-                {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Save Changes
-              </Button>
-            </>
-          )}
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving} size="sm">
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveProfile} disabled={isSaving} className="flex items-center gap-1.5">
+                  {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                  Save Changes
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
       
-      <Tabs defaultValue="personal">
-        <TabsList className="mb-6">
-          <TabsTrigger value="personal">Personal Info</TabsTrigger>
-          <TabsTrigger value="health">Health & Diet</TabsTrigger>
+      <Tabs defaultValue="personal" className="space-y-8">
+        <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
+          <TabsTrigger value="personal" className="text-sm">Personal Information</TabsTrigger>
+          <TabsTrigger value="health" className="text-sm">Health & Wellness</TabsTrigger>
         </TabsList>
         
         <TabsContent value="personal">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Account Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CircleUserRound className="h-5 w-5 mr-2" />
+            <Card className="overflow-hidden border-none bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-900/40 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500/5 to-indigo-500/5 pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CircleUserRound className="h-5 w-5 text-primary" />
                   Account Information
                 </CardTitle>
-                <CardDescription>Your account details</CardDescription>
+                <CardDescription>Profile created on {new Date(user.created_at).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-muted-foreground text-sm">Email</Label>
-                  <p className="font-medium">{user.email}</p>
+              <CardContent className="space-y-4 pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{user.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">Account Created</Label>
-                  <p className="font-medium">
-                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                
+                <Separator className="my-2" />
+                
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email Status</p>
+                    <div>
+                      {user.email_confirmed_at ? (
+                        <Badge variant="success">Verified</Badge>
+                      ) : (
+                        <Badge variant="destructive">Not Verified</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="my-2" />
+                
+                <div className="rounded-lg bg-primary/5 p-3">
+                  <p className="text-sm text-center">
+                    Member since {new Date(user.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
+                      month: 'long'
                     })}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">Email Verified</Label>
-                  <p className="font-medium">
-                    {user.email_confirmed_at ? (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Verified</Badge>
-                    ) : (
-                      <Badge variant="destructive">Not Verified</Badge>
-                    )}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Personal Information */}
-            <Card className="col-span-1 md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <UserCircle2 className="h-5 w-5 mr-2" />
-                  Personal Information
+            <Card className="col-span-1 md:col-span-2 border-none shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <UserCircle2 className="h-5 w-5 text-primary" />
+                  Personal Details
                 </CardTitle>
-                <CardDescription>Your personal details</CardDescription>
+                <CardDescription>Your personal information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -309,9 +369,10 @@ const ProfilePage = () => {
                         value={formData.first_name || ''}
                         onChange={handleInputChange}
                         placeholder="Enter your first name"
+                        className="bg-muted/40"
                       />
                     ) : (
-                      <p className="p-2 bg-muted/40 rounded-md">{profile.first_name || 'Not provided'}</p>
+                      <div className="p-2 rounded-md bg-muted/30 min-h-10">{profile.first_name || 'Not provided'}</div>
                     )}
                   </div>
                   
@@ -324,17 +385,18 @@ const ProfilePage = () => {
                         value={formData.last_name || ''}
                         onChange={handleInputChange}
                         placeholder="Enter your last name"
+                        className="bg-muted/40"
                       />
                     ) : (
-                      <p className="p-2 bg-muted/40 rounded-md">{profile.last_name || 'Not provided'}</p>
+                      <div className="p-2 rounded-md bg-muted/30 min-h-10">{profile.last_name || 'Not provided'}</div>
                     )}
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="birth_date" className="flex items-center">
-                      <CalendarDays className="h-4 w-4 mr-1" /> Birth Date
+                    <Label htmlFor="birth_date" className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5" /> Birth Date
                     </Label>
                     {isEditing ? (
                       <Input
@@ -343,17 +405,18 @@ const ProfilePage = () => {
                         type="date"
                         value={formData.birth_date || ''}
                         onChange={handleInputChange}
+                        className="bg-muted/40"
                       />
                     ) : (
-                      <p className="p-2 bg-muted/40 rounded-md">
+                      <div className="p-2 rounded-md bg-muted/30 min-h-10">
                         {profile.birth_date ? new Date(profile.birth_date).toLocaleDateString() : 'Not provided'}
-                      </p>
+                      </div>
                     )}
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="phone_number" className="flex items-center">
-                      <Phone className="h-4 w-4 mr-1" /> Phone Number
+                    <Label htmlFor="phone_number" className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5" /> Phone Number
                     </Label>
                     {isEditing ? (
                       <Input
@@ -362,16 +425,17 @@ const ProfilePage = () => {
                         value={formData.phone_number || ''}
                         onChange={handleInputChange}
                         placeholder="Enter your phone number"
+                        className="bg-muted/40"
                       />
                     ) : (
-                      <p className="p-2 bg-muted/40 rounded-md">{profile.phone_number || 'Not provided'}</p>
+                      <div className="p-2 rounded-md bg-muted/30 min-h-10">{profile.phone_number || 'Not provided'}</div>
                     )}
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="profession" className="flex items-center">
-                    <GraduationCap className="h-4 w-4 mr-1" /> Profession
+                  <Label htmlFor="profession" className="flex items-center gap-1.5">
+                    <GraduationCap className="h-3.5 w-3.5" /> Profession
                   </Label>
                   {isEditing ? (
                     <Input
@@ -380,9 +444,10 @@ const ProfilePage = () => {
                       value={formData.profession || ''}
                       onChange={handleInputChange}
                       placeholder="Enter your profession"
+                      className="bg-muted/40"
                     />
                   ) : (
-                    <p className="p-2 bg-muted/40 rounded-md">{profile.profession || 'Not provided'}</p>
+                    <div className="p-2 rounded-md bg-muted/30 min-h-10">{profile.profession || 'Not provided'}</div>
                   )}
                 </div>
                 
@@ -390,7 +455,7 @@ const ProfilePage = () => {
                   <Label htmlFor="gender">Gender</Label>
                   {isEditing ? (
                     <Select value={formData.gender || ''} onValueChange={(value) => handleSelectChange('gender', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-muted/40">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -401,7 +466,7 @@ const ProfilePage = () => {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="p-2 bg-muted/40 rounded-md capitalize">{profile.gender || 'Not provided'}</p>
+                    <div className="p-2 rounded-md bg-muted/30 min-h-10 capitalize">{profile.gender || 'Not provided'}</div>
                   )}
                 </div>
               </CardContent>
@@ -412,157 +477,171 @@ const ProfilePage = () => {
         <TabsContent value="health">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Physical Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ActivityIcon className="h-5 w-5 mr-2" />
+            <Card className="border-none shadow-sm bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-900/40">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ActivityIcon className="h-5 w-5 text-emerald-600" />
                   Physical Information
                 </CardTitle>
                 <CardDescription>Your physical metrics and activity</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="height" className="flex items-center">
-                    <RulerIcon className="h-4 w-4 mr-1" /> Height
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="height"
-                      name="height"
-                      value={formData.height || ''}
-                      onChange={handleInputChange}
-                      placeholder="Enter your height (e.g., 5'10 or 178cm)"
-                    />
-                  ) : (
-                    <p className="p-2 bg-muted/40 rounded-md">{profile.height || 'Not provided'}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="weight" className="flex items-center">
-                    <Weight className="h-4 w-4 mr-1" /> Weight
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="weight"
-                      name="weight"
-                      value={formData.weight || ''}
-                      onChange={handleInputChange}
-                      placeholder="Enter your weight (e.g., 160lbs or 72kg)"
-                    />
-                  ) : (
-                    <p className="p-2 bg-muted/40 rounded-md">{profile.weight || 'Not provided'}</p>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="height" className="flex items-center gap-1.5">
+                      <RulerIcon className="h-3.5 w-3.5" /> Height
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        id="height"
+                        name="height"
+                        value={formData.height || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 5'10 or 178cm"
+                        className="bg-white/50"
+                      />
+                    ) : (
+                      <div className="p-2 rounded-md bg-white/50 min-h-10">{profile.height || 'Not provided'}</div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="weight" className="flex items-center gap-1.5">
+                      <Weight className="h-3.5 w-3.5" /> Weight
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        id="weight"
+                        name="weight"
+                        value={formData.weight || ''}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 160lbs or 72kg"
+                        className="bg-white/50"
+                      />
+                    ) : (
+                      <div className="p-2 rounded-md bg-white/50 min-h-10">{profile.weight || 'Not provided'}</div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="activity_level">Activity Level</Label>
                   {isEditing ? (
                     <Select value={formData.activity_level || ''} onValueChange={(value) => handleSelectChange('activity_level', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white/50">
                         <SelectValue placeholder="Select activity level" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sedentary">Sedentary (little or no exercise)</SelectItem>
-                        <SelectItem value="lightly-active">Lightly active (light exercise 1-3 days/week)</SelectItem>
-                        <SelectItem value="moderately-active">Moderately active (moderate exercise 3-5 days/week)</SelectItem>
-                        <SelectItem value="very-active">Very active (hard exercise 6-7 days/week)</SelectItem>
-                        <SelectItem value="extra-active">Extra active (very hard exercise & physical job)</SelectItem>
+                        <SelectItem value="lightly-active">Lightly active (1-3 days/week)</SelectItem>
+                        <SelectItem value="moderately-active">Moderately active (3-5 days/week)</SelectItem>
+                        <SelectItem value="very-active">Very active (6-7 days/week)</SelectItem>
+                        <SelectItem value="extra-active">Extra active (very demanding)</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="p-2 bg-muted/40 rounded-md capitalize">
-                      {profile.activity_level?.replace('-', ' ') || 'Not provided'}
-                    </p>
+                    <div className="p-2 rounded-md bg-white/50 min-h-10">
+                      {profile.activity_level ? getActivityLevelLabel(profile.activity_level) : 'Not provided'}
+                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Health Goals & Dietary Restrictions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  <div className="flex items-center">
-                    <Dumbbell className="h-5 w-5 mr-2" />
-                    Health Goals
-                  </div>
+            <Card className="border-none shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Dumbbell className="h-5 w-5 text-primary" />
+                  Health Objectives
                 </CardTitle>
-                <CardDescription>Your health objectives and goals</CardDescription>
+                <CardDescription>Your health goals and dietary preferences</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {loadingHealthGoals ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : isEditing ? (
-                  <ScrollArea className="h-48 rounded-md border p-4">
-                    <div className="space-y-3">
-                      {healthGoalOptions.map((goal) => (
-                        <div key={goal.id} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`goal-${goal.id}`} 
-                            checked={currentHealthGoals.includes(goal.label)}
-                            onCheckedChange={() => toggleHealthGoal(goal.label)}
-                          />
-                          <Label htmlFor={`goal-${goal.id}`} className="cursor-pointer">{goal.label}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                ) : (
+              <CardContent>
+                <div className="space-y-4">
                   <div>
-                    {currentHealthGoals.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {currentHealthGoals.map((goal) => (
-                          <Badge key={goal} variant="secondary">{goal}</Badge>
-                        ))}
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                      <Dumbbell className="h-3.5 w-3.5 text-primary" /> Health Goals
+                    </h3>
+                    {loadingHealthGoals ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      </div>
+                    ) : isEditing ? (
+                      <div className="border rounded-lg bg-muted/30">
+                        <ScrollArea className="h-32 p-3">
+                          <div className="space-y-2">
+                            {healthGoalOptions.map((goal) => (
+                              <div key={goal.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`goal-${goal.id}`} 
+                                  checked={currentHealthGoals.includes(goal.label)}
+                                  onCheckedChange={() => toggleHealthGoal(goal.label)}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                                <Label htmlFor={`goal-${goal.id}`} className="cursor-pointer text-sm">{goal.label}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No health goals set</p>
+                      <div className="min-h-12">
+                        {currentHealthGoals.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {currentHealthGoals.map((goal) => (
+                              <Badge key={goal} variant="pill">{goal}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-muted-foreground text-sm p-2">No health goals set</div>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-                
-                <Separator className="my-4" />
-                
-                <div className="space-y-2">
-                  <Label className="flex items-center">
-                    <AppleIcon className="h-4 w-4 mr-1" />
-                    Dietary Restrictions
-                  </Label>
-                  {loadingDietaryRestrictions ? (
-                    <div className="flex justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  ) : isEditing ? (
-                    <ScrollArea className="h-48 rounded-md border p-4">
-                      <div className="space-y-3">
-                        {dietaryRestrictionOptions.map((restriction) => (
-                          <div key={restriction.id} className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={`restriction-${restriction.id}`} 
-                              checked={currentDietaryRestrictions.includes(restriction.label)}
-                              onCheckedChange={() => toggleDietaryRestriction(restriction.label)}
-                            />
-                            <Label htmlFor={`restriction-${restriction.id}`} className="cursor-pointer">{restriction.label}</Label>
-                          </div>
-                        ))}
+                  
+                  <Separator className="my-4" />
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                      <AppleIcon className="h-3.5 w-3.5 text-primary" /> Dietary Restrictions
+                    </h3>
+                    {loadingDietaryRestrictions ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       </div>
-                    </ScrollArea>
-                  ) : (
-                    <div>
-                      {currentDietaryRestrictions.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {currentDietaryRestrictions.map((restriction) => (
-                            <Badge key={restriction} variant="outline">{restriction}</Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No dietary restrictions set</p>
-                      )}
-                    </div>
-                  )}
+                    ) : isEditing ? (
+                      <div className="border rounded-lg bg-muted/30">
+                        <ScrollArea className="h-32 p-3">
+                          <div className="space-y-2">
+                            {dietaryRestrictionOptions.map((restriction) => (
+                              <div key={restriction.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`restriction-${restriction.id}`} 
+                                  checked={currentDietaryRestrictions.includes(restriction.label)}
+                                  onCheckedChange={() => toggleDietaryRestriction(restriction.label)}
+                                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                />
+                                <Label htmlFor={`restriction-${restriction.id}`} className="cursor-pointer text-sm">{restriction.label}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    ) : (
+                      <div className="min-h-12">
+                        {currentDietaryRestrictions.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {currentDietaryRestrictions.map((restriction) => (
+                              <Badge key={restriction} variant="ghost">{restriction}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-muted-foreground text-sm p-2">No dietary restrictions set</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
