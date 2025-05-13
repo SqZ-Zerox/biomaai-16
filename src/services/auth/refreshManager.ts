@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { clearAuthCache } from "./sessionManagement";
 
@@ -62,7 +63,7 @@ const isRateLimited = (): boolean => {
  * Handles rate limit errors by incrementing the attempt count and setting the last error time.
  * @param {Error} error - The error that occurred during session refresh.
  */
-const handleRateLimitError = (error: Error) => {
+export const handleRateLimitError = (error: Error) => {
   refreshAttempts++;
   lastErrorTime = Date.now();
 
@@ -96,6 +97,7 @@ export const resetRefreshState = () => {
   // Clear any cached data that might affect refresh operations
   // This ensures we start with a clean slate
   clearSessionCache();
+  console.log("Auth refresh state reset");
 };
 
 // Add a clearSessionCache helper if it doesn't exist

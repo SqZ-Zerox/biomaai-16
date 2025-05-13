@@ -20,8 +20,7 @@ import {
   getCurrentSession,
   updateUserVerificationStatus,
   cleanupAuthState,
-  clearAuthCache,
-  resetRefreshAttempts
+  clearAuthCache
 } from "./sessionManagement";
 
 import {
@@ -34,6 +33,10 @@ import {
   forceProfileRefresh,
   getUserProfile
 } from "./profileManager";
+
+import {
+  resetRefreshAttempts
+} from "./refreshManager";
 
 // Re-export all functionality
 export {
@@ -54,6 +57,7 @@ export {
   // Email utilities
   checkIfEmailExists,
   validateEmailFormat,
+  resendVerificationEmail,
   
   // Profile management
   forceProfileRefresh,
@@ -62,6 +66,3 @@ export {
   // Type definitions
   type UserProfileData
 };
-
-// Note: We're intentionally NOT re-exporting resendVerificationEmail
-// It will be exported directly from the main index.ts file

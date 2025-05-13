@@ -1,7 +1,7 @@
 
 // Export specific items instead of using star exports to avoid conflicts
 // This file should be the main entry point for auth exports
-import { refreshSession } from './refreshManager';
+import { refreshSession, resetRefreshAttempts, resetRefreshState } from './refreshManager';
 import { resendVerificationEmail, validateEmailFormat, checkIfEmailExists, clearEmailExistsCache } from './emailUtils';
 
 // Export everything from auth.ts except what we're explicitly exporting here
@@ -11,6 +11,8 @@ export * from './auth';
 // Explicitly export these to avoid conflicts
 export {
   refreshSession,
+  resetRefreshAttempts,
+  resetRefreshState,
   resendVerificationEmail,
   validateEmailFormat,
   checkIfEmailExists,
