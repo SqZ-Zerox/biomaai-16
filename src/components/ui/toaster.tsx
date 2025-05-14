@@ -22,12 +22,8 @@ export function Toaster() {
           <Toast 
             key={id} 
             {...props}
-            // Use cn to conditionally apply variant-specific classes
-            className={cn(
-              className,
-              variant === "success" && "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300",
-              variant === "warning" && "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300"
-            )}
+            variant={variant}
+            className={className}
           >
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
