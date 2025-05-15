@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -29,6 +28,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))"
         },
+        "primary-dark-bg": "hsl(236, 40%, 25%)", // Added new color #232163
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))"
@@ -64,10 +64,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         legal: {
-          primary: "#4F78FF", // Changed from cyan to blue
-          secondary: "#0057FF", // Changed to blue
+          primary: "#4F78FF", 
+          secondary: "#0057FF", 
           muted: "#1A2C42", 
-          accent: "#4F78FF", // Changed from cyan to blue
+          accent: "#4F78FF", 
         }
       },
       borderRadius: {

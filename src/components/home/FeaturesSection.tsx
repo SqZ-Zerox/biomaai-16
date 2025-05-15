@@ -175,23 +175,23 @@ const FeaturesSection: React.FC = () => {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true, margin: "-50px" }}
-          className="relative rounded-3xl overflow-hidden bg-[#1A1F2C] text-white mb-12"
+          className="relative rounded-3xl overflow-hidden bg-primary-dark-bg text-white mb-12"
         >
           {/* Background decoration */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50"></div> {/* Changed from-[#0EA5E9]/20 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50"></div>
           <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,rgba(255,255,255,0.6))]"></div>
           
           <div className="relative px-6 py-10 md:p-12">
             {/* Coming Soon Header with enhanced styling */}
             <div className="flex flex-col items-center justify-center text-center mb-10">
-              <Badge className="mb-4 px-4 py-1.5 bg-primary/20 text-primary border border-primary/30"> {/* Changed from #0EA5E9 */}
+              <Badge className="mb-4 px-4 py-1.5 bg-primary/20 text-primary border border-primary/30">
                 <BarChart3 className="h-4 w-4 mr-1.5" />
                 Coming Soon
               </Badge>
               <h3 className="text-2xl md:text-3xl font-bold mb-2 text-white">
                 Future Innovations
               </h3>
-              <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/30 rounded-full mb-4"></div> {/* Changed from #0EA5E9 */}
+              <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/30 rounded-full mb-4"></div>
               <p className="text-white/70 max-w-2xl">
                 Exciting new features we're developing to revolutionize your wellness journey
               </p>
@@ -207,17 +207,17 @@ const FeaturesSection: React.FC = () => {
                   viewport={{ once: true, margin: "-100px" }}
                   className={`relative ${feature.highlight ? 'lg:col-span-3 md:col-span-2' : ''}`}
                 >
-                  <div className={`absolute -inset-px rounded-xl ${feature.highlight ? 'bg-gradient-to-r from-primary/30 to-primary/10' : 'bg-white/5'} blur-sm -z-10`}></div> {/* Changed from #0EA5E9 */}
+                  <div className={`absolute -inset-px rounded-xl ${feature.highlight ? 'bg-gradient-to-r from-primary/30 to-primary/10' : 'bg-white/5'} blur-sm -z-10`}></div>
                   <Card className={`h-full border-white/10 hover:border-primary/40 transition-all duration-300 bg-white/5 backdrop-blur-sm p-6 ${feature.highlight ? 'md:flex md:items-center md:gap-8' : ''}`}>
                     <div className={feature.highlight ? 'md:flex-shrink-0' : ''}>
-                      <div className={`h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''} glow-effect`}> {/* Changed bg-[#0EA5E9]/20 */}
+                      <div className={`h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''} glow-effect`}>
                         {feature.icon}
                       </div>
                     </div>
                     <div>
                       <h3 className={`font-semibold mb-2 flex items-center gap-2 ${feature.highlight ? 'text-xl md:text-2xl' : 'text-lg'} text-white`}>
                         {feature.title}
-                        <Badge className="bg-primary/20 text-primary border-primary/30"> {/* Changed from #0EA5E9 */}
+                        <Badge className="bg-primary/20 text-primary border-primary/30">
                           Soon
                         </Badge>
                       </h3>
@@ -225,7 +225,7 @@ const FeaturesSection: React.FC = () => {
                       
                       {feature.highlight && (
                         <div className="mt-4 flex items-center gap-2">
-                          <Badge variant="pill" className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20"> {/* Changed from #0EA5E9 */}
+                          <Badge variant="pill" className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/20">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Join Waitlist
                           </Badge>
