@@ -1,7 +1,7 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Home, Upload, MessageCircle, User, TrendingUp } from "lucide-react";
+import { Home, Upload, MessageCircle, User, TrendingUp, Dna, Watch } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navigation = () => {
@@ -33,13 +33,13 @@ const Navigation = () => {
         </NavLink>
         
         <NavLink 
-          to="/progress" 
+          to="/genetic-analysis" 
           className={({ isActive }) => 
             `flex flex-col items-center justify-center p-2 ${isActive ? 'text-primary' : 'text-muted-foreground'}`
           }
         >
-          <TrendingUp className="h-5 w-5" />
-          <span className="text-xs font-medium mt-1">Progress</span>
+          <Dna className="h-5 w-5" />
+          <span className="text-xs font-medium mt-1">Genetics</span>
         </NavLink>
         
         <NavLink 

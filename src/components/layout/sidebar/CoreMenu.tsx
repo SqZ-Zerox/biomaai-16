@@ -2,7 +2,10 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { Home, Upload, ActivitySquare, Utensils, MessageCircle, TrendingUp } from "lucide-react";
+import { 
+  Home, Upload, ActivitySquare, Utensils, MessageCircle, 
+  TrendingUp, Dna, Watch, Badge 
+} from "lucide-react";
 
 const CoreMenu = () => {
   return (
@@ -104,6 +107,40 @@ const CoreMenu = () => {
             >
               <TrendingUp className="h-4 w-4" />
               <span>Progress Tracking</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/genetic-analysis" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Dna className="h-4 w-4" />
+              <span>Genetic Analysis</span>
+              <Badge variant="outline" className="ml-1 py-0 h-5 bg-primary/10 text-primary text-xs">Soon</Badge>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <NavLink 
+              to="/wearable" 
+              className={({ isActive }) => 
+                `group flex items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-primary/10 ${
+                  isActive ? 'bg-primary/10 text-primary' : 'text-foreground'
+                }`
+              }
+            >
+              <Watch className="h-4 w-4" />
+              <span>Wearable Tech</span>
+              <Badge variant="outline" className="ml-1 py-0 h-5 bg-primary/10 text-primary text-xs">Soon</Badge>
             </NavLink>
           </SidebarMenuButton>
         </SidebarMenuItem>

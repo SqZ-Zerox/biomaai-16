@@ -24,6 +24,8 @@ import SettingsPage from "./pages/SettingsPage";
 import LabDetailsPage from "./pages/LabDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgressTrackingPage from "./pages/ProgressTrackingPage";
+import GeneticAnalysisPage from "./pages/GeneticAnalysisPage";
+import WearableTechnologyPage from "./pages/WearableTechnologyPage";
 
 // Protected route component that requires authentication and email verification
 const ProtectedRoute = () => {
@@ -105,6 +107,8 @@ function App() {
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/progress" element={<ProgressTrackingPage />} />
+                <Route path="/genetic-analysis" element={<GeneticAnalysisPage />} />
+                <Route path="/wearable" element={<WearableTechnologyPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/lab-details" element={<LabDetailsPage />} />
                 <Route path="/lab-details/:reportId" element={<LabDetailsPage />} />
