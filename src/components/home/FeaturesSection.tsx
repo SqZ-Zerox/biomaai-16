@@ -59,31 +59,31 @@ const FeaturesSection: React.FC = () => {
       upcoming: true,
       features: [
         {
-          icon: <Dna className="h-6 w-6 text-primary" />,
+          icon: <Dna className="h-6 w-6 text-white" />,
           title: "Genetic Analysis",
           description: "Unlock insights from your DNA to better understand your health predispositions and optimize your wellness journey.",
           highlight: true
         },
         {
-          icon: <ChartLine className="h-6 w-6 text-primary" />,
+          icon: <ChartLine className="h-6 w-6 text-white" />,
           title: "BIOMASCORE",
           description: "Track your overall health progress with our proprietary scoring system that gamifies your wellness journey.",
           highlight: false
         },
         {
-          icon: <Trophy className="h-6 w-6 text-primary" />,
+          icon: <Trophy className="h-6 w-6 text-white" />,
           title: "Gamified Progress Tracking",
           description: "Turn your health journey into an engaging adventure with achievements, milestones, and rewards.",
           highlight: false
         },
         {
-          icon: <Smartphone className="h-6 w-6 text-primary" />,
+          icon: <Smartphone className="h-6 w-6 text-white" />,
           title: "Wearable Integration",
           description: "Connect your favorite fitness devices to enhance your health tracking and personalized recommendations.",
           highlight: false
         },
         {
-          icon: <Package className="h-6 w-6 text-primary" />,
+          icon: <Package className="h-6 w-6 text-white" />,
           title: "Genetic Testing Kit",
           description: "Our future offering will include custom genetic testing kits to unlock your genetic potential.",
           highlight: false
@@ -113,77 +113,123 @@ const FeaturesSection: React.FC = () => {
           </p>
         </motion.div>
         
-        {featureCategories.map((category, categoryIndex) => (
-          <div key={categoryIndex} className="mb-20 last:mb-0">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              className="text-center mb-10"
-            >
-              <div className="relative inline-block">
-                <h3 className="text-2xl md:text-3xl font-bold relative z-10">{category.title}</h3>
-                {category.upcoming && (
-                  <div className="absolute -inset-1 bg-primary/10 rounded-lg blur-sm -z-10"></div>
+        {/* Core Features Section */}
+        <div key="core" className="mb-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="text-center mb-10"
+          >
+            <div className="relative inline-block">
+              <h3 className="text-2xl md:text-3xl font-bold relative z-10">{featureCategories[0].title}</h3>
+            </div>
+            <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+              {featureCategories[0].description}
+            </p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {featureCategories[0].features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * index }}
+                viewport={{ once: true, margin: "-100px" }}
+                className={`relative ${feature.highlight ? 'lg:col-span-3 md:col-span-2' : ''}`}
+              >
+                {feature.highlight && (
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl blur-lg -z-10"></div>
                 )}
-              </div>
-              <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                {category.description}
+                <Card className={`h-full border-border/30 hover:border-primary/40 transition-all duration-300 bg-card backdrop-blur-sm p-6 ${feature.highlight ? 'md:flex md:items-center md:gap-8' : ''}`}>
+                  <div className={feature.highlight ? 'md:flex-shrink-0' : ''}>
+                    <div className={`h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''}`}>
+                      {feature.icon}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className={`font-semibold mb-2 flex items-center gap-2 ${feature.highlight ? 'text-xl md:text-2xl' : 'text-lg'}`}>
+                      {feature.title}
+                    </h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                    
+                    {feature.highlight && (
+                      <div className="mt-4 flex items-center gap-2">
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Available Now
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Coming Soon Section with enhanced styling */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-50px" }}
+          className="relative rounded-3xl overflow-hidden bg-[#1A1F2C] text-white mb-12"
+        >
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0EA5E9]/20 to-transparent opacity-50"></div>
+          <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,rgba(255,255,255,0.6))]"></div>
+          
+          <div className="relative px-6 py-10 md:p-12">
+            {/* Coming Soon Header with enhanced styling */}
+            <div className="flex flex-col items-center justify-center text-center mb-10">
+              <Badge className="mb-4 px-4 py-1.5 bg-[#0EA5E9]/20 text-[#0EA5E9] border border-[#0EA5E9]/30">
+                <BarChart3 className="h-4 w-4 mr-1.5" />
+                Coming Soon
+              </Badge>
+              <h3 className="text-2xl md:text-3xl font-bold mb-2 text-white">
+                Future Innovations
+              </h3>
+              <div className="w-20 h-1 bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/30 rounded-full mb-4"></div>
+              <p className="text-white/70 max-w-2xl">
+                Exciting new features we're developing to revolutionize your wellness journey
               </p>
-              {category.upcoming && (
-                <div className="flex justify-center mt-4">
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-3 py-1 text-sm">
-                    <BarChart3 className="h-4 w-4 mr-1" />
-                    In Development
-                  </Badge>
-                </div>
-              )}
-            </motion.div>
-            
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8`}>
-              {category.features.map((feature, index) => (
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {featureCategories[1].features.map((feature, index) => (
                 <motion.div
-                  key={index}
+                  key={`coming-soon-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                  transition={{ duration: 0.5, delay: 0.15 * index }}
                   viewport={{ once: true, margin: "-100px" }}
                   className={`relative ${feature.highlight ? 'lg:col-span-3 md:col-span-2' : ''}`}
                 >
-                  {feature.highlight && (
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl blur-lg -z-10"></div>
-                  )}
-                  <Card className={`h-full border-border/30 hover:border-primary/40 transition-all duration-300 bg-card backdrop-blur-sm p-6 ${feature.highlight ? 'md:flex md:items-center md:gap-8' : ''}`}>
+                  <div className={`absolute -inset-px rounded-xl ${feature.highlight ? 'bg-gradient-to-r from-[#0EA5E9]/30 to-[#0EA5E9]/10' : 'bg-white/5'} blur-sm -z-10`}></div>
+                  <Card className={`h-full border-white/10 hover:border-[#0EA5E9]/40 transition-all duration-300 bg-white/5 backdrop-blur-sm p-6 ${feature.highlight ? 'md:flex md:items-center md:gap-8' : ''}`}>
                     <div className={feature.highlight ? 'md:flex-shrink-0' : ''}>
-                      <div className={`h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''}`}>
+                      <div className={`h-12 w-12 rounded-full bg-[#0EA5E9]/20 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''} glow-effect`}>
                         {feature.icon}
                       </div>
                     </div>
                     <div>
-                      <h3 className={`font-semibold mb-2 flex items-center gap-2 ${feature.highlight ? 'text-xl md:text-2xl' : 'text-lg'}`}>
+                      <h3 className={`font-semibold mb-2 flex items-center gap-2 ${feature.highlight ? 'text-xl md:text-2xl' : 'text-lg'} text-white`}>
                         {feature.title}
-                        {category.upcoming && (
-                          <Badge className="bg-primary/10 text-primary border-primary/20">
-                            Coming Soon
-                          </Badge>
-                        )}
+                        <Badge className="bg-[#0EA5E9]/20 text-[#0EA5E9] border-[#0EA5E9]/30">
+                          Soon
+                        </Badge>
                       </h3>
-                      <p className="text-muted-foreground">{feature.description}</p>
+                      <p className="text-white/70">{feature.description}</p>
                       
                       {feature.highlight && (
                         <div className="mt-4 flex items-center gap-2">
-                          {category.upcoming ? (
-                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Join Waitlist
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Available Now
-                            </Badge>
-                          )}
+                          <Badge variant="pill" className="bg-[#0EA5E9]/20 hover:bg-[#0EA5E9]/30 text-[#0EA5E9] border-[#0EA5E9]/20">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Join Waitlist
+                          </Badge>
                         </div>
                       )}
                     </div>
@@ -192,7 +238,7 @@ const FeaturesSection: React.FC = () => {
               ))}
             </div>
           </div>
-        ))}
+        </motion.div>
       </div>
     </section>
   );
