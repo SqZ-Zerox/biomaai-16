@@ -1,6 +1,7 @@
+
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, ArrowUpRight, CheckCircle2, Dna, TestTube, Microscope, BookText } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CheckCircle2, Dna, TestTube, Brain, Heart, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -22,12 +23,12 @@ const HeroSection: React.FC = () => {
       badge: "Coming Soon"
     },
     {
-      icon: <Microscope className="h-5 w-5 text-primary" />,
-      text: "Personalized Insights"
+      icon: <Heart className="h-5 w-5 text-primary" />,
+      text: "Holistic Wellness"
     },
     {
-      icon: <BookText className="h-5 w-5 text-primary" />,
-      text: "Health Recommendations"
+      icon: <MessageSquare className="h-5 w-5 text-primary" />,
+      text: "AI Health Advisor"
     }
   ];
 
@@ -56,14 +57,14 @@ const HeroSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <Badge className="mb-2 text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20 rounded-full">
-                  Future of Health Analytics
+                  Holistic Health & Wellness
                 </Badge>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-                    Unlock Your Health
+                    AI-powered Health
                   </span>{" "}
                   <br className="hidden md:inline" />
-                  <span>With <span className="text-primary">Genetic</span> Insights</span>
+                  <span>For <span className="text-primary">Every Body</span>, Every Day</span>
                 </h1>
               </motion.div>
               
@@ -73,8 +74,8 @@ const HeroSection: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                BIOMA AI is developing advanced genetic analysis capabilities—the future of personalized healthcare. 
-                While we build this revolutionary technology, experience our lab test analysis showcase today.
+                Decode your body, optimize your lifestyle, and align your healing journey with personalized 
+                AI guidance for your physical, mental, and spiritual health.
               </motion.p>
             </div>
             
@@ -109,12 +110,12 @@ const HeroSection: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <p className="text-sm text-muted-foreground mb-4">Trusted by health enthusiasts worldwide</p>
+              <p className="text-sm text-muted-foreground mb-4">Trusted by wellness seekers worldwide</p>
               <div className="flex flex-wrap gap-6 justify-center lg:justify-start items-center">
-                <div className="text-muted-foreground/70 font-semibold">HealthTech</div>
-                <div className="text-muted-foreground/70 font-semibold">BioInnovate</div>
-                <div className="text-muted-foreground/70 font-semibold">GeneLife</div>
-                <div className="text-muted-foreground/70 font-semibold">MedFuture</div>
+                <div className="text-muted-foreground/70 font-semibold">WellnessHub</div>
+                <div className="text-muted-foreground/70 font-semibold">HolisticLife</div>
+                <div className="text-muted-foreground/70 font-semibold">MindfulCare</div>
+                <div className="text-muted-foreground/70 font-semibold">VitalBalance</div>
               </div>
             </motion.div>
           </div>
@@ -132,8 +133,8 @@ const HeroSection: React.FC = () => {
               <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl shadow-xl overflow-hidden">
                 <div className="p-6 sm:p-8">
                   <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Dna className="mr-2 h-5 w-5 text-primary" />
-                    Your Health Insights
+                    <Heart className="mr-2 h-5 w-5 text-primary" />
+                    Your Wellness Journey
                   </h3>
                   
                   <div className="space-y-4 mb-6">
@@ -144,7 +145,7 @@ const HeroSection: React.FC = () => {
                         </div>
                         <div>
                           <h4 className="font-medium text-sm">Lab Analysis Progress</h4>
-                          <p className="text-xs text-muted-foreground mt-1">Cholesterol · Comprehensive Panel</p>
+                          <p className="text-xs text-muted-foreground mt-1">Comprehensive Health Panel</p>
                           <div className="w-full bg-muted rounded-full h-2 mt-2">
                             <div className="bg-primary h-2 rounded-full w-3/4"></div>
                           </div>
@@ -158,8 +159,8 @@ const HeroSection: React.FC = () => {
                           <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-sm">Health Streak</h4>
-                          <p className="text-xs text-muted-foreground mt-1">You've been monitoring your health consistently for 7 days</p>
+                          <h4 className="font-medium text-sm">Wellness Streak</h4>
+                          <p className="text-xs text-muted-foreground mt-1">You've been following your personalized plan for 7 days</p>
                           <div className="flex gap-1 mt-2">
                             {[...Array(7)].map((_, i) => (
                               <div key={i} className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -192,7 +193,7 @@ const HeroSection: React.FC = () => {
                     className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
                     onClick={() => navigate("/login")}
                   >
-                    Get Started
+                    Start Your Journey
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -227,11 +228,11 @@ const HeroSection: React.FC = () => {
               <div className="absolute -bottom-4 -right-4 bg-card border border-border/40 shadow-lg rounded-lg p-3 w-52">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <TestTube className="h-4 w-4 text-primary" />
+                    <MessageSquare className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Lab Analysis Available Now</p>
-                    <p className="text-xs text-muted-foreground">While we develop genetic analysis</p>
+                    <p className="text-xs font-medium">AI Health Advisor Ready</p>
+                    <p className="text-xs text-muted-foreground">Ask questions about your health</p>
                   </div>
                 </div>
               </div>

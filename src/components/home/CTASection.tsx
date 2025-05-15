@@ -1,7 +1,7 @@
 
 import React, { useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -32,9 +32,10 @@ const CTASection: React.FC = () => {
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]"></div>
             <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
               <div className="max-w-xl">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Waiting for our Genetic Analysis?</h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to Decode Your Health?</h2>
                 <p className="text-muted-foreground mb-6 md:mb-0">
-                  While we develop our revolutionary genetic analysis capabilities, try our lab test analysis today to get a glimpse of what BIOMA AI can offer for your health journey.
+                  Join BIOMA AI today and transform confusing lab results into clear, personalized wellness guidance. 
+                  Your journey to better health starts with understanding your body.
                 </p>
               </div>
               
@@ -44,7 +45,7 @@ const CTASection: React.FC = () => {
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleGetStarted}
                 >
-                  Get Started
+                  Start Your Journey
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button 
@@ -53,7 +54,7 @@ const CTASection: React.FC = () => {
                   className="border-primary/20"
                   onClick={scrollToFeatures}
                 >
-                  Learn More
+                  Explore Features
                   <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>

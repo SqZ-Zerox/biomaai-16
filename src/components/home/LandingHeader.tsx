@@ -1,7 +1,7 @@
 
-import React, { useRef } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Dna } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LandingHeader: React.FC = () => {
@@ -18,7 +18,7 @@ const LandingHeader: React.FC = () => {
           <div className="relative flex items-center justify-center w-9 h-9">
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-[6px]"></div>
             <div className="relative rounded-full p-1.5 w-8 h-8 flex items-center justify-center bg-primary/10 border border-primary/20">
-              <Dna className="h-5 w-5 text-primary" />
+              <Heart className="h-5 w-5 text-primary" />
             </div>
           </div>
           <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>
