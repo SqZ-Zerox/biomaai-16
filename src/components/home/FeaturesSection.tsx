@@ -178,8 +178,8 @@ const FeaturesSection: React.FC = () => {
           className="relative rounded-3xl overflow-hidden bg-primary-dark-bg text-white mb-12"
         >
           {/* Background decoration */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent opacity-50"></div>
-          <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,rgba(255,255,255,0.6))]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent opacity-60"></div>
+          <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,rgba(255,255,255,0.3))]"></div>
           
           <div className="relative px-6 py-10 md:p-12">
             {/* Coming Soon Header with enhanced styling */}
@@ -207,10 +207,10 @@ const FeaturesSection: React.FC = () => {
                   viewport={{ once: true, margin: "-100px" }}
                   className={`relative ${feature.highlight ? 'lg:col-span-3 md:col-span-2' : ''}`}
                 >
-                  <div className={`absolute -inset-px rounded-xl ${feature.highlight ? 'bg-gradient-to-r from-primary/30 to-primary/10' : 'bg-white/5'} blur-sm -z-10`}></div>
-                  <Card className={`h-full border-white/10 hover:border-primary/40 transition-all duration-300 bg-white/5 backdrop-blur-sm p-6 ${feature.highlight ? 'md:flex md:items-center md:gap-8' : ''}`}>
+                  <div className={`absolute -inset-px rounded-xl ${feature.highlight ? 'bg-gradient-to-r from-primary/40 to-primary/20' : 'bg-white/10'} blur opacity-75 group-hover:opacity-100 transition-opacity duration-300 -z-10`}></div>
+                  <Card className={`group h-full border-white/10 hover:border-primary/40 transition-all duration-300 bg-primary-dark-bg/40 hover:bg-primary-dark-bg/60 backdrop-blur-lg p-6 hover:shadow-[0_0_25px_-3px_theme(colors.primary/0.4)] hover:scale-[1.02]`}>
                     <div className={feature.highlight ? 'md:flex-shrink-0' : ''}>
-                      <div className={`h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''} glow-effect`}>
+                      <div className={`h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center mb-4 ${feature.highlight ? 'md:h-16 md:w-16' : ''} glow-effect group-hover:scale-105 transition-transform duration-300`}>
                         {feature.icon}
                       </div>
                     </div>
