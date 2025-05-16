@@ -1,11 +1,16 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const LandingHeader: React.FC = () => {
   const navigate = useNavigate();
-  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png"; // Updated with new logo
+  const location = useLocation();
+  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png";
+
+  // Hide logo on auth pages
+  const shouldShowLogo = !location.pathname.includes('/login') && 
+                         !location.pathname.includes('/auth');
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -15,14 +20,16 @@ const LandingHeader: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background/90 backdrop-blur-md border-b border-border/20">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="relative flex items-center justify-center">
-            <img 
-              src={logoUrl} 
-              alt="BiomaAI Logo" 
-              className="w-20 h-20 object-contain" 
-              style={{ filter: 'brightness(1.2)' }}
-            />
-          </div>
+          {shouldShowLogo && (
+            <div className="relative flex items-center justify-center">
+              <img 
+                src={logoUrl} 
+                alt="BiomaAI Logo" 
+                className="w-20 h-20 object-contain" 
+                style={{ filter: 'brightness(1.2)' }}
+              />
+            </div>
+          )}
           <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>
         </div>
         

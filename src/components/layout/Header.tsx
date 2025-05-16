@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon, Bell, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -17,7 +17,13 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { profile } = useAuth();
-  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png"; // Updated with new logo
+  const location = useLocation();
+  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png";
+  
+  // Hide logo on dashboard and auth pages
+  const shouldShowLogo = !location.pathname.includes('/dashboard') && 
+                         !location.pathname.includes('/login') &&
+                         !location.pathname.includes('/auth');
 
   return (
     <header className="bg-card/70 backdrop-blur-md border-b border-border/40 py-3 sticky top-0 z-30">
@@ -31,14 +37,16 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             role="button"
             tabIndex={0}
           >
-            <div className="flex items-center justify-center">
-              <img 
-                src={logoUrl} 
-                alt="BiomaAI Logo" 
-                className="w-24 h-24 object-contain" 
-                style={{ filter: 'brightness(1.2)' }}
-              />
-            </div>
+            {shouldShowLogo && (
+              <div className="flex items-center justify-center">
+                <img 
+                  src={logoUrl} 
+                  alt="BiomaAI Logo" 
+                  className="w-24 h-24 object-contain" 
+                  style={{ filter: 'brightness(1.2)' }}
+                />
+              </div>
+            )}
             {!isMobile && <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>}
           </div>
         </div>
