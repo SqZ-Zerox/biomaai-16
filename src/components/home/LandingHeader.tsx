@@ -1,11 +1,10 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LandingHeader: React.FC = () => {
   const navigate = useNavigate();
+  const logoUrl = "/lovable-uploads/1fab83ec-4fc6-4b85-9376-3e87d9df2a46.png";
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -16,9 +15,9 @@ const LandingHeader: React.FC = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="relative flex items-center justify-center w-9 h-9">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-[6px]"></div>
-            <div className="relative rounded-full p-1.5 w-8 h-8 flex items-center justify-center bg-primary/10 border border-primary/20">
-              <Heart className="h-5 w-5 text-primary" />
+            <div className="absolute inset-0 bg-primary/20 rounded-lg blur-[6px]"></div>
+            <div className="relative rounded-lg p-1 w-8 h-8 flex items-center justify-center bg-card/50 border border-primary/20">
+              <img src={logoUrl} alt="BiomaAI Logo" className="w-6 h-6 object-contain" />
             </div>
           </div>
           <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>

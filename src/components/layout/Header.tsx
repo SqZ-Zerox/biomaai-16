@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon, Bell, User } from "lucide-react";
@@ -17,6 +16,7 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { profile } = useAuth();
+  const logoUrl = "/lovable-uploads/1fab83ec-4fc6-4b85-9376-3e87d9df2a46.png";
 
   return (
     <header className="bg-card/70 backdrop-blur-md border-b border-border/40 py-3 sticky top-0 z-30">
@@ -30,8 +30,8 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             role="button"
             tabIndex={0}
           >
-            <div className="neon-border rounded-full p-1.5 w-9 h-9 flex items-center justify-center bg-primary/10">
-              <span className="text-primary font-bold">B</span>
+            <div className="neon-border rounded-lg p-1 w-9 h-9 flex items-center justify-center bg-card">
+              <img src={logoUrl} alt="BiomaAI Logo" className="w-7 h-7 object-contain" />
             </div>
             {!isMobile && <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>}
           </div>
