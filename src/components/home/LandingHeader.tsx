@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const LandingHeader: React.FC = () => {
   const navigate = useNavigate();
-  const logoUrl = "/lovable-uploads/ad59829f-84fe-4b58-a803-a7a930074fb4.png"; // Updated with new logo
+  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png"; // Updated with new logo
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -19,7 +19,7 @@ const LandingHeader: React.FC = () => {
             <img 
               src={logoUrl} 
               alt="BiomaAI Logo" 
-              className="w-16 h-16 object-contain" 
+              className="w-20 h-20 object-contain" 
               style={{ filter: 'brightness(1.2)' }}
             />
           </div>

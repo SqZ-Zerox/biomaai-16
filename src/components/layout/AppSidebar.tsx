@@ -14,7 +14,7 @@ import UserProfile from "./sidebar/UserProfile";
 import SidebarFooterContent from "./sidebar/SidebarFooter";
 
 const AppSidebar = () => {
-  const logoUrl = "/lovable-uploads/ad59829f-84fe-4b58-a803-a7a930074fb4.png"; // Updated with new logo
+  const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png"; // Updated with new logo
   return (
     <Sidebar>
       <SidebarHeader className="py-6">
@@ -23,7 +23,7 @@ const AppSidebar = () => {
             <img 
               src={logoUrl} 
               alt="BiomaAI Logo" 
-              className="w-20 h-20 object-contain" 
+              className="w-24 h-24 object-contain" 
               style={{ filter: 'brightness(1.2)' }}
             />
           </div>
