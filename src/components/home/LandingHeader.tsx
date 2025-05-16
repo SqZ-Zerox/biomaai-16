@@ -8,9 +8,8 @@ const LandingHeader: React.FC = () => {
   const location = useLocation();
   const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png";
 
-  // Hide logo on auth pages
-  const shouldShowLogo = !location.pathname.includes('/login') && 
-                         !location.pathname.includes('/auth');
+  // Only show logo on the exact landing page route (/)
+  const shouldShowLogo = location.pathname === '/';
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });

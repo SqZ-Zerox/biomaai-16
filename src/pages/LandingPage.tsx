@@ -4,8 +4,6 @@ import LandingHeader from "@/components/home/LandingHeader";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
-import PricingSection from "@/components/home/PricingSection";
-import FAQSection from "@/components/home/FAQSection";
 import CTASection from "@/components/home/CTASection";
 import LandingFooter from "@/components/home/LandingFooter";
 
@@ -17,8 +15,6 @@ const LandingPage: React.FC = () => {
         <HeroSection />
         <FeaturesSection />
         <TestimonialsSection />
-        <PricingSection />
-        <FAQSection />
         <CTASection />
       </main>
       <LandingFooter />
