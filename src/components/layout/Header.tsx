@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon, Bell, User } from "lucide-react";
@@ -17,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { profile } = useAuth();
-  const logoUrl = "/lovable-uploads/df0476f6-6a0f-41e6-a14b-2abf89833186.png"; // Updated user uploaded image
+  const logoUrl = "/lovable-uploads/ad59829f-84fe-4b58-a803-a7a930074fb4.png"; // Updated with new logo
 
   return (
     <header className="bg-card/70 backdrop-blur-md border-b border-border/40 py-3 sticky top-0 z-30">
@@ -31,9 +30,13 @@ const Header: React.FC<HeaderProps> = ({ toggleDarkMode, isDarkMode }) => {
             role="button"
             tabIndex={0}
           >
-            {/* Updated logo container: removed neon-border; added border; increased size */}
             <div className="border border-primary/30 rounded-lg p-1 w-16 h-16 flex items-center justify-center bg-card">
-              <img src={logoUrl} alt="BiomaAI Logo" className="w-14 h-14 object-contain" /> {/* Increased size */}
+              <img 
+                src={logoUrl} 
+                alt="BiomaAI Logo" 
+                className="w-14 h-14 object-contain" 
+                style={{ filter: 'brightness(1.2)' }} // Added brightness to improve visibility
+              />
             </div>
             {!isMobile && <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>}
           </div>
