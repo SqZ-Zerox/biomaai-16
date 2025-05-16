@@ -4,8 +4,9 @@ import { NavLink } from "react-router-dom";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { 
   Home, Upload, ActivitySquare, Utensils, MessageCircle, 
-  TrendingUp, Dna, Watch, Badge 
+  TrendingUp, Dna, Watch, Badge as LucideBadgeIcon // Renamed to avoid conflict if needed, though Badge component is from ui
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge"; // This is the Badge component for UI
 
 const CoreMenu = () => {
   return (
@@ -111,6 +112,7 @@ const CoreMenu = () => {
           </SidebarMenuButton>
         </SidebarMenuItem>
 
+        {/* Corrected Genetic Analysis Item */}
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
             <NavLink 
@@ -128,6 +130,7 @@ const CoreMenu = () => {
           </SidebarMenuButton>
         </SidebarMenuItem>
 
+        {/* Corrected Wearable Tech Item */}
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
             <NavLink 
@@ -150,3 +153,4 @@ const CoreMenu = () => {
 };
 
 export default CoreMenu;
+
