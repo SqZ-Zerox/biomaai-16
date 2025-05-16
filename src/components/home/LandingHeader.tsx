@@ -15,15 +15,13 @@ const LandingHeader: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background/90 backdrop-blur-md border-b border-border/20">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="relative flex items-center justify-center w-14 h-14">
-            <div className="relative rounded-lg p-1 w-14 h-14 flex items-center justify-center bg-card/50 border border-primary/30">
-              <img 
-                src={logoUrl} 
-                alt="BiomaAI Logo" 
-                className="w-12 h-12 object-contain" 
-                style={{ filter: 'brightness(1.2)' }} // Added brightness to improve visibility
-              />
-            </div>
+          <div className="relative flex items-center justify-center">
+            <img 
+              src={logoUrl} 
+              alt="BiomaAI Logo" 
+              className="w-16 h-16 object-contain" 
+              style={{ filter: 'brightness(1.2)' }}
+            />
           </div>
           <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>
         </div>

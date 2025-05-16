@@ -19,12 +19,12 @@ const AppSidebar = () => {
     <Sidebar>
       <SidebarHeader className="py-6">
         <div className="flex items-center gap-2 px-4">
-          <div className="border border-primary/30 rounded-lg p-1 w-16 h-16 flex items-center justify-center bg-card">
+          <div className="flex items-center justify-center">
             <img 
               src={logoUrl} 
               alt="BiomaAI Logo" 
-              className="w-14 h-14 object-contain" 
-              style={{ filter: 'brightness(1.2)' }} // Added brightness to improve visibility
+              className="w-20 h-20 object-contain" 
+              style={{ filter: 'brightness(1.2)' }}
             />
           </div>
           <h1 className="text-xl font-bold text-foreground">Bioma<span className="text-primary">AI</span></h1>
