@@ -37,9 +37,20 @@ const GeneticFeatureSection: React.FC = () => {
             Currently showcasing lab test analysis, with genetic analysis coming soon
           </p>
         </div>
-        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-white">
-          Join Waitlist for Genetic Analysis <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-white btn-hover-effect">
+            <span className="relative z-10 flex items-center">
+              Join Waitlist for Genetic Analysis
+              <motion.span
+                className="ml-2"
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </motion.span>
+            </span>
+          </Button>
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -49,16 +60,20 @@ const GeneticFeatureSection: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 + 0.2 }}
+            className="hover-lift"
           >
             <Card className="h-full border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-md bg-card/60 backdrop-blur-sm">
               <CardContent className="pt-6">
-                <div className="mb-4 p-3 bg-primary/10 w-fit rounded-lg">
+                <motion.div 
+                  className="mb-4 p-3 bg-primary/10 w-fit rounded-lg"
+                  whileHover={{ rotate: [0, 5, -5, 0], transition: { duration: 0.5 } }}
+                >
                   {feature.icon}
-                </div>
+                </motion.div>
                 <div className="flex items-center gap-2 mb-2">
                   <h4 className="font-semibold text-lg">{feature.title}</h4>
                   {feature.comingSoon && (
-                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">Coming Soon</Badge>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 badge-pulse">Coming Soon</Badge>
                   )}
                 </div>
                 <p className="text-muted-foreground">{feature.description}</p>
@@ -68,7 +83,12 @@ const GeneticFeatureSection: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/20">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/20"
+      >
         <div className="flex items-start gap-3">
           <div className="p-2 bg-primary/10 rounded-full mt-1">
             <Dna className="h-5 w-5 text-primary" />
@@ -83,7 +103,7 @@ const GeneticFeatureSection: React.FC = () => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

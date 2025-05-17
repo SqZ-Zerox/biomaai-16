@@ -32,7 +32,7 @@ const WearableTechBanner: React.FC = () => {
               <AlertTitle className="text-lg font-bold">
                 Wearable Technology Integration
               </AlertTitle>
-              <Badge variant="outline" className="bg-primary/15 border-primary/30 text-primary font-medium">Coming Soon</Badge>
+              <Badge variant="outline" className="bg-primary/15 border-primary/30 text-primary font-medium badge-pulse">Coming Soon</Badge>
             </div>
             <AlertDescription className="mt-2">
               <p className="text-muted-foreground mb-2">
@@ -47,7 +47,7 @@ const WearableTechBanner: React.FC = () => {
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
             <Button 
               variant="outline" 
-              className="mt-2 sm:mt-0 whitespace-nowrap border-primary/30 text-primary hover:bg-primary hover:text-white group relative overflow-hidden"
+              className="mt-2 sm:mt-0 whitespace-nowrap border-primary/30 text-primary hover:bg-primary hover:text-white group relative overflow-hidden btn-hover-effect"
               onClick={() => navigate('/wearable')}
             >
               <span className="relative z-10 flex items-center">
@@ -60,7 +60,6 @@ const WearableTechBanner: React.FC = () => {
                   <ArrowRight className="h-4 w-4" />
                 </motion.span>
               </span>
-              <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </Button>
           </motion.div>
         </div>

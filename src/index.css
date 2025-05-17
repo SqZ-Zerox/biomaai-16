@@ -4,7 +4,7 @@
 @tailwind utilities;
  
 @layer base {
-  /* Root variables for light theme with purplish-bluish tones */
+  /* Root variables for light theme with purplish tone matching the uploaded image */
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -21,13 +21,13 @@
     --border: 240 6% 90%;
     --input: 240 6% 90%;
  
-    --primary: 250 82% 60%; /* Adjusted to purplish-blue: rgb(99, 78, 235) */
+    --primary: 252 68% 55%; /* Adjusted to match the uploaded purple color */
     --primary-foreground: 210 40% 98%;
  
     --secondary: 240 10% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
  
-    --accent: 250 82% 60%; /* Matching primary */
+    --accent: 252 68% 55%; /* Matching primary */
     --accent-foreground: 222.2 47.4% 11.2%;
  
     --destructive: 0 84.2% 60.2%;
@@ -36,7 +36,7 @@
     --success: 142 76% 36%;
     --success-foreground: 210 40% 98%;
  
-    --ring: 250 82% 60%; /* Matching primary */
+    --ring: 252 68% 55%; /* Matching primary */
  
     --radius: 0.5rem;
   }
@@ -57,13 +57,13 @@
     --border: 240 9% 25%;
     --input: 240 9% 25%;
  
-    --primary: 250 82% 60%; /* Same purplish-blue as light theme */
+    --primary: 252 68% 60%; /* Same purple as light theme but slightly brighter for dark mode */
     --primary-foreground: 210 40% 98%;
  
     --secondary: 240 15% 17.5%;
     --secondary-foreground: 210 40% 98%;
  
-    --accent: 250 75% 70%; /* Slightly lighter for dark mode */
+    --accent: 252 68% 65%; /* Slightly lighter for dark mode */
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 62.8% 30.6%;
@@ -131,12 +131,12 @@
 .elegant-border {
   border: 1px solid;
   border-image-slice: 1;
-  border-image-source: linear-gradient(to right, rgba(155, 135, 245, 0.3), rgba(126, 105, 171, 0.1));
+  border-image-source: linear-gradient(to right, rgba(133, 90, 255, 0.3), rgba(133, 90, 255, 0.1));
 }
 
-/* Animated background */
+/* Animated background - modified to use smoother animation */
 .animated-gradient {
-  background: linear-gradient(-45deg, #9b87f5, #7E69AB, #6E59A5, #9b87f5);
+  background: linear-gradient(-45deg, #855aff, #9d77ff, #7644ff, #855aff);
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
 }
@@ -155,7 +155,7 @@
 
 /* Soft shadow effect */
 .soft-shadow {
-  box-shadow: 0 8px 30px rgba(155, 135, 245, 0.1);
+  box-shadow: 0 8px 30px rgba(133, 90, 255, 0.1);
 }
 
 .dark .soft-shadow {
@@ -165,4 +165,73 @@
 /* Blur effect for cards and modals */
 .blur-backdrop {
   backdrop-filter: blur(8px);
+}
+
+/* Fixed animation for "Coming Soon" elements to prevent flickering */
+.badge-pulse {
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+/* Smooth reveal animation for staggered items */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.stagger-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Refined hover effects */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Subtle background animation */
+.subtle-animate {
+  transition: all 0.3s ease;
+}
+
+.subtle-animate:hover {
+  background-color: rgba(133, 90, 255, 0.05);
+}
+
+/* Button hover animation */
+.btn-hover-effect {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-hover-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
+  z-index: -1;
+}
+
+.btn-hover-effect:hover::before {
+  left: 100%;
 }

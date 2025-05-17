@@ -1,7 +1,7 @@
 
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { ArrowRight, ArrowUpRight, Heart } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -41,7 +41,6 @@ const CTASection: React.FC = () => {
     }
   };
 
-  // Fixed the glowVariants to use a specific repeatType from allowed options
   const glowVariants = {
     initial: { opacity: 0.5, scale: 1 },
     animate: { 
@@ -50,7 +49,7 @@ const CTASection: React.FC = () => {
       transition: { 
         duration: 3, 
         repeat: Infinity,
-        repeatType: "reverse" as const // Type assertion to fix the error
+        repeatType: "reverse" as const
       }
     }
   };
@@ -93,7 +92,6 @@ const CTASection: React.FC = () => {
                 className="flex flex-col sm:flex-row gap-3 md:flex-col lg:flex-row"
                 variants={itemVariants}
               >
-                {/* Wrap Button in motion.div for hover animations */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
@@ -101,7 +99,7 @@ const CTASection: React.FC = () => {
                 >
                   <Button 
                     size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full relative overflow-hidden group"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full relative overflow-hidden group btn-hover-effect"
                     onClick={handleGetStarted}
                   >
                     <span className="relative z-10 flex items-center">
@@ -114,11 +112,9 @@ const CTASection: React.FC = () => {
                         <ArrowRight className="h-4 w-4" />
                       </motion.span>
                     </span>
-                    <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Button>
                 </motion.div>
                 
-                {/* Wrap Button in motion.div for hover animations */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
@@ -127,7 +123,7 @@ const CTASection: React.FC = () => {
                   <Button 
                     size="lg"
                     variant="outline"
-                    className="border-primary/20 w-full group"
+                    className="border-primary/20 w-full group subtle-animate"
                     onClick={scrollToFeatures}
                   >
                     <span className="flex items-center">

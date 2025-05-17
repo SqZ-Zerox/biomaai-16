@@ -120,7 +120,7 @@ const LandingHeader: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="ml-2 transition-transform border-primary/30 hover:border-primary/60" 
+              className="ml-2 transition-transform border-primary/30 hover:border-primary/60 subtle-animate" 
               onClick={() => navigate("/login")}
             >
               Sign In
@@ -137,11 +137,10 @@ const LandingHeader: React.FC = () => {
           >
             <Button 
               size="sm" 
-              className="ml-1 transition-transform relative overflow-hidden group" 
+              className="ml-1 transition-transform relative overflow-hidden group btn-hover-effect" 
               onClick={() => navigate("/login")}
             >
               <span className="relative z-10">Get Started</span>
-              <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </Button>
           </motion.div>
         </nav>
@@ -157,10 +156,9 @@ const LandingHeader: React.FC = () => {
           <Button 
             size="sm" 
             onClick={() => navigate("/login")}
-            className="transition-transform relative overflow-hidden group"
+            className="transition-transform relative overflow-hidden group btn-hover-effect"
           >
             <span className="relative z-10">Sign In</span>
-            <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
           </Button>
         </motion.div>
       </div>

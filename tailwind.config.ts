@@ -29,7 +29,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))"
         },
-        "primary-dark-bg": "hsl(246, 40%, 25%)", // Adjusted to more purplish
+        "primary-dark-bg": "hsl(252, 40%, 25%)", // Adjusted to more purplish
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))"
@@ -65,10 +65,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         legal: {
-          primary: "#7E69AB", // Updated to purplish
-          secondary: "#6E59A5", // Updated to purplish
+          primary: "#855aff", // Updated to match our new purple
+          secondary: "#7644ff", // Updated to match our new purple
           muted: "#1A2C42", 
-          accent: "#9B87F5", // Updated to purplish
+          accent: "#9d77ff", // Updated to match our new purple
         }
       },
       borderRadius: {
@@ -128,8 +128,8 @@ export default {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "purple-gradient": "linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%)",
-        "purple-blue-gradient": "linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)",
+        "purple-gradient": "linear-gradient(90deg, #855aff 0%, #9d77ff 100%)",
+        "purple-blue-gradient": "linear-gradient(90deg, #855aff 0%, #7644ff 100%)",
       }
     }
   },
