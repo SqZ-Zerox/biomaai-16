@@ -1,4 +1,3 @@
-
 import React from "react";
 
 export interface Goal {
@@ -7,7 +6,7 @@ export interface Goal {
   description: string;
   id: string;
   title: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement; // Changed from React.ReactNode to React.ReactElement
 }
 
 export interface DietaryOption {
