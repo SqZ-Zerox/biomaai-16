@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import NutritionPlanCreator from '@/components/nutrition/NutritionPlanCreator';
-import GeneratedMealPlanView from '@/components/nutrition/GeneratedMealPlanView'; // Assuming this will be used later
+import GeneratedMealPlanView from '@/components/nutrition/GeneratedMealPlanView';
 import { useNutritionPlan } from '@/hooks/useNutritionPlan';
 import { goals, dietaryOptions, restrictionOptions } from '@/components/nutrition/formData';
 import { Loader2, RefreshCw } from 'lucide-react';
@@ -70,17 +70,21 @@ const MyPlanTab: React.FC = () => {
   }
   
   if (planGenerated && generatedPlan) {
-    // If a plan is generated (either successfully or fallback), show it.
-    // For now, let's use GeneratedMealPlanView or a placeholder
-    // The GeneratedMealPlanView is read-only, so we'd need to implement a similar view
-    // or use a simpler display for now.
     return (
        <GeneratedMealPlanView
-        plan={generatedPlan}
+        generatedPlan={generatedPlan}
+        mealPreferences={mealPreferences}
         currentDay={currentDay}
         setCurrentDay={setCurrentDay}
-        onTryAgain={handleTryAgain}
-        isLoading={isLoading}
+        selectedGoal={selectedGoal}
+        dietType={dietType}
+        location={location}
+        calorieTarget={calorieTarget}
+        error={error}
+        handleTryAgain={handleTryAgain}
+        handleViewRecipes={handleViewRecipes}
+        // isLoading prop was passed before but is not defined in GeneratedMealPlanViewProps
+        // if it's needed, it should be added to GeneratedMealPlanViewProps
       />
     );
   }
@@ -109,9 +113,10 @@ const MyPlanTab: React.FC = () => {
       goals={goals}
       dietaryOptions={dietaryOptions}
       restrictionOptions={restrictionOptions}
-      handleViewRecipes={handleViewRecipes} // This navigates to /recipes
+      handleViewRecipes={handleViewRecipes}
     />
   );
 };
 
 export default MyPlanTab;
+
