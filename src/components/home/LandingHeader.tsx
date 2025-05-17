@@ -1,62 +1,168 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const LandingHeader: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const logoUrl = "/lovable-uploads/a250c362-9d68-403d-a105-c329a9435a47.png";
+  const [scrollY, setScrollY] = useState(0);
 
   // Only show logo on the exact landing page route (/)
   const shouldShowLogo = location.pathname === '/';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const headerOpacity = Math.min(0.9 + scrollY * 0.001, 0.98);
+  const headerBlur = Math.min(4 + scrollY * 0.05, 12);
+
+  const navItemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: (i: number) => ({
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        delay: i * 0.1,
+        duration: 0.3,
+        ease: "easeOut" 
+      }
+    })
+  };
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background/90 backdrop-blur-md border-b border-border/20">
+    <motion.header 
+      className="fixed top-0 left-0 right-0 z-50 py-4 px-6 border-b border-border/20"
+      style={{ 
+        backgroundColor: `rgba(var(--background), ${headerOpacity})`,
+        backdropFilter: `blur(${headerBlur}px)` 
+      }}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    >
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <motion.div 
+          className="flex items-center gap-2"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           {shouldShowLogo && (
-            <div className="relative flex items-center justify-center">
+            <motion.div 
+              className="relative flex items-center justify-center"
+              initial={{ rotate: -10, scale: 0.9 }}
+              animate={{ rotate: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              whileHover={{ scale: 1.05, rotate: 5 }}
+            >
               <img 
                 src={logoUrl} 
                 alt="BiomaAI Logo" 
                 className="w-20 h-20 object-contain" 
                 style={{ filter: 'brightness(1.2)' }}
               />
-            </div>
+            </motion.div>
           )}
-          <h1 className="text-xl font-bold">BIOMA<span className="text-primary">AI</span></h1>
-        </div>
+          <motion.h1 
+            className="text-xl font-bold"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            BIOMA<span className="text-primary">AI</span>
+          </motion.h1>
+        </motion.div>
         
         <nav className="hidden md:flex items-center space-x-1">
-          <Button variant="ghost" size="sm" onClick={() => scrollToSection('features')}>
-            Features
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => scrollToSection('testimonials')}>
-            Testimonials
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => scrollToSection('pricing')}>
-            Pricing
-          </Button>
-          <Button variant="outline" size="sm" className="ml-2" onClick={() => navigate("/login")}>
-            Sign In
-          </Button>
-          <Button size="sm" className="ml-1" onClick={() => navigate("/login")}>
-            Get Started
-          </Button>
+          {["features", "testimonials", "pricing"].map((section, i) => (
+            <motion.div
+              key={section}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={navItemVariants}
+            >
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => scrollToSection(section)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {section.charAt(0).toUpperCase() + section.slice(1)}
+              </Button>
+            </motion.div>
+          ))}
+          
+          <motion.div
+            custom={3}
+            initial="hidden"
+            animate="visible"
+            variants={navItemVariants}
+          >
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-2" 
+              onClick={() => navigate("/login")}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Sign In
+            </Button>
+          </motion.div>
+          
+          <motion.div
+            custom={4}
+            initial="hidden"
+            animate="visible"
+            variants={navItemVariants}
+          >
+            <Button 
+              size="sm" 
+              className="ml-1" 
+              onClick={() => navigate("/login")}
+              whileHover={{ 
+                scale: 1.05,
+                transition: { duration: 0.2 } 
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get Started
+            </Button>
+          </motion.div>
         </nav>
         
-        <div className="md:hidden flex items-center">
-          <Button size="sm" onClick={() => navigate("/login")}>
+        <motion.div 
+          className="md:hidden flex items-center"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Button 
+            size="sm" 
+            onClick={() => navigate("/login")}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             Sign In
           </Button>
-        </div>
+        </motion.div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 
