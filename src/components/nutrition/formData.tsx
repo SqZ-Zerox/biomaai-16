@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Goal, DietaryOption, RestrictionOption } from "./types";
-import { Apple, Target, Zap, Leaf, WheatOff, MilkOff, FishOff, Shrimp } from 'lucide-react'; // Changed Shellfish to Shrimp
+import { Apple, Target, Zap, Leaf, WheatOff, MilkOff, FishOff } from 'lucide-react'; // Removed Shrimp
 
 export const goals: Goal[] = [
   {
@@ -56,3 +57,4 @@ export const restrictionOptions: RestrictionOption[] = [
   { id: "shellfish-free", value: "shellfish-free", label: "Shellfish-Free" }, // Icon for this is in the goals array, not directly here. The general restriction list does not use icons per item in the current structure.
   { id: "fish-free", value: "fish-free", label: "Fish-Free" },
 ];
+
