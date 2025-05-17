@@ -1,12 +1,10 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Info, Calendar, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import MealPlanDisplay from "@/components/nutrition/MealPlanDisplay";
-import { MealPreferences, MealPlan } from "@/components/nutrition/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, ArrowLeft, FileText } from "lucide-react";
+import WeeklyNutritionPlan from "./WeeklyNutritionPlan";
+import { MealPlan, MealPreferences } from "./types";
 
 interface GeneratedMealPlanViewProps {
   generatedPlan: MealPlan | null;
@@ -35,93 +33,45 @@ const GeneratedMealPlanView: React.FC<GeneratedMealPlanViewProps> = ({
   handleTryAgain,
   handleViewRecipes
 }) => {
-  const navigate = useNavigate();
-  
-  if (!generatedPlan) return null;
-  
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="flex flex-col gap-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center">
-              <Apple className="mr-2 h-6 w-6 text-primary" />
-              Your 30-Day Nutrition Plan
-            </h1>
-            <p className="text-muted-foreground">Personalized meal plan based on your health goals and preferences</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleTryAgain}>
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Create New Plan
-            </Button>
-            <Button onClick={handleViewRecipes}>
-              Find Recipes
-            </Button>
-          </div>
-        </div>
-        
-        {error && (
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500 rounded-lg mb-2">
-            <h3 className="font-medium flex items-center">
-              <Info className="h-4 w-4 mr-2" />
-              Using Sample Plan
-            </h3>
-            <p className="text-sm mt-1">
-              We couldn't generate your personalized plan due to an API issue. 
-              You're viewing a sample plan. Try again later or add your own Gemini API key in Settings.
+  if (!generatedPlan) {
+    return (
+      <Card className="border-border/40">
+        <CardContent className="pt-6">
+          <div className="text-center py-12">
+            <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h2 className="mt-4 text-2xl font-semibold">No Plan Available</h2>
+            <p className="mt-2 text-muted-foreground">
+              There was a problem generating your nutrition plan.
             </p>
+            <div className="flex justify-center mt-6 gap-4">
+              <Button onClick={handleTryAgain}>
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={handleViewRecipes}>
+                <FileText className="mr-2 h-4 w-4" />
+                View Recipes Instead
+              </Button>
+            </div>
           </div>
-        )}
-        
-        <Card className="border-border/40">
-          <CardHeader>
-            <div className="flex justify-between items-center flex-col sm:flex-row gap-4">
-              <div>
-                <CardTitle className="flex items-center">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  30-Day Nutrition Plan for {selectedGoal}
-                </CardTitle>
-                <CardDescription>
-                  Following a {dietType} diet with {calorieTarget} calories per day
-                  {location && ` • Optimized for ${location}`}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-primary/20 hover:bg-primary/30 text-primary border-primary/30">
-                  {calorieTarget} calories/day
-                </Badge>
-                <Button variant="outline" size="sm">
-                  Download Plan
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6 p-4 bg-primary/10 rounded-lg">
-              <h3 className="font-medium mb-2">Plan Overview</h3>
-              <p className="text-sm">This nutrition plan is specifically designed to support your goal of <strong>{selectedGoal}</strong>. It provides balanced meals that meet your daily calorie target of <strong>{calorieTarget} calories</strong> following a <strong>{dietType}</strong> diet approach.</p>
-            </div>
-            
-            <MealPlanDisplay 
-              days={generatedPlan.days}
-              mealPreferences={mealPreferences}
-              currentDay={currentDay}
-              setCurrentDay={setCurrentDay}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-between flex-col sm:flex-row gap-4">
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Info className="h-4 w-4 mr-1" />
-              <span>Nutrition facts are approximate and may vary based on exact ingredients used</span>
-            </div>
-            <Button onClick={handleViewRecipes}>
-              Find Recipe Ideas
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <WeeklyNutritionPlan
+      days={generatedPlan.days || []}
+      mealPreferences={mealPreferences}
+      currentDay={currentDay}
+      setCurrentDay={setCurrentDay}
+      selectedGoal={selectedGoal}
+      dietType={dietType}
+      location={location}
+      calorieTarget={calorieTarget}
+      error={error}
+      handleTryAgain={handleTryAgain}
+      handleViewRecipes={handleViewRecipes}
+    />
   );
 };
 
