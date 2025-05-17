@@ -3,6 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MealPreferences } from "./types";
 
 interface StepThreeProps {
@@ -22,77 +23,81 @@ const StepThree: React.FC<StepThreeProps> = ({
   mealPreferences,
   onMealPreferenceToggle
 }) => {
+  const mealTypes: Array<{id: keyof MealPreferences, label: string}> = [
+    { id: "breakfast", label: "Breakfast" },
+    { id: "lunch", label: "Lunch" },
+    { id: "dinner", label: "Dinner" },
+    { id: "snacks", label: "Snacks" },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold">Meal Preferences</h2>
-        <p className="text-muted-foreground">Customize your daily meal structure</p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold tracking-tight">Customize Your Meals</h2>
+        <p className="text-muted-foreground mt-1">Adjust daily meals, calorie targets, and preferred meal types.</p>
       </div>
       
-      <div className="space-y-8">
-        <div className="space-y-3">
-          <Label className="text-base">Meals per Day: {mealCount}</Label>
-          <Slider
-            min={2}
-            max={6}
-            step={1}
-            value={[mealCount]}
-            onValueChange={(value) => setMealCount(value[0])}
-          />
-        </div>
-        
-        <div className="space-y-3">
-          <Label className="text-base">Daily Calorie Target: {calorieTarget}</Label>
-          <Slider
-            min={1200}
-            max={4000}
-            step={100}
-            value={[calorieTarget]}
-            onValueChange={(value) => setCalorieTarget(value[0])}
-          />
-          <p className="text-xs text-muted-foreground">
-            Recommended based on your profile and activity level
-          </p>
-        </div>
-        
-        <div className="space-y-3">
-          <Label className="text-base">Include Meal Types</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="breakfast" 
-                checked={mealPreferences.breakfast}
-                onCheckedChange={() => onMealPreferenceToggle("breakfast")}
-              />
-              <Label htmlFor="breakfast" className="cursor-pointer">Breakfast</Label>
+      <Card className="border-border/40">
+        <CardHeader>
+          <CardTitle className="text-lg">Daily Meal Structure</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="mealCountSlider" className="text-base font-medium">Meals per Day</Label>
+              <span className="text-primary font-semibold text-lg">{mealCount}</span>
             </div>
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="lunch" 
-                checked={mealPreferences.lunch}
-                onCheckedChange={() => onMealPreferenceToggle("lunch")}
-              />
-              <Label htmlFor="lunch" className="cursor-pointer">Lunch</Label>
-            </div>
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="dinner" 
-                checked={mealPreferences.dinner}
-                onCheckedChange={() => onMealPreferenceToggle("dinner")}
-              />
-              <Label htmlFor="dinner" className="cursor-pointer">Dinner</Label>
-            </div>
-            <div className="flex items-start space-x-2">
-              <Checkbox 
-                id="snacks" 
-                checked={mealPreferences.snacks}
-                onCheckedChange={() => onMealPreferenceToggle("snacks")}
-              />
-              <Label htmlFor="snacks" className="cursor-pointer">Snacks</Label>
-            </div>
+            <Slider
+              id="mealCountSlider"
+              min={2}
+              max={6}
+              step={1}
+              value={[mealCount]}
+              onValueChange={(value) => setMealCount(value[0])}
+              className="my-2"
+            />
           </div>
-        </div>
-      </div>
+          
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="calorieTargetSlider" className="text-base font-medium">Daily Calorie Target</Label>
+              <span className="text-primary font-semibold text-lg">{calorieTarget} kcal</span>
+            </div>
+            <Slider
+              id="calorieTargetSlider"
+              min={1200}
+              max={4000}
+              step={50} // Finer control for calories
+              value={[calorieTarget]}
+              onValueChange={(value) => setCalorieTarget(value[0])}
+              className="my-2"
+            />
+            <CardDescription className="text-xs">
+              Adjust based on your activity level and goals. This is an estimate.
+            </CardDescription>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/40">
+        <CardHeader>
+            <CardTitle className="text-lg">Include Meal Types</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+                {mealTypes.map(mealType => (
+                    <div key={mealType.id} className="flex items-center space-x-2 p-3 rounded-md border border-input hover:bg-muted/50 transition-colors">
+                        <Checkbox 
+                            id={mealType.id} 
+                            checked={mealPreferences[mealType.id]}
+                            onCheckedChange={() => onMealPreferenceToggle(mealType.id)}
+                        />
+                        <Label htmlFor={mealType.id} className="font-normal cursor-pointer flex-1">{mealType.label}</Label>
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

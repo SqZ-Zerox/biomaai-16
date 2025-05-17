@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { MapPin, Search, Check } from "lucide-react";
 
 interface StepFourProps {
   location: string;
@@ -14,12 +15,8 @@ const StepFour: React.FC<StepFourProps> = ({ location, setLocation }) => {
   const [searchTerm, setSearchTerm] = useState(location);
   
   const commonLocations = [
-    "New York, USA",
-    "London, UK",
-    "Tokyo, Japan",
-    "Sydney, Australia",
-    "Paris, France",
-    "Berlin, Germany"
+    "New York, USA", "Los Angeles, USA", "London, UK", "Paris, France", 
+    "Berlin, Germany", "Tokyo, Japan", "Sydney, Australia", "Toronto, Canada"
   ];
 
   const handleLocationSelect = (selectedLocation: string) => {
@@ -27,61 +24,71 @@ const StepFour: React.FC<StepFourProps> = ({ location, setLocation }) => {
     setSearchTerm(selectedLocation);
   };
 
+  const handleSetCustomLocation = () => {
+    setLocation(searchTerm.trim());
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold">Where are you located?</h2>
-        <p className="text-muted-foreground">
-          This helps us recommend meals with locally available ingredients
-        </p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold tracking-tight">Where Are You Based?</h2>
+        <p className="text-muted-foreground mt-1">This helps tailor recommendations to locally available ingredients.</p>
       </div>
 
-      <div className="space-y-5">
-        <div className="space-y-3">
-          <Label htmlFor="location" className="text-base">Your Location</Label>
-          <div className="flex gap-2">
+      <Card className="border-border/40">
+        <CardHeader>
+          <CardTitle className="text-lg">Enter Your Location</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2 items-center">
             <div className="relative flex-1">
-              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 id="location"
-                placeholder="Enter your location (city, country)"
+                placeholder="e.g., City, Country"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-11 text-base" // Increased padding and height
               />
             </div>
             <Button 
-              variant="secondary" 
-              onClick={() => setLocation(searchTerm)}
+              onClick={handleSetCustomLocation}
+              disabled={!searchTerm.trim() || searchTerm.trim() === location}
+              size="lg" // Larger button
             >
               <Search className="h-4 w-4 mr-2" />
               Set
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Your location helps us suggest meals with seasonally available ingredients
-          </p>
-        </div>
+          <CardDescription className="text-xs">
+            Providing your location helps us suggest meals with ingredients that are more likely to be seasonally available near you.
+          </CardDescription>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-3">
-          <Label className="text-base">Common Locations</Label>
-          <div className="flex flex-wrap gap-2">
+      <Card className="border-border/40">
+        <CardHeader>
+          <CardTitle className="text-lg">Or Select a Common Region</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
             {commonLocations.map((loc) => (
               <Button
                 key={loc}
-                variant="outline"
+                variant={location === loc ? "default" : "outline"}
                 size="sm"
-                className={`${
-                  location === loc ? "bg-primary/20 border-primary" : ""
+                className={`transition-all duration-150 ease-in-out ${
+                  location === loc ? "ring-2 ring-primary ring-offset-2 shadow-md" : "hover:bg-accent"
                 }`}
                 onClick={() => handleLocationSelect(loc)}
               >
+                {location === loc && <Check className="mr-2 h-4 w-4" />}
                 {loc}
               </Button>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

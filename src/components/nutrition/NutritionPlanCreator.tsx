@@ -1,6 +1,4 @@
-
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Apple, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProgressStepper from "@/components/nutrition/ProgressStepper";
@@ -58,23 +56,27 @@ const NutritionPlanCreator: React.FC<NutritionPlanCreatorProps> = ({
   handleViewRecipes
 }) => {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <div className="flex flex-col gap-6">
-        <Button 
-          variant="ghost" 
-          className="w-fit text-muted-foreground" 
-          onClick={onBack}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {step === 1 ? 'Back to Dashboard' : 'Previous Step'}
-        </Button>
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="flex flex-col gap-8">
+        {step > 0 && (
+          <Button 
+            variant="ghost" 
+            className="w-fit text-muted-foreground self-start -ml-4" 
+            onClick={onBack}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {step === 1 ? 'Back to Dashboard' : 'Previous Step'}
+          </Button>
+        )}
         
-        <div className="text-center mb-2">
+        <div className="text-center">
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center">
-            <Apple className="mr-2 h-7 w-7 text-primary" />
-            Create 30-Day Nutrition Plan
+            <Apple className="mr-3 h-8 w-8 text-primary" />
+            Create Your Nutrition Plan
           </h1>
-          <p className="text-muted-foreground">Step {step} of 4</p>
+          <p className="text-muted-foreground text-lg">
+            Step {step} of 4: {['Select Your Goal', 'Dietary Choices', 'Meal Setup', 'Your Location'][step - 1] || 'Summary'}
+          </p>
         </div>
         
         <ProgressStepper currentStep={step} totalSteps={4} />
@@ -102,12 +104,6 @@ const NutritionPlanCreator: React.FC<NutritionPlanCreatorProps> = ({
           dietaryOptions={dietaryOptions}
           restrictionOptions={restrictionOptions}
         />
-        
-        <div className="text-center">
-          <Button variant="link" onClick={handleViewRecipes}>
-            Or skip to recipe suggestions
-          </Button>
-        </div>
       </div>
     </div>
   );
