@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -28,7 +29,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))"
         },
-        "primary-dark-bg": "hsl(236, 40%, 25%)", // Added new color #232163
+        "primary-dark-bg": "hsl(246, 40%, 25%)", // Adjusted to more purplish
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))"
@@ -64,10 +65,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))"
         },
         legal: {
-          primary: "#4F78FF", 
-          secondary: "#0057FF", 
+          primary: "#7E69AB", // Updated to purplish
+          secondary: "#6E59A5", // Updated to purplish
           muted: "#1A2C42", 
-          accent: "#4F78FF", 
+          accent: "#9B87F5", // Updated to purplish
         }
       },
       borderRadius: {
@@ -103,6 +104,14 @@ export default {
         "scale-in": {
           from: { transform: "scale(0.95)", opacity: "0" },
           to: { transform: "scale(1)", opacity: "1" }
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" }
+        },
+        "subtle-rotate": {
+          "0%, 100%": { transform: "rotate(-1deg)" },
+          "50%": { transform: "rotate(1deg)" }
         }
       },
       animation: {
@@ -112,7 +121,15 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "fade-out": "fade-out 0.3s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
-        "scale-in": "scale-in 0.3s ease-out"
+        "scale-in": "scale-in 0.3s ease-out",
+        "float": "float 6s ease-in-out infinite",
+        "subtle-rotate": "subtle-rotate 6s ease-in-out infinite"
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "purple-gradient": "linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%)",
+        "purple-blue-gradient": "linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)",
       }
     }
   },

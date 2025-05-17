@@ -50,7 +50,7 @@ const CTASection: React.FC = () => {
       transition: { 
         duration: 3, 
         repeat: Infinity,
-        repeatType: "reverse" // "reverse", "loop", or "mirror" are valid values
+        repeatType: "reverse" as const // Type assertion to fix the error
       }
     }
   };
@@ -73,7 +73,7 @@ const CTASection: React.FC = () => {
           ></motion.div>
           
           <motion.div 
-            className="relative bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-primary/20 overflow-hidden"
+            className="relative glass-card bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-primary/20 overflow-hidden soft-shadow"
             variants={itemVariants}
           >
             <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]"></div>
@@ -101,16 +101,20 @@ const CTASection: React.FC = () => {
                 >
                   <Button 
                     size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full relative overflow-hidden group"
                     onClick={handleGetStarted}
                   >
-                    Start Your Journey
-                    <motion.span
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
-                    >
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </motion.span>
+                    <span className="relative z-10 flex items-center">
+                      Start Your Journey
+                      <motion.span
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
+                        className="ml-2"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </motion.span>
+                    </span>
+                    <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Button>
                 </motion.div>
                 
@@ -123,16 +127,17 @@ const CTASection: React.FC = () => {
                   <Button 
                     size="lg"
                     variant="outline"
-                    className="border-primary/20 w-full"
+                    className="border-primary/20 w-full group"
                     onClick={scrollToFeatures}
                   >
-                    Explore Features
-                    <motion.span
-                      whileHover={{ rotate: 45 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ArrowUpRight className="ml-2 h-4 w-4" />
-                    </motion.span>
+                    <span className="flex items-center">
+                      Explore Features
+                      <motion.span
+                        className="ml-2 transition-transform duration-300 group-hover:rotate-45"
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </motion.span>
+                    </span>
                   </Button>
                 </motion.div>
               </motion.div>

@@ -71,7 +71,7 @@ const LandingHeader: React.FC = () => {
               <img 
                 src={logoUrl} 
                 alt="BiomaAI Logo" 
-                className="w-20 h-20 object-contain" 
+                className="w-20 h-20 object-contain animate-float" 
                 style={{ filter: 'brightness(1.2)' }}
               />
             </motion.div>
@@ -82,7 +82,7 @@ const LandingHeader: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            BIOMA<span className="text-primary">AI</span>
+            BIOMA<span className="text-primary bg-clip-text text-transparent bg-purple-gradient">AI</span>
           </motion.h1>
         </motion.div>
         
@@ -101,9 +101,10 @@ const LandingHeader: React.FC = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => scrollToSection(section)}
-                className="transition-transform"
+                className="transition-transform relative overflow-hidden group"
               >
-                {section.charAt(0).toUpperCase() + section.slice(1)}
+                <span>{section.charAt(0).toUpperCase() + section.slice(1)}</span>
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
               </Button>
             </motion.div>
           ))}
@@ -119,7 +120,7 @@ const LandingHeader: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="ml-2 transition-transform" 
+              className="ml-2 transition-transform border-primary/30 hover:border-primary/60" 
               onClick={() => navigate("/login")}
             >
               Sign In
@@ -136,10 +137,11 @@ const LandingHeader: React.FC = () => {
           >
             <Button 
               size="sm" 
-              className="ml-1 transition-transform" 
+              className="ml-1 transition-transform relative overflow-hidden group" 
               onClick={() => navigate("/login")}
             >
-              Get Started
+              <span className="relative z-10">Get Started</span>
+              <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </Button>
           </motion.div>
         </nav>
@@ -155,9 +157,10 @@ const LandingHeader: React.FC = () => {
           <Button 
             size="sm" 
             onClick={() => navigate("/login")}
-            className="transition-transform"
+            className="transition-transform relative overflow-hidden group"
           >
-            Sign In
+            <span className="relative z-10">Sign In</span>
+            <span className="absolute inset-0 bg-purple-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
           </Button>
         </motion.div>
       </div>
