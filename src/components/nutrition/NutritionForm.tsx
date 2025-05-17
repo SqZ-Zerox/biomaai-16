@@ -103,7 +103,7 @@ const NutritionForm: React.FC<NutritionFormProps> = ({
 
   return (
     <Card className="border-border/40">
-      <CardContent className="pt-6">
+      <CardContent className="pt-4"> {/* Reduced pt-6 to pt-4 */}
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -117,9 +117,11 @@ const NutritionForm: React.FC<NutritionFormProps> = ({
         </AnimatePresence>
       </CardContent>
       <CardFooter className="flex justify-between pt-4 border-t">
+        {/* Back button in footer can be conditional if step > 1, or handled by onBack logic */}
         <Button
           variant="outline"
           onClick={onBack}
+          // disabled={step === 1} // Optionally disable if onBack for step 1 navigates away
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back

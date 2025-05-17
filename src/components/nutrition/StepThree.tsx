@@ -31,17 +31,14 @@ const StepThree: React.FC<StepThreeProps> = ({
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Customize Your Meals</h2>
-        <p className="text-muted-foreground mt-1">Adjust daily meals, calorie targets, and preferred meal types.</p>
-      </div>
+    <div className="space-y-4"> {/* Reduced space-y-8 to space-y-4 */}
+      {/* Removed redundant title section, now handled by NutritionPlanCreator */}
       
       <Card className="border-border/40">
         <CardHeader>
           <CardTitle className="text-lg">Daily Meal Structure</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4"> {/* Reduced space-y-6 to space-y-4 */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <Label htmlFor="mealCountSlider" className="text-base font-medium">Meals per Day</Label>
@@ -67,7 +64,7 @@ const StepThree: React.FC<StepThreeProps> = ({
               id="calorieTargetSlider"
               min={1200}
               max={4000}
-              step={50} // Finer control for calories
+              step={50}
               value={[calorieTarget]}
               onValueChange={(value) => setCalorieTarget(value[0])}
               className="my-2"

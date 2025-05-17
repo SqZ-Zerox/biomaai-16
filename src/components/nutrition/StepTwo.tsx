@@ -24,13 +24,10 @@ const StepTwo: React.FC<StepTwoProps> = ({
   restrictionOptions
 }) => {
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Your Dietary Choices</h2>
-        <p className="text-muted-foreground mt-1">Select your diet type and any restrictions.</p>
-      </div>
+    <div className="space-y-4"> {/* Reduced space-y-8 to space-y-4 */}
+      {/* Removed redundant title section, now handled by NutritionPlanCreator */}
       
-      <div className="space-y-6">
+      <div className="space-y-4"> {/* Reduced space-y-6 to space-y-4 */}
         <Card className="border-border/40">
           <CardHeader>
             <CardTitle className="text-lg">Preferred Diet Type</CardTitle>

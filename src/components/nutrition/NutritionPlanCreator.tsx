@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Apple, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,12 +54,15 @@ const NutritionPlanCreator: React.FC<NutritionPlanCreatorProps> = ({
   goals,
   dietaryOptions,
   restrictionOptions,
-  handleViewRecipes
+  handleViewRecipes // This prop is passed but not used in this component directly after previous changes. Keeping it for now as it might be used by NutritionForm.
 }) => {
+  const stepTitles = ['Select Your Goal', 'Dietary Choices', 'Meal Setup', 'Your Location'];
+  const currentStepTitle = stepTitles[step - 1] || 'Summary';
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="flex flex-col gap-8">
-        {step > 0 && (
+    <div className="container mx-auto px-4 py-6 max-w-2xl"> {/* Reduced py-8 to py-6 */}
+      <div className="flex flex-col gap-6"> {/* Reduced gap-8 to gap-6 */}
+        {step > 0 && ( // Changed from step > 0 for consistency, was step > 1. If back to dashboard logic is tied to step 1, this is fine. Let's assume step 0 is not a valid state for this component.
           <Button 
             variant="ghost" 
             className="w-fit text-muted-foreground self-start -ml-4" 
@@ -75,11 +79,11 @@ const NutritionPlanCreator: React.FC<NutritionPlanCreatorProps> = ({
             Create Your Nutrition Plan
           </h1>
           <p className="text-muted-foreground text-lg">
-            Step {step} of 4: {['Select Your Goal', 'Dietary Choices', 'Meal Setup', 'Your Location'][step - 1] || 'Summary'}
+            Step {step} of {stepTitles.length}: {currentStepTitle}
           </p>
         </div>
         
-        <ProgressStepper currentStep={step} totalSteps={4} />
+        <ProgressStepper currentStep={step} totalSteps={stepTitles.length} />
         
         <NutritionForm
           step={step}

@@ -29,11 +29,8 @@ const StepFour: React.FC<StepFourProps> = ({ location, setLocation }) => {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Where Are You Based?</h2>
-        <p className="text-muted-foreground mt-1">This helps tailor recommendations to locally available ingredients.</p>
-      </div>
+    <div className="space-y-4"> {/* Reduced space-y-8 to space-y-4 */}
+      {/* Removed redundant title section, now handled by NutritionPlanCreator */}
 
       <Card className="border-border/40">
         <CardHeader>
@@ -48,13 +45,13 @@ const StepFour: React.FC<StepFourProps> = ({ location, setLocation }) => {
                 placeholder="e.g., City, Country"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 text-base" // Increased padding and height
+                className="pl-10 h-11 text-base"
               />
             </div>
             <Button 
               onClick={handleSetCustomLocation}
               disabled={!searchTerm.trim() || searchTerm.trim() === location}
-              size="lg" // Larger button
+              size="lg"
             >
               <Search className="h-4 w-4 mr-2" />
               Set

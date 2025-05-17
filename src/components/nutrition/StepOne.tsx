@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Added CardHeader, CardTitle, CardDescription
-import { CheckCircle2 } from "lucide-react"; // Using a different check icon for a clearer selection
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CheckCircle2 } from "lucide-react";
 import { Goal } from "./types";
 
 interface StepOneProps {
@@ -12,11 +12,8 @@ interface StepOneProps {
 
 const StepOne: React.FC<StepOneProps> = ({ selectedGoal, onGoalSelect, goals }) => {
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">What's Your Primary Goal?</h2>
-        <p className="text-muted-foreground mt-1">Choose the goal that best aligns with your aspirations.</p>
-      </div>
+    <div className="space-y-4"> {/* Reduced space-y-8 to space-y-4 */}
+      {/* Removed redundant title section, now handled by NutritionPlanCreator */}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {goals.map((goal) => (
@@ -28,8 +25,8 @@ const StepOne: React.FC<StepOneProps> = ({ selectedGoal, onGoalSelect, goals }) 
                             : "border-border/40 hover:border-primary/60"
                         }`}
             onClick={() => onGoalSelect(goal.id)}
-            tabIndex={0} // Make it focusable
-            onKeyPress={(e) => e.key === 'Enter' && onGoalSelect(goal.id)} // Allow selection with Enter key
+            tabIndex={0} 
+            onKeyPress={(e) => e.key === 'Enter' && onGoalSelect(goal.id)}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
