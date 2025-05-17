@@ -94,13 +94,14 @@ const LandingHeader: React.FC = () => {
               initial="hidden"
               animate="visible"
               variants={navItemVariants}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => scrollToSection(section)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="transition-transform"
               >
                 {section.charAt(0).toUpperCase() + section.slice(1)}
               </Button>
@@ -112,14 +113,14 @@ const LandingHeader: React.FC = () => {
             initial="hidden"
             animate="visible"
             variants={navItemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Button 
               variant="outline" 
               size="sm" 
-              className="ml-2" 
+              className="ml-2 transition-transform" 
               onClick={() => navigate("/login")}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
               Sign In
             </Button>
@@ -130,16 +131,13 @@ const LandingHeader: React.FC = () => {
             initial="hidden"
             animate="visible"
             variants={navItemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Button 
               size="sm" 
-              className="ml-1" 
+              className="ml-1 transition-transform" 
               onClick={() => navigate("/login")}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { duration: 0.2 } 
-              }}
-              whileTap={{ scale: 0.95 }}
             >
               Get Started
             </Button>
@@ -151,12 +149,13 @@ const LandingHeader: React.FC = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           <Button 
             size="sm" 
             onClick={() => navigate("/login")}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="transition-transform"
           >
             Sign In
           </Button>

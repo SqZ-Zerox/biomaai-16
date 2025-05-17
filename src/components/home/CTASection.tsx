@@ -41,6 +41,7 @@ const CTASection: React.FC = () => {
     }
   };
 
+  // Fixed the glowVariants to use a specific repeatType from allowed options
   const glowVariants = {
     initial: { opacity: 0.5, scale: 1 },
     animate: { 
@@ -49,7 +50,7 @@ const CTASection: React.FC = () => {
       transition: { 
         duration: 3, 
         repeat: Infinity,
-        repeatType: "reverse" 
+        repeatType: "reverse" // "reverse", "loop", or "mirror" are valid values
       }
     }
   };
@@ -92,43 +93,48 @@ const CTASection: React.FC = () => {
                 className="flex flex-col sm:flex-row gap-3 md:flex-col lg:flex-row"
                 variants={itemVariants}
               >
-                <Button 
-                  size="lg"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={handleGetStarted}
-                  whileHover={{ 
-                    scale: 1.05,
-                    transition: { duration: 0.2 }
-                  }}
+                {/* Wrap Button in motion.div for hover animations */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto"
                 >
-                  Start Your Journey
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
+                  <Button 
+                    size="lg"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
+                    onClick={handleGetStarted}
                   >
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </motion.span>
-                </Button>
-                <Button 
-                  size="lg"
-                  variant="outline"
-                  className="border-primary/20"
-                  onClick={scrollToFeatures}
-                  whileHover={{ 
-                    scale: 1.05,
-                    transition: { duration: 0.2 }
-                  }}
+                    Start Your Journey
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
+                    >
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </motion.span>
+                  </Button>
+                </motion.div>
+                
+                {/* Wrap Button in motion.div for hover animations */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto"
                 >
-                  Explore Features
-                  <motion.span
-                    whileHover={{ rotate: 45 }}
-                    transition={{ duration: 0.2 }}
+                  <Button 
+                    size="lg"
+                    variant="outline"
+                    className="border-primary/20 w-full"
+                    onClick={scrollToFeatures}
                   >
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </motion.span>
-                </Button>
+                    Explore Features
+                    <motion.span
+                      whileHover={{ rotate: 45 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </motion.span>
+                  </Button>
+                </motion.div>
               </motion.div>
             </div>
           </motion.div>
