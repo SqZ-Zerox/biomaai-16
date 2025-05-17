@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -14,9 +13,9 @@ import {
   BarChart,
   Calendar,
   ChevronRight,
-  Flask
+  FlaskConical
 } from "lucide-react";
-import { MealPlanDisplay } from "@/components/nutrition/MealPlanDisplay";
+import MealPlanDisplay from "@/components/nutrition/MealPlanDisplay";
 import { MealPreferences } from "@/components/nutrition/types";
 
 interface WeeklyNutritionPlanProps {
@@ -257,7 +256,7 @@ const WeeklyNutritionPlan: React.FC<WeeklyNutritionPlanProps> = ({
                                 ? 'bg-red-500/20 text-red-600'
                                 : 'bg-green-500/20 text-green-600'
                             }`}>
-                              <Flask className="h-4 w-4" />
+                              <FlaskConical className="h-4 w-4" />
                             </div>
                             <div>
                               <h4 className="font-medium">{insight.name}</h4>
